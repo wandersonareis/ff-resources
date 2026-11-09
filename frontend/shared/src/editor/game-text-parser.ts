@@ -5,6 +5,7 @@ import {
   extractChipLabel,
   getColorTagName,
   getResolvedColorFromTag,
+  isFf13Version,
   isLockedTagInner,
 } from './game-text-tags';
 import type { ChipValidator } from './tag-catalog';
@@ -40,6 +41,14 @@ export interface GameTextRenderOptions extends GameTextMarkOptions {
 
 /** Chip de quebra real (fundo preto/letra branca nos 2 temas — globals.css). */
 const NEWLINE_CHIP_HTML = '<span class="newline-chip">LF</span>';
+
+/**
+ * Tag de cor no formato da versão: FFX usa `{CLR:NOME}`, a trilogia FF13
+ * `{COLOR:Nome}` (o codec do FF13 resolve o nome para o par da codepage).
+ */
+function colorTag(name: string, version: string): string {
+  return isFf13Version(version) ? `{COLOR:${name}}` : `{CLR:${name}}`;
+}
 
 /** Intervalo já resolvido em UTF-16 (a varredura trabalha em offsets absolutos). */
 interface ResolvedMark {
@@ -233,7 +242,7 @@ export const gameTextParser = {
    * Cores/itálico sincronizados por parágrafo; chips emitidos verbatim.
    * Parágrafos unidos com {TEXT_NEWLINE} (espelha WriteLinebreaksAsCommands).
    */
-  serializeJSONToGameText(json: JSONContent): string {
+  serializeJSONToGameText(json: JSONContent, version = ''): string {
     if (!json?.content) return '';
 
     const paragraphTexts: string[] = [];
@@ -266,9 +275,9 @@ export const gameTextParser = {
 
             if (nodeColorTag !== currentColorTag) {
               if (nodeColorTag) {
-                blockText += `{CLR:${nodeColorTag}}`;
+                blockText += colorTag(nodeColorTag, version);
               } else if (currentColorTag) {
-                blockText += `{CLR:${COLOR_RESET_TAG}}`;
+                blockText += colorTag(COLOR_RESET_TAG, version);
               }
               currentColorTag = nodeColorTag;
             }
@@ -280,7 +289,7 @@ export const gameTextParser = {
         }
 
         if (currentColorTag) {
-          blockText += `{CLR:${COLOR_RESET_TAG}}`;
+          blockText += colorTag(COLOR_RESET_TAG, version);
           currentColorTag = null;
         }
         if (italicActive) {

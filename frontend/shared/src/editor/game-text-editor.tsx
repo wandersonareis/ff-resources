@@ -26,7 +26,7 @@ import {
 import { Separator } from '../components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
 import { gameTextParser } from './game-text-parser';
-import { extractChipLabel, isLockedTagInner, KNOWN_COLORS } from './game-text-tags';
+import { colorsForVersion, extractChipLabel, isLockedTagInner } from './game-text-tags';
 import { splitLeadingPadding, summarizePadding } from './leading-padding';
 import { useApi } from '../api/ApiProvider';
 import { getChipValidator, loadTagCatalog, type TagCatalog } from './tag-catalog';
@@ -205,7 +205,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
         try {
           // Padding do valor ATUAL (o editor vive além da linha aberta).
           const { padding } = splitLeadingPadding(valueRef.current);
-          const next = padding + gameTextParser.serializeJSONToGameText(updated.getJSON());
+          const next = padding + gameTextParser.serializeJSONToGameText(updated.getJSON(), version);
           lastEmittedValue.current = next;
           onValueChangeRef.current(next);
         } finally {
@@ -255,7 +255,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
       .run();
   };
 
-  const colors = Object.values(KNOWN_COLORS).filter((c) => c.name !== 'WHITE');
+  const colors = colorsForVersion(version);
   const { padding } = splitLeadingPadding(value);
 
   /**
@@ -273,7 +273,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
     const { body } = splitLeadingPadding(valueRef.current);
     if (body === valueRef.current) return;
     if (editor && catalog !== undefined) {
-      const current = gameTextParser.serializeJSONToGameText(editor.getJSON());
+      const current = gameTextParser.serializeJSONToGameText(editor.getJSON(), version);
       if (current !== body) {
         editor.commands.setContent(
           gameTextParser.parseGameTextToHTML(body, getChipValidator(catalog ?? null)),

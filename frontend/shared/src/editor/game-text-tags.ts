@@ -21,6 +21,69 @@ export const KNOWN_COLORS: Record<string, ColorDefinition> = {
   WHITE: { label: 'Branco (reset)', name: 'WHITE', hex: '#ffffff' },
 };
 
+/**
+ * Paleta do FF13 (trilogia XIII) para o `{COLOR:Nome}` do codec novo. Os
+ * hexes são só para o CHIP da UI — a cor real sai do jogo. `EXTRA00..28` são
+ * slots que o ZTRtool deixou sem nome no ff131: cinza neutro até nomearem.
+ */
+const FF13_COLOR_HEX: Record<string, string> = {
+  White: '#ffffff',
+  IceBlue: '#a5d8e6',
+  Gold: '#e8c15a',
+  LightRed: '#e8736b',
+  Yellow: '#f2d24a',
+  Green: '#6fbf73',
+  Gray: '#9aa0a6',
+  LightGold: '#f0dfa0',
+  Rose: '#e58fb0',
+  Purple: '#9b6bc7',
+  DarkYellow: '#b89a2e',
+  Gray2: '#7d838a',
+  Voilet: '#8a6bb5',
+  LightGreen: '#a8dda8',
+  Sapphire: '#3a6fd8',
+  Voilet2: '#7a5fb0',
+  OliveGreen: '#8a9a4a',
+  DarkCyan: '#3f7a80',
+  Lavender: '#c9b8e0',
+  Brown: '#8a5a30',
+  Gold2: '#d4af37',
+  Gold3: '#c9a227',
+  DarkGray: '#5f666d',
+  DarkRed: '#9c2b2b',
+  Jade: '#4fa88a',
+  SmokeGray: '#b5babd',
+  DarkGold: '#a8842c',
+  Magenta: '#c74bb0',
+  PureWhite: '#ffffff',
+  Orange: '#e8913a',
+  NavyBlue: '#2c3e70',
+};
+
+/** Paleta completa do FF13 (EXTRA00..28 entram como cinza neutro). */
+export const FF13_KNOWN_COLORS: Record<string, ColorDefinition> = (() => {
+  const out: Record<string, ColorDefinition> = {};
+  for (const [name, hex] of Object.entries(FF13_COLOR_HEX)) {
+    out[name.toUpperCase()] = { label: name, name, hex };
+  }
+  for (let i = 0; i <= 28; i++) {
+    const name = `EXTRA${String(i).padStart(2, '0')}`;
+    out[name] = { label: name, name, hex: '#9ca3af' };
+  }
+  return out;
+})();
+
+/** true para as versões da trilogia FF13 (part1/2/3). */
+export function isFf13Version(version: string): boolean {
+  return version === 'part1' || version === 'part2' || version === 'part3';
+}
+
+/** Paleta de cores da versão (FFX vs. FF13), sem o "reset". */
+export function colorsForVersion(version: string): ColorDefinition[] {
+  const table = isFf13Version(version) ? FF13_KNOWN_COLORS : KNOWN_COLORS;
+  return Object.values(table).filter((c) => !c.name.toUpperCase().endsWith('WHITE'));
+}
+
 export const COLOR_RESET_TAG = 'WHITE';
 
 /**
@@ -225,8 +288,15 @@ export function getColorTagName(colorValue?: string | null): string | null {
   const value = colorValue.trim();
   if (!value) return null;
   const lower = value.toLowerCase();
+  // FFX casa por NOME ou hex; a paleta do FF13 só entra por HEX exato — os
+  // nomes dela não podem capturar um valor CSS do FFX ("gold" é YELLOW lá).
   for (const definition of Object.values(KNOWN_COLORS)) {
     if (definition.name.toLowerCase() === lower || definition.hex.toLowerCase() === lower) {
+      return definition.name;
+    }
+  }
+  for (const definition of Object.values(FF13_KNOWN_COLORS)) {
+    if (definition.hex.toLowerCase() === lower) {
       return definition.name;
     }
   }
@@ -246,6 +316,9 @@ export function getColorTagName(colorValue?: string | null): string | null {
  * Aceita o que o decoder do backend emite (`{CLR:88}`, `{CLR:41}`) e o que
  * versões anteriores do editor gravaram por engano (`{CLR:#RRGGBB}` e
  * `{CLR:RGB(...)}`): o rascunho antigo volta a ser cor em vez de chip.
+ *
+ * Conhece as DUAS paletas: a do FFX (`{CLR:BLUE}`) e a da trilogia FF13
+ * (`{COLOR:IceBlue}`) — os nomes não colidem, então um mapa só serve.
  */
 export function getResolvedColorFromTag(
   tagName: string,
@@ -253,8 +326,11 @@ export function getResolvedColorFromTag(
   const normalized = tagName.trim().toUpperCase();
   if (!normalized) return null;
   if (normalized === COLOR_RESET_TAG) return { hex: null, isReset: true };
-  if (KNOWN_COLORS[normalized]) {
-    return { hex: KNOWN_COLORS[normalized].hex, isReset: false };
+  const known =
+    FF13_KNOWN_COLORS[normalized] ?? KNOWN_COLORS[normalized];
+  if (known) {
+    if (known.name.toUpperCase() === COLOR_RESET_TAG) return { hex: null, isReset: true };
+    return { hex: known.hex, isReset: false };
   }
   const byteName = COLOR_NAME_BY_BYTE[normalized];
   if (byteName) {
@@ -279,12 +355,26 @@ export function getResolvedColorFromTag(
 // nunca editáveis): CMD, HEX e qualquer UNK*.
 const LOCKED_ASIS_PREFIXES = ['CMD:', 'HEX:', 'UNKCHR:', 'UNKDBLCHR:', 'UNKTPLCHR:'];
 
+// Classes do FF13 cujo valor é calculado no jogo: o tradutor não escolhe o
+// byte, então o chip é bloqueado (VAR já era).
+const FF13_LOCKED_PREFIXES = [
+  'VAR:',
+  'CTR:',
+  'KEY:',
+  'RAW:',
+  'B:',
+  'PAGE:',
+  'NL:',
+  'TAB:',
+];
+
 /**
  * Indica se a tag é bloqueada (CMD, HEX, UNK ou VAR).
  */
 export function isLockedTagInner(inner: string): boolean {
   const upper = inner.trim().toUpperCase();
   if (upper === 'VAR' || upper.startsWith('VAR:')) return true;
+  if (FF13_LOCKED_PREFIXES.some((p) => upper.startsWith(p))) return true;
   return LOCKED_ASIS_PREFIXES.some((p) => upper.startsWith(p));
 }
 
@@ -294,6 +384,10 @@ export function isLockedTagInner(inner: string): boolean {
  * - VAR: exibe apenas "Variável".
  * - Demais: último segmento após ':', sem aspas duplas.
  *   ex: MCR:s06:l3F:"Yevon" -> Yevon | PC:01:YUNA -> YUNA | PAUSE -> PAUSE
+ *
+ * Tags do FF13 sem segmento de nome (`{VAR:F4:40}`, `{RAW:81:40}`) mostram a
+ * tag inteira: o último segmento seria o segundo byte do par, que não diz
+ * nada a quem lê.
  */
 export function extractChipLabel(inner: string): string {
   const trimmed = inner.trim();
@@ -305,6 +399,11 @@ export function extractChipLabel(inner: string): string {
     return 'Variável';
   }
   const segments = trimmed.split(':');
+  if (segments.length === 1) return trimmed || `{${trimmed}}`;
+  // Classe:hex:hex (sem nome) — FF13 (VAR/CTR/KEY/RAW/B/PAGE/NL/TAB).
+  if (FF13_LOCKED_PREFIXES.some((p) => upper.startsWith(p))) {
+    return `{${trimmed}}`;
+  }
   const last = segments[segments.length - 1].trim();
   const unquoted = last.replace(/^"|"$/g, '').trim();
   return unquoted || trimmed;
