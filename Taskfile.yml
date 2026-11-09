@@ -1,0 +1,49 @@
+version: '3'
+
+# Orquestrador do monorepo ff-resources (Go + Wails v3, módulo raiz único).
+# Cada app tem o próprio build/ gerado pelo wails3 init; aqui só despachamos.
+
+vars:
+  BIN_FF13: apps/ff13/bin/ff13.exe
+  BIN_LAUNCHER: apps/launcher/bin/launcher.exe
+
+tasks:
+  compile:
+    desc: Compila tudo (gate rápido, sem UI): go build ./...
+    cmds:
+      - go build ./...
+
+  test:
+    desc: go test ./...  (ainda depende de testdata/ffx e do fixture build/bin/data)
+    cmds:
+      - go test ./... -count=1
+
+  build:ff13:
+    desc: wails3 build do app FF13
+    dir: apps/ff13
+    cmds:
+      - wails3 build
+
+  build:launcher:
+    desc: wails3 build do launcher
+    dir: apps/launcher
+    cmds:
+      - wails3 build
+
+  build:ffx:
+    desc: wails3 build do app FFX (ainda com frontend/out placeholder — UI real é fase seguinte)
+    dir: apps/ffx
+    cmds:
+      - wails3 build
+
+  build:
+    desc: build dos três apps
+    cmds:
+      - task: build:ff13
+      - task: build:launcher
+      - task: build:ffx
+
+  bundle:
+    desc: monta dist/ com launcher + ffx + ff13 + manifest + assets
+    cmds:
+      - echo "bundle: copiar binários, manifest.json e assets/ para dist/ (ver docs)"

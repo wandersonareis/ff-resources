@@ -1,0 +1,52 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.syso
+/*.syso
+go.work
+go.work.sum
+
+# Binários e saída de build por app (gerados)
+apps/*/build/bin/
+apps/*/bin/
+apps/*/frontend/dist/
+apps/*/frontend/out/
+
+# Frontend: instalados/gerados
+node_modules/
+**/node_modules/
+frontend/out/
+frontend/dist/
+frontend/.next/
+frontend/coverage/
+*.tsbuildinfo
+package-lock.json
+npm-debug.log*
+
+# Task (Wails v3) e artefatos diversos
+.task/
+.task/
+coverage/
+logs/
+*.log
+
+# Fixtures grandes (testdata é trazido manualmente; binários/textos ficam fora do git)
+testdata/ffx/**/*.bin
+testdata/ffx/**/*.txt
+testdata/ffx/**/*.sps2
+testdata/ffx/**/*.dcp
+
+# IDEs / agentes
+.idea/
+.vscode/
+.kilo/
+.agent/
+.angular/
+
+# Bindings gerados pelo wails3 (regenerados em `wails3 build`)
+apps/*/frontend/bindings-ff13/

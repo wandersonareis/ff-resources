@@ -1,0 +1,27 @@
+{
+  "apps": [
+    {
+      "id": "ffx",
+      "title": "FINAL FANTASY X | X-2 HD Remaster",
+      "exe": "ffx/ffx-resources.exe",
+      "cover": "assets/launcher/ffx.png",
+      "profiles": [
+        { "id": "ffx", "display": "FFX" },
+        { "id": "ffx2", "display": "FFX-2" },
+        { "id": "eternalcalm", "display": "Eternal Calm" },
+        { "id": "lastmiss", "display": "Last Mission" }
+      ]
+    },
+    {
+      "id": "ff13",
+      "title": "FINAL FANTASY XIII Trilogy",
+      "exe": "ff13/ff13-resources.exe",
+      "cover": "assets/launcher/ff13.png",
+      "profiles": [
+        { "id": "part1", "display": "FINAL FANTASY XIII", "cover": "assets/launcher/ff13.png" },
+        { "id": "part2", "display": "FINAL FANTASY XIII-2", "cover": "assets/launcher/ff13-2.png" },
+        { "id": "part3", "display": "LRFFXIII", "cover": "assets/launcher/lrff13.png" }
+      ]
+    }
+  ]
+}

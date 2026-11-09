@@ -1,0 +1,35 @@
+{
+  "name": "@ff-resources/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pacote local, Wails-agnostic: contrato GameApi, tema e componentes/estados React compartilhados entre os apps ffx e ff13. NÃO importa bindings/* (isso é adapter de cada app).",
+  "dependencies": {
+    "@tanstack/react-hotkeys": "^0.22.0",
+    "@tanstack/react-store": "^0.11.2",
+    "@tanstack/store": "^0.11.2",
+    "@tiptap/core": "^3.32.2",
+    "@tiptap/extension-color": "^3.32.2",
+    "@tiptap/extension-text-style": "^3.32.2",
+    "@tiptap/pm": "^3.32.2",
+    "@tiptap/starter-kit": "^3.32.2",
+    "@tiptap/suggestion": "^3.32.2",
+    "@wailsio/runtime": "^3.1.0",
+    "cn": "^0.5.2",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^1.66.0",
+    "radix-ui": "^1.8.1",
+    "react-resizable-panels": "^4.17.0",
+    "sonner": "^2.0.8"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme": "./src/theme.tsx",
+    "./api/GameApi": "./src/api/GameApi.ts",
+    "./*": "./src/*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
