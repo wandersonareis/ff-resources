@@ -24,11 +24,11 @@ func buildKeySet(game GameCode, cp Codepage) (*KeySet, error) {
 
 	switch game {
 	case FF131:
-		set.Color, set.Icon, set.Btn = xiiiColor[cp], xiiiIcon[cp], xiiiBtn[cp]
+		set.Color, set.Icon, set.Btn = xiiiColors.expand(ClassColor, cp), xiiiIcons.expand(ClassIcon, cp), xiiiBtns.expand(ClassBtn, cp)
 	case FF132:
-		set.Color, set.Icon, set.Btn = xiii2Color[cp], xiii2Icon[cp], xiii2Btn[cp]
+		set.Color, set.Icon, set.Btn = xiii2Colors.expand(ClassColor, cp), xiii2Icons.expand(ClassIcon, cp), xiii2Btns.expand(ClassBtn, cp)
 	case FF133:
-		set.Color, set.Icon, set.Btn = xiii3Color[cp], xiii3Icon[cp], xiii3Btn[cp]
+		set.Color, set.Icon, set.Btn = xiii3Colors.expand(ClassColor, cp), xiii3Icons.expand(ClassIcon, cp), xiii3Btns.expand(ClassBtn, cp)
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrGameCodeNotFound, game)
 	}
