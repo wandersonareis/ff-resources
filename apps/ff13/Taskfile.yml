@@ -59,6 +59,15 @@ tasks:
     cmds:
       - task: common:run:server
 
+  test:e2e:
+    summary: E2E do catálogo de tags (sobe o server e chama o binding)
+    desc: |
+      Requer o binário de server: task build:server.
+      Roda com a tag de build `e2e` — não entra no gate de unidade.
+    cmds:
+      - task: build:server
+      - go test -tags e2e . -run TestTagCatalogE2E -v -count=1
+
   build:docker:
     summary: Builds a Docker image for server mode deployment
     cmds:
