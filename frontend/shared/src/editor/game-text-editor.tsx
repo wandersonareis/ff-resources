@@ -1,0 +1,549 @@
+'use client';
+
+import { Editor } from '@tiptap/core';
+import { Color } from '@tiptap/extension-color';
+import { TextStyle } from '@tiptap/extension-text-style';
+import StarterKit from '@tiptap/starter-kit';
+import {
+  ChevronDown,
+  DoorOpen,
+  Eraser,
+  Italic,
+  Palette,
+  Redo2,
+  RotateCcw,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Separator } from '../components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
+import { gameTextParser } from './game-text-parser';
+import { extractChipLabel, isLockedTagInner, KNOWN_COLORS } from './game-text-tags';
+import { splitLeadingPadding, summarizePadding } from './leading-padding';
+import { useApi } from '../api/ApiProvider';
+import { getChipValidator, loadTagCatalog, type TagCatalog } from './tag-catalog';
+import { CleanMarksExtension } from './clean-marks.extension';
+import { createDoubleClickSelectionExtension } from './double-click-selection.extension';
+import { GameTagExtension } from './game-tag.extension';
+import { LeadingEmptyBlockExtension } from './leading-empty-block.extension';
+import { LockedTagsExtension } from './locked-tags.extension';
+import { createPasteHandlerExtension } from './paste-handler.extension';
+import { createTagAutocompleteExtension } from './tag-autocomplete.extension';
+import { createTypedTagExtension } from './typed-tag.extension';
+
+interface TemplateItem {
+  /** Tag completa, ex: {BUTTON:31:X}. */
+  value: string;
+  /** Classes CSS dos tiles na sprite public/pad_icon.png (sequência). */
+  cls: string[];
+}
+
+/**
+ * buttonMap completo exposto ao menu Botões — espelho do Go
+ * (backend/core/encoding/encoding_players.go) na arte do Xbox do jogo:
+ * 30 TRIANGLE→Y, 31 X→A, 32 CIRCLE→B, 33 SQUARE→X.
+ * Dummy/Dummy2 (0x2D, 0x2E) ficam de fora: são dummies legados sem glifo
+ * na sprite, e o chip deles continua textual.
+ */
+const BUTTON_ITEMS: TemplateItem[] = [
+  { value: '{BUTTON:30:TRIANGLE}', cls: ['gb-y'] },
+  { value: '{BUTTON:31:X}', cls: ['gb-a'] },
+  { value: '{BUTTON:32:CIRCLE}', cls: ['gb-b'] },
+  { value: '{BUTTON:33:SQUARE}', cls: ['gb-x'] },
+  { value: '{BUTTON:34:L1}', cls: ['gb-lb'] },
+  { value: '{BUTTON:35:R1}', cls: ['gb-rb'] },
+  { value: '{BUTTON:36:L2}', cls: ['gb-lt'] },
+  { value: '{BUTTON:37:R2}', cls: ['gb-rt'] },
+  { value: '{BUTTON:38:START}', cls: ['gb-start'] },
+  { value: '{BUTTON:39:SELECT}', cls: ['gb-back'] },
+];
+
+/**
+ * buttonMap dos direcionais (0x40–0x4F) completo — sequências de setas na
+ * ordem do nome do código (como o jogo renderiza). "Direcional" (0x40) e
+ * "All" (0x4F) usam o cursor ✛ do pad.
+ */
+const DPAD_ITEMS: TemplateItem[] = [
+  { value: '{BUTTON:40:Direcional}', cls: ['gb-cursor'] },
+  { value: '{BUTTON:41:Direcional UP}', cls: ['gb-arrow-up'] },
+  { value: '{BUTTON:42:Direcional RIGHT}', cls: ['gb-arrow-right'] },
+  { value: '{BUTTON:43:Direcional Up+Right}', cls: ['gb-arrow-up', 'gb-arrow-right'] },
+  { value: '{BUTTON:44:Direcional DOWN}', cls: ['gb-arrow-down'] },
+  { value: '{BUTTON:45:Direcional Up+Down}', cls: ['gb-arrow-up', 'gb-arrow-down'] },
+  { value: '{BUTTON:46:Direcional Down+Right}', cls: ['gb-arrow-down', 'gb-arrow-right'] },
+  {
+    value: '{BUTTON:47:Direcional Up+Right+Down}',
+    cls: ['gb-arrow-up', 'gb-arrow-right', 'gb-arrow-down'],
+  },
+  { value: '{BUTTON:48:Direcional LEFT}', cls: ['gb-arrow-left'] },
+  { value: '{BUTTON:49:Direcional Up+Left}', cls: ['gb-arrow-up', 'gb-arrow-left'] },
+  { value: '{BUTTON:4A:Direcional Left+Right}', cls: ['gb-arrow-left', 'gb-arrow-right'] },
+  {
+    value: '{BUTTON:4B:Direcional Up+Left+Right}',
+    cls: ['gb-arrow-up', 'gb-arrow-left', 'gb-arrow-right'],
+  },
+  { value: '{BUTTON:4C:Direcional Left+Down}', cls: ['gb-arrow-left', 'gb-arrow-down'] },
+  {
+    value: '{BUTTON:4D:Direcional Up+Left+Down}',
+    cls: ['gb-arrow-up', 'gb-arrow-left', 'gb-arrow-down'],
+  },
+  {
+    value: '{BUTTON:4E:Direcional Left+Down+Right}',
+    cls: ['gb-arrow-left', 'gb-arrow-down', 'gb-arrow-right'],
+  },
+  { value: '{BUTTON:4F:Direcional All}', cls: ['gb-cursor'] },
+];
+
+interface IconTemplate {
+  label: string;
+  value: string;
+}
+
+const ICON_TEMPLATES: IconTemplate[] = [
+  { label: 'Red Gate', value: '{ICON:80:Red Gate}' },
+  { label: 'Green Gate', value: '{ICON:81:Green Gate}' },
+  { label: 'Yellow Gate', value: '{ICON:82:Yellow Gate}' },
+  { label: 'Blue Gate', value: '{ICON:83:Blue Gate}' },
+];
+
+export interface GameTextEditorProps {
+  /** Texto canônico com tags (ex: linha de TextRow.text[lang]). */
+  value: string;
+  /** Emite o texto canônico serializado a cada edição. */
+  onValueChange: (value: string) => void;
+  /** Versão do jogo: define o catálogo de tags (autocomplete/validação). */
+  version: string;
+}
+
+export function GameTextEditor({ value, onValueChange, version }: GameTextEditorProps) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  /** Wrapper do editor: container de montagem do popup de sugestões. */
+  const popupContainerRef = useRef<HTMLDivElement | null>(null);
+  const suppressUpdate = useRef(false);
+  const onValueChangeRef = useRef(onValueChange);
+  /**
+   * Último texto que o PRÓPRIO editor emitiu por onValueChange. O efeito de
+   * sincronização só reconstrói o conteúdo quando o `value` veio de fora —
+   * comparar HTML literalmente (getHTML × parser) fazia setContent a cada
+   * edição em casos de marca vazia/cor, derrubando cursor e seleção.
+   */
+  const lastEmittedValue = useRef(value);
+  /** `value` atual sem depender do closure da criação do editor. */
+  const valueRef = useRef(value);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [, setTick] = useState(0);
+  // undefined = catálogo ainda carregando (o editor só nasce com ele pronto:
+  // parse, colagem e tags digitadas precisam do MESMO validador).
+  const api = useApi();
+  const [catalog, setCatalog] = useState<TagCatalog | null | undefined>(undefined);
+
+  useEffect(() => {
+    onValueChangeRef.current = onValueChange;
+  }, [onValueChange]);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    let alive = true;
+    loadTagCatalog(version, api).then((loaded) => {
+      if (alive) setCatalog(loaded);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [version, api]);
+
+  // O editor nasce com o catálogo da versão e NUNCA é recriado depois:
+  // `value` fica FORA das deps de propósito. Recriar o editor a cada tecla
+  // (o `value` muda a cada tecla/colagem) destrói o contenteditable e o foco
+  // do usuário vai para o body — o bug de "digito uma letra e o foco perde".
+  // As mudanças externas de `value` são aplicadas pelo efeito de sincronia
+  // abaixo (setContent), que preserva o cursor.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: o editor não pode ser recriado a cada tecla
+  useEffect(() => {
+    const element = hostRef.current;
+    if (catalog === undefined || !element) return;
+    const validate = getChipValidator(catalog);
+    const ed = new Editor({
+      element,
+      extensions: [
+        StarterKit.configure({
+          heading: false,
+          bulletList: false,
+          orderedList: false,
+          listItem: false,
+          blockquote: false,
+          codeBlock: false,
+          horizontalRule: false,
+          bold: false,
+          strike: false,
+        }),
+        TextStyle,
+        Color,
+        GameTagExtension,
+        LockedTagsExtension,
+        CleanMarksExtension,
+        LeadingEmptyBlockExtension,
+        createDoubleClickSelectionExtension(),
+        createTypedTagExtension(validate),
+        createTagAutocompleteExtension(catalog, () => popupContainerRef.current),
+        createPasteHandlerExtension(gameTextParser, validate),
+      ],
+      content: gameTextParser.parseGameTextToHTML(splitLeadingPadding(value).body, validate),
+      onUpdate: ({ editor: updated }) => {
+        suppressUpdate.current = true;
+        try {
+          // Padding do valor ATUAL (o editor vive além da linha aberta).
+          const { padding } = splitLeadingPadding(valueRef.current);
+          const next = padding + gameTextParser.serializeJSONToGameText(updated.getJSON());
+          lastEmittedValue.current = next;
+          onValueChangeRef.current(next);
+        } finally {
+          queueMicrotask(() => (suppressUpdate.current = false));
+        }
+      },
+      onTransaction: () => setTick((t) => t + 1),
+    });
+    lastEmittedValue.current = value;
+    setEditor(ed);
+    return () => {
+      ed.destroy();
+      setEditor(null);
+    };
+  }, [catalog]);
+
+  useEffect(() => {
+    if (!editor || suppressUpdate.current || catalog === undefined) return;
+    // Mesma string que o editor acabou de emitir = eco do onValueChange; não
+    // reconstrói o documento (preserva cursor/seleção).
+    if (value === lastEmittedValue.current) return;
+    const html = gameTextParser.parseGameTextToHTML(
+      splitLeadingPadding(value).body,
+      getChipValidator(catalog),
+    );
+    editor.commands.setContent(html, { emitUpdate: false });
+    lastEmittedValue.current = value;
+  }, [editor, value, catalog]);
+
+  const insertControlTag = (template: TemplateItem | IconTemplate) => {
+    if (!editor) return;
+    const inner = template.value.slice(1, -1);
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'gameTag',
+        attrs: {
+          value: template.value,
+          label: extractChipLabel(inner),
+          locked: isLockedTagInner(inner),
+          // Mesmo critério do parse: um template que não round-tripa
+          // aparece marcado, não "ok" na tela e errado no binário.
+          invalid: !getChipValidator(catalog ?? null)(inner),
+        },
+      })
+      .run();
+  };
+
+  const colors = Object.values(KNOWN_COLORS).filter((c) => c.name !== 'WHITE');
+  const { padding } = splitLeadingPadding(value);
+
+  /**
+   * Remove o padding de tela do rascunho. O prefixo fica FORA do documento
+   * (o editor o esconde), então a remoção é um novo `value` sem ele — não há
+   * comando do ProseMirror para isso. Atualizar valueRef/lastEmittedValue
+   * evita que o próximo onUpdate reinjete o padding e que a sincronia
+   * reconstrua o conteúdo (cursor/seleção ficam onde estão).
+   *
+   * Normaliza também o documento: quando o padding nasceu de parágrafos
+   * vazios à frente (colar `{TEXT_NEWLINE}…`), deixá-los no ProseMirror faria
+   * o próximo onUpdate serializar o prefixo de novo — o padding voltaria.
+   */
+  const removePadding = () => {
+    const { body } = splitLeadingPadding(valueRef.current);
+    if (body === valueRef.current) return;
+    if (editor && catalog !== undefined) {
+      const current = gameTextParser.serializeJSONToGameText(editor.getJSON());
+      if (current !== body) {
+        editor.commands.setContent(
+          gameTextParser.parseGameTextToHTML(body, getChipValidator(catalog ?? null)),
+          { emitUpdate: false },
+        );
+      }
+    }
+    valueRef.current = body;
+    lastEmittedValue.current = body;
+    onValueChangeRef.current(body);
+  };
+
+  return (
+    <div ref={popupContainerRef} className="relative flex min-h-0 flex-1 flex-col gap-2">
+      <div
+        className="flex shrink-0 flex-wrap items-center justify-between gap-1 rounded border border-border px-2 py-1"
+        role="toolbar"
+        aria-label="Formatação do texto do jogo"
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+              data-active={editor?.isActive('italic') ?? false}
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
+              aria-label="Itálico"
+            >
+              <Italic size={20} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Itálico ({'{TEXT_ITALIC}'})</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor?.chain().focus().unsetItalic().run()}
+            >
+              <Eraser size={20} />
+              Normal
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Texto normal ({'{TEXT_NORMAL}'})</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="my-1 w-px" />
+
+        <SpriteTemplateDropdown
+          ariaLabel="Botões ({BUTTON:…})"
+          tooltip="Inserir botão ({BUTTON:…})"
+          items={BUTTON_ITEMS}
+          triggerCls={['gb-a']}
+          onSelect={insertControlTag}
+        />
+        <SpriteTemplateDropdown
+          ariaLabel="Direcionais ({BUTTON:…})"
+          tooltip="Inserir direcional ({BUTTON:…})"
+          items={DPAD_ITEMS}
+          triggerCls={['gb-cursor']}
+          onSelect={insertControlTag}
+        />
+        <TemplateDropdown
+          ariaLabel="Ícones ({ICON:…})"
+          tooltip="Inserir ícone ({ICON:…})"
+          icon={<DoorOpen size={20} />}
+          templates={ICON_TEMPLATES}
+          onSelect={insertControlTag}
+        />
+
+        <Separator orientation="vertical" className="my-1 w-px" />
+
+        <fieldset
+          className="m-0 inline-flex items-center gap-0.5 border-0 p-0"
+          aria-label="Cores ({CLR:…})"
+        >
+          <Palette size={20} aria-label="Cores ({CLR:…}, {CLR:WHITE} reseta)" />
+          {colors.map((c) => {
+            const isActive = editor?.isActive('textStyle', { color: c.hex }) ?? false;
+            return (
+              <Tooltip key={c.name}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-5.5 w-5.5 cursor-pointer rounded border-2 p-0"
+                    style={{
+                      backgroundColor: c.hex,
+                      borderColor: isActive ? 'currentColor' : 'transparent',
+                      boxShadow: isActive ? '0 0 0 1px currentColor' : 'none',
+                    }}
+                    aria-label={`Cor ${c.label}`}
+                    onClick={() => editor?.chain().focus().setColor(c.hex).run()}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>{`{CLR:${c.name}}`}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Resetar cor"
+                onClick={() => editor?.chain().focus().unsetColor().run()}
+              >
+                <RotateCcw size={20} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Resetar cor ({'{CLR:WHITE}'})</TooltipContent>
+          </Tooltip>
+        </fieldset>
+
+        <Separator orientation="vertical" className="my-1 w-px" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={!editor?.can().undo()}
+              aria-label="Desfazer"
+              onClick={() => editor?.chain().focus().undo().run()}
+            >
+              <Undo2 size={20} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Desfazer</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={!editor?.can().redo()}
+              aria-label="Refazer"
+              onClick={() => editor?.chain().focus().redo().run()}
+            >
+              <Redo2 size={20} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Refazer</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {padding !== '' && (
+        <div
+          className="group/padding flex w-fit shrink-0 items-center gap-1 text-xs text-muted-foreground"
+          title="Espaços/quebras intencionais do jogo, preservados automaticamente. Use a lixeira para removê-los."
+        >
+          <span>␍ padding de tela:</span>
+          <code className="rounded bg-muted px-1">{summarizePadding(padding)}</code>
+          <button
+            type="button"
+            aria-label="Remover padding de tela"
+            title="Remover o padding de tela (espaços/quebras iniciais) desta tradução"
+            className="pointer-events-none shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:pointer-events-auto focus-visible:opacity-100 group-focus-within/padding:pointer-events-auto group-focus-within/padding:opacity-100 group-hover/padding:pointer-events-auto group-hover/padding:opacity-100"
+            onClick={removePadding}
+          >
+            <Trash2 size={14} aria-hidden />
+          </button>
+        </div>
+      )}
+      <div
+        ref={hostRef}
+        // Host é flex coluna + rolagem interna: o contenteditable (.tiptap)
+        // estica com flex-1 e texto maior que a caixa rola aqui dentro.
+        //
+        // O FOCO é UM efeito só: a própria borda da caixa troca para a cor
+        // de foco (focus-within), como um input ganhando foco. O retângulo
+        // não muda de tamanho, posição nem raio. Sem anel/halo extra: o
+        // box-shadow de 3px em DPI fracionário (125%/150%) desenhava uma
+        // segunda linha assimétrica (parecia 1px mais baixa) e lia como
+        // "outra área". Antes o outline nativo do Chromium ficava no
+        // .tiptap, 12px para dentro (host p-3): uma segunda área menor que
+        // surgia no clique, com o texto a só 4px (p-1) dela. Ambos zerados.
+        //
+        // Respiro do texto: host p-3 (12px) + p-1 DENTRO do .tiptap (4px),
+        // mais o 1px da borda = 17px até a borda, igual com e sem foco.
+        data-testid="editor-surface"
+        className="flex min-h-40 flex-1 flex-col overflow-y-auto rounded border border-border p-3 outline-none transition-colors focus-within:border-ring [&_.tiptap]:flex-1 [&_.tiptap]:p-1 [&_.tiptap]:outline-none [&_.tiptap_p]:mb-2 [&_.tiptap_p:last-child]:mb-0"
+      />
+    </div>
+  );
+}
+
+/**
+ * Menu de templates textuais (Ícones — gates não têm tile na sprite).
+ */
+function TemplateDropdown({
+  ariaLabel,
+  icon,
+  templates,
+  tooltip,
+  onSelect,
+}: {
+  ariaLabel: string;
+  icon: React.ReactNode;
+  templates: IconTemplate[];
+  tooltip: string;
+  onSelect: (t: IconTemplate) => void;
+}) {
+  return (
+    <Tooltip>
+      <DropdownMenu>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" aria-label={ariaLabel}>
+              {icon}
+              <ChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <DropdownMenuContent>
+          {templates.map((t) => (
+            <DropdownMenuItem key={t.value} onSelect={() => onSelect(t)}>
+              {t.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * Menu só-ícone de controles (Botões / Direcionais): trigger com glifo da
+ * sprite e itens ícone + nome do buttonMap.
+ */
+function SpriteTemplateDropdown({
+  ariaLabel,
+  tooltip,
+  items,
+  triggerCls,
+  onSelect,
+}: {
+  ariaLabel: string;
+  tooltip: string;
+  items: TemplateItem[];
+  triggerCls: string[];
+  onSelect: (t: TemplateItem) => void;
+}) {
+  return (
+    <Tooltip>
+      <DropdownMenu>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" aria-label={ariaLabel}>
+              {triggerCls.map((cls) => (
+                <span key={cls} className={`gb-sprite gb-trigger-ico ${cls}`} aria-hidden="true" />
+              ))}
+              <ChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <DropdownMenuContent align="start" className="max-h-85 overflow-y-auto">
+          {items.map((t) => (
+            <DropdownMenuItem key={t.value} onSelect={() => onSelect(t)}>
+              {t.cls.map((cls) => (
+                <span key={cls} className={`gb-sprite gb-menu-item ${cls}`} />
+              ))}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}

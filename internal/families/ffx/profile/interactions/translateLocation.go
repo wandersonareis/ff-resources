@@ -1,0 +1,40 @@
+package interactions
+
+import (
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/families/ffx/profile/interfaces"
+)
+
+type (
+	TranslateLocation struct {
+		*interactionBase
+	}
+	ITranslateLocation interface {
+		interfaces.IInteractionBase
+	}
+)
+
+func newTranslateLocation(path string, config ISetAppConfig) ITranslateLocation {
+	translateLocation := &TranslateLocation{
+		interactionBase: &interactionBase{
+			targetDir: path,
+			config:    config,
+			configKey: "TranslateLocation",
+		},
+	}
+	translateLocation.SetTargetDirectory(path)
+	return translateLocation
+}
+
+// SetTargetDirectory persiste imediatamente no config.json (via base)
+// e garante a existência do diretório traduzido (<game>/mods/translated
+// por padrão). É a fonte da tradução usada no reimport (Compress).
+func (t *TranslateLocation) SetTargetDirectory(path string) error {
+	if err := t.interactionBase.SetTargetDirectory(path); err != nil {
+		return err
+	}
+	if target := t.interactionBase.GetTargetDirectory(); target != "" {
+		_ = common.EnsurePathExists(target)
+	}
+	return nil
+}

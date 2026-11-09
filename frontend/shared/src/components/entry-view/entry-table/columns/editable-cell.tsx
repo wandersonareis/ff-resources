@@ -1,0 +1,71 @@
+import { RotateCcw, Trash2 } from 'lucide-react';
+import { GameTextView } from '../../../game-text-view';
+import type { GameTextMark } from '../../../../editor/game-text-parser';
+
+/**
+ * Célula traduzida comum: texto editável (clique abre o editor) e os botões
+ * de reverter para o original (linha divergida) e de EXCLUIR (linha órfã,
+ * sem par no original — abre o aviso destrutivo).
+ */
+export function EditableCell({
+  displayed,
+  edited,
+  canRevert,
+  marks,
+  onOpen,
+  onRevert,
+  onDelete,
+}: {
+  displayed: string;
+  edited: boolean;
+  canRevert: boolean;
+  /** Destaques da busca local (intervalos em <mark> no texto exibido). */
+  marks?: readonly GameTextMark[];
+  onOpen: (() => void) | undefined;
+  onRevert: () => void;
+  /** Linha órfã: exclusão manual (aviso destrutivo). */
+  onDelete?: () => void;
+}) {
+  return (
+    <div className="group flex items-center gap-1">
+      {/* A célula é clicável, mas a abertura pelo teclado é da linha da tabela
+          (Enter com a <tr> focada); por isso não é um controle focável aqui. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: abertura pelo teclado tratada na linha (Enter/F2). */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: abertura pelo teclado tratada na linha (Enter/F2). */}
+      <div
+        className={`text-cell translated-cell min-w-0 px-2 flex-1${edited || canRevert ? ' edited' : ''}`}
+        onClick={onOpen}
+      >
+        <GameTextView text={displayed} marks={marks} newlineChip />
+      </div>
+      {onDelete ? (
+        <button
+          type="button"
+          aria-label="Excluir linha órfã"
+          title="Excluir linha órfã (não existe no original) — aviso destrutivo"
+          className="shrink-0 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-destructive/10 hover:text-destructive hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 size={15} aria-hidden />
+        </button>
+      ) : null}
+      {canRevert ? (
+        <button
+          type="button"
+          aria-label="Reverter esta linha para o original"
+          title="Reverter esta linha para o original (se for cópia, volta a convergir com a definição)"
+          className="shrink-0 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRevert();
+          }}
+        >
+          <RotateCcw size={15} aria-hidden />
+        </button>
+      ) : null}
+    </div>
+  );
+}

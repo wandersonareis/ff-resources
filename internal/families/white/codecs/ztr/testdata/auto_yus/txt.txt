@@ -1,0 +1,1469 @@
+$ksm_00b003800 |:| Everyone, get back!
+$ksm_00b003801 |:| The Chaos is here.
+$ksm_00b003802 |:| Keep a lookout for monsters!
+$ksm_00b003803 |:| It's not safe everywhere. Be careful.
+$ksm_00b003804 |:| We need backup!
+$ksm_00b003805 |:| No one's seen the Patron in a while.
+$ksm_00b033300 |:| We're on high alert. You can look around if you're careful.
+$ksm_00b033301 |:| We're making preparations to rebuild the set. We don't want the gods getting mad at us!
+$ksm_00b033302 |:| We're busy here! Stay out of our way.
+$ksm_00b033303 |:| The Chaos is everywhere! Be careful.
+$ksm_00b033304 |:| The Patron seems like his old self again. I'm glad.
+$ksm_00b033305 |:| I hear the savior knocked over the statue.  ...Has anyone ever told you you look like her?
+$ksm_00b033306 |:| This theater is the hope of Yusnaan. We'll get it restored.
+$ksm_00b033307 |:| Inquisitors from Luxerion are coming here to investigate. What a pain.
+$ksm_00b033308 |:| They've dropped the charges against the savior. She's to be left alone.
+$ksm_00b033309 |:| The savior might be the angel of death, but she's our only hope.
+$ksm_00b033310 |:| I hope my hard work in this world carries over when I'm reborn in the new world.
+$ksm_00b033311 |:| I've lived for so long, and yet, I still fear death.
+$ksm_00b033312 |:| If you happen to be the savior, will you do me the honor of saving my soul?
+$yub_00b009900 |:| Morning!
+$yub_00b009901 |:| Morning!
+$yub_00b009902 |:| Morning!
+$yub_00b009903 |:| Good morning!
+$yub_00b109900 |:| Hi there!
+$yub_00b109901 |:| Hi!
+$yub_00b109902 |:| I'm hungry!
+$yub_00b109903 |:| Hey!
+$yub_00b109904 |:| Yo!
+$yub_00b209900 |:| Hi there!
+$yub_00b209901 |:| It's time for the feast!
+$yub_00b209902 |:| This will be fun!
+$yub_00b209903 |:| Everything's so sparkly!
+$yub_00b209904 |:| There's so much to see!
+$yub_00b309900 |:| Isn't it time yet?
+$yub_00b309901 |:| 
+$yub_00b309902 |:| Choco-boco-lina!
+$yub_00b309903 |:| Bye!
+$yub_00b309904 |:| Everyone's having fun!
+$yub_00b700000 |:| 
+$yub_00b700001 |:| 
+$yub_00b700002 |:| 
+$yub_00b700003 |:| 
+$yub_00b700004 |:| 
+$yub_00b909900 |:| 
+$yub_00b909901 |:| Where ya going?
+$yub_00b909902 |:| Having fun?
+$yub_00b909903 |:| Where next?
+$yub_00b909904 |:| I overslept!
+$yub_00b909905 |:| I'm thirsty!
+$yub_00b909906 |:| How are you?
+$yub_00b909907 |:| 
+$yub_00b909908 |:| Over here!
+$yub_00b909909 |:| 
+$yub_00b909910 |:| 
+$yub_00b909911 |:| 
+$yub_00b909912 |:| Where was it again?
+$yub_00b909913 |:| That one?
+$yub_00b909914 |:| 
+$yub_00b909915 |:| 
+$yub_00b909916 |:| I want it!
+$yub_99_103700 |:| 
+$yub_99_103701 |:| 
+$yub_99_103702 |:| This is cool!
+$yub_99_103703 |:| 
+$yub_99_103704 |:| 
+$yub_99_103800 |:| It's the chocobo lady!
+$yub_99_103801 |:| Choco-boco!
+$yub_99_103802 |:| Meow-meow, choco-chow!
+$yub_99_103803 |:| 
+$yub_99_103804 |:| 
+$yub_99_104100 |:| 
+$yub_99_104101 |:| 
+$yub_99_104102 |:| 
+$yub_99_104103 |:| 
+$yub_99_104104 |:| 
+$yub_99_104200 |:| 
+$yub_99_104201 |:| 
+$yub_99_104202 |:| 
+$yub_99_104203 |:| 
+$yub_99_104204 |:| 
+$yuf_00b002000 |:| Yusnaan is like a bright star in the night sky. I can't wait till nightfall!
+$yuf_00b002001 |:| If you want some peace and quiet, it's best to venture out in the morning.
+$yuf_00b002002 |:| There's lot to see in Yusnaan, especially at night.
+$yuf_00b002003 |:| Is this your first time here? I can show you around!
+$yuf_00b002004 |:| The Glutton's Quarter is filled with delicious food! The smell is intoxicating.
+$yuf_00b002005 |:| The Reveler's Quarter is the city's center. The iconic fountain is mesmerizing!
+$yuf_00b002006 |:| If you're looking to get your blood pumping, head to the Champion's Quarter. There's a battle arena where man and monster duke it out!
+$yuf_00b002007 |:| You can buy some great Yusnaan souvenirs!
+$yuf_00b002008 |:| Keep an eye on your belongings... The thieves know a tourist when they see one!
+$yuf_00b002009 |:| Lord Snow once kept the peace in this town. Now it's like he doesn't care.
+$yuf_00b002010 |:| The Patron's been neglecting the town's order lately.
+$yuf_00b002011 |:| In Yusnaan, having fun is a part of life.
+$yuf_00b002012 |:| I love chocobos so much that I've been thinking of moving to the Wildlands.
+$yuf_00b002013 |:| I'm finally here! Where to start?
+$yuf_00b002014 |:| Am I too early for the fal'Cie tour in the industrial area?
+$yuf_00b002015 |:| There are so many shops, I don't know where to start!
+$yuf_00b002016 |:| The mornings are pretty dull, but at night, it's a whole different story!
+$yuf_00b002017 |:| Luxerion's a big city too, but it feels so different here!
+$yuf_00b002018 |:| When the sun sets, you'll find yourself surrounded by feasts and parties!
+$yuf_00b002019 |:| All the laborers work in a place called the industrial area.
+$yuf_00b002020 |:| Yusnaan's the only place with a fal'Cie.
+$yuf_00b002021 |:| The view at night is amazing. What to do till then?
+$yuf_00b002022 |:| I love the street performers in this city!
+$yuf_00b002200 |:| What a wonderful morning.
+$yuf_00b002201 |:| I'm here to check out places to eat.
+$yuf_00b002203 |:| I wonder if any places are using fresh Wildlands vegetables.
+$yuf_00b002204 |:| The food produced by the fal'Cie is a bit...confusing for my taste.
+$yuf_00b002205 |:| I'm bored of eating the same dishes over and over. I want something different.
+$yuf_00b002206 |:| Not many places are open in the morning, but come noon, they all open their doors at once!
+$yuf_00b002207 |:| This is my favorite area in the Upper City!
+$yuf_00b002208 |:| The sunrise used to make me feel alive, but now, I don't feel anything anymore.
+$yuf_00b002209 |:| Everyone thinks the world is going to end. People need to ignore stupid rumors and enjoy great food!
+$yuf_00b002210 |:| I wonder if there's a way to stop the world's destruction. That's all I think about.
+$yuf_00b002211 |:| I eat something different for breakfast every morning in order to avoid monotony.
+$yuf_00b002212 |:| When I'm here, I forget all about my faith in God and listen to my stomach instead.
+$yuf_00b002300 |:| The owner of the coliseum, Zoe, used to be an actress.
+$yuf_00b002301 |:| I love the smell of bloodshed.
+$yuf_00b002302 |:| The coliseum opens its doors at night.
+$yuf_00b002303 |:| The flames get me all riled up!
+$yuf_00b002304 |:| You look like you have some fight in you. Did you sign up?
+$yuf_00b002305 |:| I hope I get a glimpse of the contestants!
+$yuf_00b002306 |:| You can even get Yusnaan fireworks as a prize!
+$yuf_00b002307 |:| It gets really wild here at night.
+$yuf_00b002308 |:| Time to train for tonight!
+$yuf_00b002309 |:| Guess I'm a little early.
+$yuf_00b003100 |:| Only the rich can afford to attend the play in the Augur's Quarter. We're allowed to peek through the gate, though!
+$yuf_00b003101 |:| I hate mornings. It's when I have to deal with reality.
+$yuf_00b003102 |:| The sun is too bright!
+$yuf_00b003103 |:| I don't feel like doing anything during the day. At night, it's a different story.
+$yuf_00b003104 |:| You can see every dirty nook and cranny during the day. Time to go home.
+$yuf_00b003105 |:| Another night well spent. Home awaits!
+$yuf_00b003106 |:| I can't wait for tonight!
+$yuf_00b003107 |:| The city looks different during the day. What happened to the night's magic?
+$yuf_00b003108 |:| I get so lonely when the night ends. If only I had someone...
+$yuf_00b003109 |:| Once the sun sets, we can see what Yusnaan really has to offer!
+$yuf_00b003110 |:| The sun's come up so it's bedtime for me.
+$yuf_00b003111 |:| The city's desolate in the mornings, nothing like at night.
+$yuf_00b003112 |:| Why is life so unfair!?
+$yuf_00b003113 |:| The sun burns my eyes! Go away! We don't need you!
+$yuf_00b003114 |:| If it were dark all the time, we could avoid seeing things we don't want to see.
+$yuf_00b003115 |:| Phew, I'm beat. That was some date!
+$yuf_00b003118 |:| I really want to see the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC}!
+$yuf_00b003119 |:| I see there's nothing going on here during the day.
+$yuf_00b003120 |:| What a boring place... Or maybe I'm the one who's boring!
+$yuf_00b003121 |:| What is there to do around here?
+$yuf_00b003122 |:| I wish I could've been at the ball in a fancy dress.
+$yuf_00b003123 |:| I wonder if the chocobo girls are around in the mornings.
+$yuf_00b003124 |:| The glittering city really loses its shine during the day.
+$yuf_00b003125 |:| Why did I jump in the fountain?
+$yuf_00b003126 |:| I'll bet the security guards are hiding cute faces underneath those masks!
+$yuf_00b003127 |:| I think I'll hang around the Cactuar statue today.
+$yuf_00b003128 |:| I can't wait for night to come. I want to go dancing!
+$yuf_00b003129 |:| In the harsh light of day, this place loses all its romance.
+$yuf_00b003130 |:| There's nothing sexy or romantic about the mornings here.
+$yuf_00b003131 |:| I've always wanted to visit the Reveler's Quarter!
+$yuf_00b003132 |:| I'm here to play pranks on all the romantic couples on their dates!
+$yuf_00b003300 |:| Why, good morning.
+$yuf_00b003301 |:| Has my dress arrived yet?
+$yuf_00b003302 |:| I must prepare for the grand dinner.
+$yuf_00b003303 |:| I should sit outside and read.
+$yuf_00b003304 |:| I have so many parties to attend.
+$yuf_00b003305 |:| How are you this fine day?
+$yuf_00b003306 |:| Hello.
+$yuf_00b003307 |:| Oh? A visitor?
+$yuf_00b003308 |:| Everyone knows everyone's business around here. Keep that in mind.
+$yuf_00b003309 |:| The gate was built a few years ago. Before that, everyone was free to come and go.
+$yuf_00b003310 |:| The residents of the area were handpicked to live here by God's own servant, Snow, the l'Cie.
+$yuf_00b003311 |:| Lord Snow watches over us all the time.
+$yuf_00b003312 |:| There's a certain standard that must be maintained in this area.
+$yuf_00b003313 |:| If you're going to spend time here, you must act accordingly.
+$yuf_00b003314 |:| I want to be an actress. I got an ID card so I can watch the play and take notes.
+$yuf_00b003800 |:| I want to leave!
+$yuf_00b003801 |:| This is bad!
+$yuf_00b003802 |:| I'm scared...
+$yuf_00b003803 |:| Who is that?
+$yuf_00b003804 |:| I can't handle this!
+$yuf_00b003805 |:| With Chaos taking over the city, how can we not live in fear?
+$yuf_00b004000 |:| The thrill of this tour is right up my alley!
+$yuf_00b004001 |:| They weren't kidding when they said not everyone could handle the challenge.
+$yuf_00b004002 |:| When you've lived for so long, life has little meaning, and people do stupid things. Like this.
+$yuf_00b004003 |:| This tour is a little more extreme than I expected.
+$yuf_00b004004 |:| The play better be good, after all this!
+$yuf_00b004005 |:| I'm so tired! I just want to take a nice, warm shower.
+$yuf_00b004006 |:| My throat hurts from screaming! I need a drink.
+$yuf_00b004007 |:| I've never been so scared in my life! That monster got really close!
+$yuf_00b004008 |:| Running around in fear tonight will be my best memory of this place!
+$yuf_00b004009 |:| Are you the one who defeated the monster? I'm glad you came with us!
+$yuf_00b004010 |:| We're safe thanks to that strong woman! She must have wanted to see the play pretty badly.
+$yuf_00b004011 |:| No one ever notices me. Not even monsters.
+$yuf_00b004012 |:| Now to enjoy the show. I'll remember this for the rest of my life!
+$yuf_00b004013 |:| The view of the Upper City is nothing short of breathtaking!
+$yuf_00b004014 |:| I can't believe I made it back from that tour alive...
+$yuf_00b004015 |:| My clothes are stained with sweat. Sneaking in is nerve-racking!
+$yuf_00b004100 |:| I just need to step through the gate.
+$yuf_00b004101 |:| So everything comes with a price...
+$yuf_00b004102 |:| Are there monsters along this special route?
+$yuf_00b004103 |:| I've come this far. I can't back down!
+$yuf_00b004104 |:| This is where you sign up for the tour.
+$yuf_00b004105 |:| Are you the guide? Then kill the monsters already!
+$yuf_00b004106 |:| So, we've been duped?
+$yuf_00b004107 |:| If you run around, you'll be fine!
+$yuf_00b004108 |:| I just need to hire myself a bodyguard.
+$yuf_00b004109 |:| Let's bring the arena combatants here!
+$yuf_00b004110 |:| I used to be a runner. I'll be fine!
+$yuf_00b004111 |:| It might be worth buying some items first.
+$yuf_00b004112 |:| I don't know if I can do this...
+$yuf_00b004113 |:| Sneaking in is really part of the tour!
+$yuf_00b004114 |:| How can I find my way back without any sun?
+$yuf_00b102000 |:| I should finish my deliveries before tonight's festivities!
+$yuf_00b102001 |:| Maybe it's time I signed up for the arena tournament.
+$yuf_00b102002 |:| The savior showed up and ruined the ball for everyone! People say she's the devil{—}or an angel of death!
+$yuf_00b102003 |:| This pamphlet has all the tourist attractions Yusnaan has to offer!
+$yuf_00b102004 |:| Staying at a five-star hotel is the best part of traveling!
+$yuf_00b102005 |:| The Cactuar statue makes for a great spot to meet.
+$yuf_00b102006 |:| It's all thanks to Lord Snow that we can live so luxuriously in this city!
+$yuf_00b102007 |:| It's quiet in the afternoons, but at night, it's a different story!
+$yuf_00b102008 |:| I wouldn't visit the Lower City if I were you. Unless you're one of those hapless fools who has to work for a living.
+$yuf_00b102009 |:| I wonder if they can make me a chocobo girl, too!
+$yuf_00b102010 |:| I live in fear of the coming end, so I have to have fun to escape from the horrid reality!
+$yuf_00b102011 |:| If you want peace and quiet, Yusnaan isn't for you.
+$yuf_00b102012 |:| I hope no one notices that I played hooky today...
+$yuf_00b102013 |:| The fal'Cie's blessing is proof that the gods still watch over us.
+$yuf_00b102014 |:| When the end comes, we're all going out painlessly, right?
+$yuf_00b102015 |:| The fervor of Yusnaan is part of what makes the Chaos grow stronger.
+$yuf_00b102016 |:| There used to be a lot more of the Lower City before the Chaos got to it.
+$yuf_00b102017 |:| The fireworks in the night sky make the city seem magical!
+$yuf_00b102018 |:| I heard this is where you can retrieve your lost hopes and dreams.
+$yuf_00b102019 |:| You need an ID card to get into the Augur's Quarter.
+$yuf_00b102200 |:| What? Sold out? No!
+$yuf_00b102201 |:| I'm a fan of their secret menu.
+$yuf_00b102202 |:| I knew they'd go out of business.
+$yuf_00b102203 |:| If a restaurant is crowded, it must be good.
+$yuf_00b102204 |:| My neighbor was raving about this!
+$yuf_00b102205 |:| Fried Munchkin! My favorite!
+$yuf_00b102206 |:| I can cook{—}I prefer not to.
+$yuf_00b102207 |:| Eating out is cheap and easy!
+$yuf_00b102208 |:| I can smell this from home!
+$yuf_00b102209 |:| I like that shop on the corner.
+$yuf_00b102210 |:| Their prices have gotten so much better.
+$yuf_00b102211 |:| I think I went overboard...
+$yuf_00b102212 |:| The Bahamut sauce was incredible!
+$yuf_00b102213 |:| I'm gonna try each and every thing here.
+$yuf_00b102214 |:| I've never seen that before. What is it, some kind of jerky? Might as well try it!
+$yuf_00b102215 |:| I love my go-to restaurants, but I also love street vendors!
+$yuf_00b102216 |:| The dishes here keep evolving to keep customers happy.
+$yuf_00b102217 |:| Oh, no! This place looks much better than the place I just ate at!
+$yuf_00b102218 |:| That restaurant is in my travel guide!
+$yuf_00b102219 |:| Do I really have to wait?
+$yuf_00b102220 |:| I want it straight from the oven!
+$yuf_00b102221 |:| What is that heavenly sweet smell?
+$yuf_00b102222 |:| I'm not going to eat anything now so I have room for all the delicious dishes I plan to eat tonight!
+$yuf_00b102223 |:| I think I'll go to my usual place.
+$yuf_00b102224 |:| What are these shiny black insects?
+$yuf_00b102225 |:| I love, love, love Miniflan rolls!
+$yuf_00b102226 |:| Maybe I should try some Flan today.
+$yuf_00b102227 |:| That waiter sure is easy on the eyes!
+$yuf_00b102228 |:| First food, then sightseeing!
+$yuf_00b102229 |:| Mmm, that smells delicious!
+$yuf_00b102300 |:| Everyone looks so strong! Only in the Champion's Quarter can you find folks like these.
+$yuf_00b102301 |:| I'm contemplating signing up for the tournament.
+$yuf_00b102302 |:| I can't wait for the games to begin!
+$yuf_00b102303 |:| Winning the tournament might earn you a position as a bodyguard for the wealthy.
+$yuf_00b102304 |:| Everyone's so big and brawny, I love it!
+$yuf_00b102305 |:| Look at their impressive physique!
+$yuf_00b102306 |:| Tonight's combatants are reputed to be the strongest around!
+$yuf_00b102307 |:| I'm here to find myself a bodyguard amongst the contestants.
+$yuf_00b102308 |:| What if the savior was competing? I'd bet she'd win the tournament!
+$yuf_00b102309 |:| When the Patron competed, he showed the strength of a l'Cie. He was unstoppable.
+$yuf_00b102310 |:| This arena is about men being men. Just what I want to see!
+$yuf_00b102311 |:| You can even get Yusnaan's famed fireworks as a prize!
+$yuf_00b102312 |:| This is so exciting I might faint!
+$yuf_00b102313 |:| I'll bet tonight's lineup won't disappoint!
+$yuf_00b102314 |:| Once the sun sets, Yusnaan is open for business!
+$yuf_00b102315 |:| That warrior's just my type! I hope he wins!
+$yuf_00b102316 |:| People who've long retired from fighting in the arena come for a match sometimes.
+$yuf_00b102317 |:| What's the point in watching people being savages? I don't get it.
+$yuf_00b102318 |:| I've been watching these fights for the past several decades now!
+$yuf_00b102b16 |:| Otherwise, everyone would get bored of the taste!
+$yuf_00b103101 |:| The dull mornings are what makes the nights seem that much more fun!
+$yuf_00b103102 |:| We've all been alive for ages! Of course we're gonna enjoy every second of it!
+$yuf_00b103103 |:| Everyone's a bit tired of it all, but we've been alive for so long, it can't be helped.
+$yuf_00b103104 |:| The actress playing the part of the savior is truly amazing!
+$yuf_00b103105 |:| I'd love to see the play up close at least once!
+$yuf_00b103106 |:| We've all chosen to live in this groggy state of life. The ones who couldn't deal with it, are long gone.
+$yuf_00b103107 |:| Until I came here, I was living in fear of the world's end.
+$yuf_00b103108 |:| I've lived for so long, it doesn't matter if or when death comes for me.
+$yuf_00b103109 |:| The one thing we all have in common is that we've been alive for over five centuries.
+$yuf_00b103110 |:| I wonder how many times I'll find love before it all ends.
+$yuf_00b103111 |:| I still live in fear of the end. I think I've just gotten used to it.
+$yuf_00b103112 |:| I've heard about this stunning dress you can get your hands on, but I've checked all the stores with no luck.
+$yuf_00b103113 |:| I'd love for a chance to meet the Patron.
+$yuf_00b103114 |:| Life has been nothing but fun since moving here!
+$yuf_00b103117 |:| You need an ID card to get into the Augur's Quarter!?
+$yuf_00b103118 |:| Does anyone have an extra ID card I can use?
+$yuf_00b103119 |:| The fun-loving folks don't come out till later.
+$yuf_00b103120 |:| The ball has been canceled because the Patron was almost assassinated!
+$yuf_00b103121 |:| Can someone lend me some money? I'll pay you back with interest!
+$yuf_00b103122 |:| I hear stories of the world's end. It's finally happening, isn't it?
+$yuf_00b103123 |:| I spend the day dreaming about the fun I'll have at night.
+$yuf_00b103124 |:| There's magic in the night air. It affects everyone, even you.
+$yuf_00b103125 |:| It feels like the residents here are the most afraid of the end.
+$yuf_00b103126 |:| The festivities are like a dream. You wake up, and it's like it never happened.
+$yuf_00b103127 |:| With Chaos taking over the city, how can we not live in fear?
+$yuf_00b103128 |:| There's a lot of freedom here. Have fun, be bored{—}it's your choice.
+$yuf_00b103300 |:| Which brand of tea should I drink today?
+$yuf_00b103301 |:| Hello there.
+$yuf_00b103302 |:| What a lovely afternoon.
+$yuf_00b103303 |:| The tailor just purchased some wonderful fabric!
+$yuf_00b103304 |:| I don't look at the price tag. I buy whatever I like.
+$yuf_00b103305 |:| How are you doing today?
+$yuf_00b103306 |:| I hear people pay lots of money to get their hands on an ID card. I would never sell mine, of course.
+$yuf_00b103307 |:| Someone was murdered for their ID card a while ago.
+$yuf_00b103308 |:| I hear Lord Snow ordered more security for this area.
+$yuf_00b103309 |:| This area is Lord Snow's own backyard.
+$yuf_00b103310 |:| The goods produced by the fal'Cie get distributed here first.
+$yuf_00b103311 |:| The Patron must not want people milling about the palace.
+$yuf_00b103312 |:| The person who gave me his ID card gathered up all his belongings and moved to Luxerion.
+$yuf_00b103313 |:| I spent lots of time and money on today's outfit. Isn't it the most exquisite thing you've ever seen?
+$yuf_00b103314 |:| I always watch the play while envisioning myself on stage. Who knows? Maybe someday I'll get up there.
+$yuf_00b103315 |:| People have become more pompous since they built the Augur's Quarter gate.
+$yuf_00b103700 |:| I love the food and the view!
+$yuf_00b103701 |:| The view is what makes the food taste better!
+$yuf_00b103702 |:| This is the life...
+$yuf_00b103703 |:| It's better than people say!
+$yuf_00b103704 |:| It lives up to its reputation.
+$yuf_00b103705 |:| I'm stuffed from the Snow Special.
+$yuf_00b103706 |:| You can get seconds if you order the NORA Special.
+$yuf_00b103707 |:| So this is what a hero eats.
+$yuf_00b103708 |:| I can't stop eating!
+$yuf_00b103709 |:| It's not about the food for me, but the view of the palace.
+$yuf_00b103710 |:| I love the friendly waitstaff!
+$yuf_00b103711 |:| The more I eat, the better I feel!
+$yuf_00b202000 |:| There's nothing exciting by the station. The fun happens further inside the city!
+$yuf_00b202001 |:| The event in the Reveler's Quarter is about to begin!
+$yuf_00b202002 |:| If you want a good seat in the arena, you'd better line up!
+$yuf_00b202003 |:| I worked so hard today! I need to blow off some steam!
+$yuf_00b202004 |:| Where's the best spot to watch the fireworks?
+$yuf_00b202005 |:| There are a lot of ways to have fun in this town.
+$yuf_00b202006 |:| The nights in Yusnaan are filled with festivities. There's something happening on every corner!
+$yuf_00b202007 |:| I want to watch the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC}! I hear the finale is to die for!
+$yuf_00b202008 |:| I want to get into the Augur's Quarter... If only I had an ID card.
+$yuf_00b202009 |:| If you're looking for tasty beverages, the Banquet of the Lord is your best bet!
+$yuf_00b202010 |:| This is my first time out here! Ooh, I'm a little nervous...
+$yuf_00b202011 |:| Everyone has that one who got away, the one they can't forget.
+$yuf_00b202012 |:| If the Chaos is taking over the world, I'm going to keep running until it catches me.
+$yuf_00b202013 |:| I've eaten at all the restaurants they have here.
+$yuf_00b202014 |:| I came here to spend my savings! Where should I go first?
+$yuf_00b202015 |:| When I need a break, I come out here and watch the people go by.
+$yuf_00b202016 |:| You know what keeps me up at night? Thinking of what Chaos is made of.
+$yuf_00b202017 |:| I believe the world will still be here when I wake up tomorrow. Good night!
+$yuf_00b202018 |:| If you get tired, I recommend booking a room in one of Yusnaan's grand hotels.
+$yuf_00b202019 |:| Everyone has a favorite place! You need to find yours, too.
+$yuf_00b202200 |:| Limited offers are my vice!
+$yuf_00b202201 |:| Are those vegetables from the Wildlands?
+$yuf_00b202202 |:| Fresh milk is delightful!
+$yuf_00b202203 |:| Is it payday soon? I'm out of money...
+$yuf_00b202204 |:| I'm stuffed! But I still have room for dessert, of course.
+$yuf_00b202205 |:| Can I try a sample?
+$yuf_00b202206 |:| I don't wanna ruin my outfit.
+$yuf_00b202207 |:| I want to eat at a clean place!
+$yuf_00b202208 |:| Fast food is okay sometimes.
+$yuf_00b202209 |:| Who littered here?
+$yuf_00b202210 |:| It was so hot, I dropped it!
+$yuf_00b202211 |:| I stepped in some food.
+$yuf_00b202212 |:| I hope I can get a patio seat at the Banquet of the Lord!
+$yuf_00b202213 |:| I need some fresh Wildlands vegetable juice!
+$yuf_00b202214 |:| I always end up eating too much.
+$yuf_00b202215 |:| The fal'Cie provides the basics, but if we want to enjoy {TEXT_ITALIC}real{TEXT_ITALIC} food, we have to provide it ourselves. Is that part of God's plan?
+$yuf_00b202216 |:| I love the sahagin jerky imported from the Dead Dunes! If I lived there, I'd eat it all the time!
+$yuf_00b202217 |:| I'm already thinking about what I wanna eat tomorrow.
+$yuf_00b202218 |:| I have plenty of money, but I can only eat so much. I wish I could enjoy ten meals a day!
+$yuf_00b202219 |:| We've stopped evolving, but the food hasn't!
+$yuf_00b202220 |:| The best places to eat open at night, but I'm still stuffed from before...
+$yuf_00b202221 |:| So many delicious smells!
+$yuf_00b202222 |:| I ate way too much.
+$yuf_00b202223 |:| I'll keep eating till the sun comes up!
+$yuf_00b202224 |:| I'll be here tomorrow. If the world really is ending, this is where I want to be.
+$yuf_00b202225 |:| Some people have no manners!
+$yuf_00b202226 |:| I like to splurge on my daily meals.
+$yuf_00b202227 |:| I always buy a salad here to take home.
+$yuf_00b202228 |:| Ah, nothing like a good meal{—}hope I can eat my fill tomorrow!
+$yuf_00b202229 |:| I've been dying to eat at the Banquet of the Lord!
+$yuf_00b202230 |:| I hope I meet my soul mate{—}but not before I eat!
+$yuf_00b202231 |:| There's nothing better than walking around sampling dishes from all over!
+$yuf_00b202232 |:| Any all-you-can-eat buffets around?
+$yuf_00b202233 |:| I'm going to eat everything that was recommended!
+$yuf_00b202234 |:| I always gain weight when I come here.
+$yuf_00b202235 |:| I'm sick of falling in love, but I'll never get sick of eating delicious food!
+$yuf_00b202236 |:| Does anyone know where I can buy some antacids...?
+$yuf_00b202300 |:| I'd love to meet the combatants.
+$yuf_00b202301 |:| I love strong men!
+$yuf_00b202302 |:| I hope the fights are bloody today, too!
+$yuf_00b202303 |:| I can hardly wait!
+$yuf_00b202304 |:| Who's going to be fighting tonight?
+$yuf_00b202305 |:| If you sign up, you'd better fight for your life!
+$yuf_00b202306 |:| That's right{—}I want to be entertained till the end!
+$yuf_00b202307 |:| You want to have the right equipment and items for each battle.
+$yuf_00b202308 |:| Any deaths tonight?
+$yuf_00b202309 |:| No one wants a dull match.
+$yuf_00b202310 |:| Look at today's monsters!
+$yuf_00b202311 |:| Destroy the coliseum if you have to!
+$yuf_00b202312 |:| Destroy the rich while you're at it!
+$yuf_00b202313 |:| I'm cheering for you, monsters!
+$yuf_00b202314 |:| Phew! This is a good workout!
+$yuf_00b202315 |:| My throat is sore from all the cheering! Buy me a drink, will you?
+$yuf_00b202316 |:| Out of my way! I'm here all the time!
+$yuf_00b202317 |:| I think he just looked at me!
+$yuf_00b202318 |:| Hmm. Not bad.
+$yuf_00b202319 |:| The monsters look dangerous!
+$yuf_00b202320 |:| Come on, give it your all!
+$yuf_00b202321 |:| That's it! Knock him out!
+$yuf_00b202322 |:| That man's bicep is as thick as my waist!
+$yuf_00b202323 |:| That's right! There! You've got him now! Sorry, I tend to get carried away...
+$yuf_00b202324 |:| The atmosphere is a little too scary for my taste.
+$yuf_00b202325 |:| I didn't know people cheered for monsters too.
+$yuf_00b202326 |:| I heard this was a must-see, but it's not my cup of tea.
+$yuf_00b202327 |:| There's so much testosterone here. I don't think this is for me.
+$yuf_00b202328 |:| This is so riveting!
+$yuf_00b202329 |:| Never-ending battles, fear in the combatants' eyes, ferocious bloodthirsty beasts...
+$yuf_00b202330 |:| I've never cheered at one of these before.
+$yuf_00b202331 |:| I'm looking forward to a bloodbath!
+$yuf_00b202332 |:| I'm starting to see what all the fuss is about!
+$yuf_00b202333 |:| I'm going to use these moves on my husband.
+$yuf_00b202334 |:| I should train too!
+$yuf_00b202335 |:| What a muscular frame.
+$yuf_00b202336 |:| Did you see that last fight?
+$yuf_00b202337 |:| I want the fireworks on the prize list!
+$yuf_00b202338 |:| This is awesome! I'm glad I came.
+$yuf_00b202339 |:| No! Come on!
+$yuf_00b202340 |:| You can do it!
+$yuf_00b202341 |:| Now's your chance!
+$yuf_00b202b11 |:| A lot can happen in 500 years...
+$yuf_00b202b13 |:| Eating the same dishes prepared by the same chefs can get old.
+$yuf_00b203100 |:| The industrial area gate opens at 6 PM, but you can't get in for free.
+$yuf_00b203101 |:| You can see the play from the freight train tracks. It's not a great view, but it'll do.
+$yuf_00b203102 |:| I'd better hurry home and get dolled up to go out!
+$yuf_00b203103 |:| The festivities are about to begin! Where should I go today?
+$yuf_00b203104 |:| When the sun sets, all I can think of is spending time with someone I love. Now if I could only find that someone...
+$yuf_00b203105 |:| I wonder if the Patron doesn't want crowds near the palace.
+$yuf_00b203106 |:| People who gamble aren't just gambling their money, but their future!
+$yuf_00b203107 |:| Why are there so many couples around me who are in love?
+$yuf_00b203108 |:| I think about things, sometimes.
+$yuf_00b203109 |:| When night falls, they set off fireworks that light up the sky!
+$yuf_00b203114 |:| Where {TEXT_ITALIC}is{TEXT_ITALIC} the industrial area in Yusnaan anyway? And isn't it closed off?
+$yuf_00b203115 |:| The last remaining fal'Cie produces food for the people of this world.
+$yuf_00b203116 |:| I've lived for so long, I feel like an old woman{—}though I don't look it.
+$yuf_00b203117 |:| Life in this city is all about excitement. It never stops!
+$yuf_00b203118 |:| It's not important where you see the fireworks from. It's who you see them with!
+$yuf_00b203119 |:| Let's get some shopping out of the way before people crowd the streets.
+$yuf_00b203120 |:| Looks like people are getting ready for tonight!
+$yuf_00b203121 |:| I'm done with work! Now it's time to have fun!
+$yuf_00b203122 |:| Once I powder my nose, I'll be ready to hit the town!
+$yuf_00b203123 |:| This area is so pretty! I love the feel!
+$yuf_00b203124 |:| Why are there so many couples around here!? Ugh, I hate PDA...
+$yuf_00b203125 |:| The lights are beautiful! This almost doesn't feel real!
+$yuf_00b203126 |:| I hope I'm reborn as a fancy city girl like all the other girls here.
+$yuf_00b203300 |:| If you're gonna attend the festivities here, you have to dress the part.
+$yuf_00b203301 |:| We're all waiting patiently for tonight's play to begin.
+$yuf_00b203302 |:| I've been a widow for three hundred years. I think I've mourned long enough.
+$yuf_00b203303 |:| The statue by the stage is of our god, Bhunivelze.
+$yuf_00b203304 |:| The statue near the stage represents the three gods:
+$yuf_00b203305 |:| They're starting to prepare for tonight's show. Even the staff has ID cards.
+$yuf_00b203306 |:| Oh? You must be an actress. You're quite exquisite.
+$yuf_00b203307 |:| I wonder what tonight's special feature will be. The director adds a surprise to every show.
+$yuf_00b203308 |:| I won't be able to dance at the ball. Maybe I can join the chocobos in their show!
+$yuf_00b203309 |:| Let's have a drink before heading out into town. I find it makes the experience more enjoyable.
+$yuf_00b203310 |:| The moment it all ends, this is what will flash before my eyes.
+$yuf_00b203311 |:| Would you care to tell me where you purchased that outfit?
+$yuf_00b203312 |:| The same actors have been playing the same parts for years because they don't age! How can I get noticed?
+$yuf_00b203b04 |:| Bhunivelze, Lindzei, and Pulse.
+$yuf_00b203b08 |:| Am I the only one without a partner to spend romantic evenings with?
+$yuf_00b302300 |:| Wow, what a night!
+$yuf_00b302301 |:| It's great for stress relief!
+$yuf_00b302302 |:| I'm really tired...
+$yuf_00b302303 |:| Time to go home and try some of those moves on my husband.
+$yuf_00b302304 |:| I hope I don't run into any Chaos.
+$yuf_00b302305 |:| The contestant I was cheering for lost... But at least he wasn't badly injured!
+$yuf_00b302306 |:| Tonight's lineup didn't disappoint! The rich sure hired a lot of bodyguards.
+$yuf_00b302307 |:| Exactly what I needed!
+$yuf_00b302308 |:| The battles were so thrilling!
+$yuf_00b302309 |:| {TEXT_ITALIC}That's{TEXT_ITALIC} what a real fight looks like!
+$yuf_00b302310 |:| I didn't look away for a second!
+$yuf_00b302311 |:| I'm too excited to sleep!
+$yuf_00b303100 |:| Things are getting exciting!
+$yuf_00b303101 |:| This is what I'm talkin' about!
+$yuf_00b303102 |:| Maybe I should play some games tonight.
+$yuf_00b303103 |:| Where are all the wealthy men?
+$yuf_00b303104 |:| Scram if you don't have money.
+$yuf_00b303105 |:| Who do I have to talk to to get into the Augur's Quarter?
+$yuf_00b303106 |:| I really can't lose tonight.
+$yuf_00b303107 |:| I've always dreamed of going on a date in Yusnaan.
+$yuf_00b303108 |:| Isn't my boyfriend so handsome?
+$yuf_00b303109 |:| Should I talk to him...or him?
+$yuf_00b303110 |:| If you have an ID card, I'll follow you anywhere.
+$yuf_00b303111 |:| I can't believe he dumped me! Bring me a bottle!
+$yuf_00b303112 |:| Who'll be the poor fool tonight?
+$yuf_00b303113 |:| Don't think about tomorrow, think about now!
+$yuf_00b303114 |:| Staring at the fountain will calm your nerves.
+$yuf_00b303115 |:| It'll be my treat.
+$yuf_00b303116 |:| I'll buy you anything, no matter the price.
+$yuf_00b303117 |:| It's so crowded! I've never seen so many people!
+$yuf_00b303118 |:| This place always makes me feel like a kid!
+$yuf_00b303119 |:| I'm in the city of dreams. I {TEXT_ITALIC}have{TEXT_ITALIC} to have fun!
+$yuf_00b303122 |:| Let's enjoy the night and forget about the Chaos!
+$yuf_00b303123 |:| I'm so happy!
+$yuf_00b303124 |:| What a beautiful view.
+$yuf_00b303125 |:| It's all so magical!
+$yuf_00b303126 |:| That looks like it cost a pretty gil!
+$yuf_00b303127 |:| I wanna wear a beautiful dress!
+$yuf_00b303128 |:| How much money will I need?
+$yuf_00b303129 |:| My boyfriend is the hottest man around!
+$yuf_00b303130 |:| Am I lost?
+$yuf_00b303131 |:| Forget about the future and the past. Let's all enjoy the present!
+$yuf_00b303132 |:| How long is he going to make me wait!?
+$yuf_00b303133 |:| Who will be {TEXT_ITALIC}my{TEXT_ITALIC} Prince Charming?
+$yuf_00b303134 |:| Isn't he one of the dancers in the play?
+$yuf_00b303135 |:| Let's enjoy the night and forget about the Chaos!
+$yuf_00b303136 |:| I don't think Lord Snow cares about the city anymore...
+$yuf_00b303137 |:| It doesn't matter how rich you are. The world's ending, and that's that.
+$yuf_00b303138 |:| Ooh, I want that! I hope he'll buy it for me!
+$yuf_00b303139 |:| I'm so excited, I might have a stroke!
+$yuf_00b303140 |:| Welcome to the glittering city of Yusnaan! The fun's just begun!
+$yuf_00b303141 |:| Would you like me to cast a spell on you?
+$yuf_00b303142 |:| My relationships are fleeting, just like the fireworks.
+$yuf_00b303143 |:| Was I supposed to meet him in front of the Cactuar statue or the fountain?
+$yuf_00b303144 |:| This city's a bit garish, isn't it?
+$yuf_00b303145 |:| The party never stops!
+$yuf_00b303146 |:| My wallet!
+$yuf_00b303147 |:| Where's my wallet? Was it stolen!?
+$yuf_00b303300 |:| I look forward to the festivities of this area every night!
+$yuf_00b303301 |:| What a pleasant evening{—}you can almost forget the Chaos is out there.
+$yuf_00b303302 |:| What fun! Look at everyone all dressed up!
+$yuf_00b303303 |:| Everyone's having so much fun! I wish the Patron could see this.
+$yuf_00b303304 |:| The party I'm hosting {TEXT_ITALIC}has{TEXT_ITALIC} to be better than my neighbors'!
+$yuf_00b303305 |:| I pray that the show will begin before the Chaos gets in the way.
+$yuf_00b303306 |:| I want a dress like the one the actress wears.
+$yuf_00b303307 |:| Good evening! May tonight be a wonderful night.
+$yuf_00b303308 |:| I hope they pull off tonight's show! No more cancellations!
+$yuf_00b303309 |:| Our cook is so talented, I can barely fit into my clothes anymore!
+$yuf_00b303310 |:| The play is canceled more often than not. You're lucky to catch a performance!
+$yuf_00b303311 |:| What's the address of the next party?
+$yuf_00b303312 |:| Hello! Are you also going to finish off this wonderful evening with the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC}?
+$yuf_00b303313 |:| Lord Snow loves the play!
+$yuf_00b303314 |:| This play devoted to God is Yusnaan's greatest treasure.
+$yuf_00b303315 |:| I can't wear the same outfit twice!
+$yuf_00b303316 |:| Will I be able to take the stage before the world ends? Probably not...
+$yuf_00b303317 |:| Who cares about the play? The chocobo show is much better!
+$yuf_00b303318 |:| What a beautiful view! It's like a dream!
+$yuf_00b303319 |:| Look at that set! It's supposed to represent God.
+$yuf_00b303320 |:| You never know when a performance will get canceled. It can even happen at the last minute!
+$yuf_00b303321 |:| I hear the leading actress is gorgeous!
+$yuf_00b303322 |:| I've always wanted to be an actress. Do you think I should hang on to my dream?
+$yuf_00b303323 |:| They keep those who are less wealthy out of this area.
+$yuf_00b303324 |:| I can't afford anything they sell here.
+$yuf_00b303325 |:| For those who can't afford a ticket, the train tracks are the only place you can see the show.
+$yuf_00b303326 |:| When I see the chocobo dancing show, I can't help but smile!
+$yuf_00b303327 |:| I wonder if it was the same architect who designed the palace and the set?
+$yuf_00b303328 |:| I'll bet the view from the stage is amazing!
+$yuf_00b303329 |:| I wonder how much I would have to pay to get a spot in the show.
+$yuf_00b303330 |:| Please, don't cancel tonight's show!
+$yuf_00b303331 |:| Lord Snow needs to watch the chocobo dancing show! That'll put anyone in a good mood.
+$yuf_00b303332 |:| Without death looming over us, people have changed over the centuries...
+$yuf_00b303b15 |:| I get so stressed thinking of what to wear!
+$yuf_00b303b17 |:| Watching the chocobos makes me want to dance with them!
+$yuf_00b309700 |:| Where am I?
+$yuf_00b309701 |:| Sorry! I'm here!
+$yuf_00b309702 |:| You're late!
+$yuf_00b309703 |:| I hope he likes my gift!
+$yuf_00b309704 |:| What shall I do today?
+$yuf_00b309705 |:| He's just my type!
+$yuf_00b309706 |:| Sorry I'm late.
+$yuf_00b309707 |:| I'm sorry!
+$yuf_00b309708 |:| I'm waiting for my date!
+$yuf_00b309709 |:| Having fun?
+$yuf_00b313300 |:| Maybe tomorrow.
+$yuf_00b313301 |:| Time for bed.
+$yuf_00b313302 |:| That's too bad!
+$yuf_00b313303 |:| Well, that's no fun!
+$yuf_00b313304 |:| So many cancellations!
+$yuf_00b313305 |:| 
+$yuf_00b313306 |:| 
+$yuf_00b313307 |:| What!?
+$yuf_00b313308 |:| But I already bought tickets!
+$yuf_00b313309 |:| This sucks!
+$yuf_00b323300 |:| Is anyone going to do something about this!?
+$yuf_00b323301 |:| I was looking forward to it!
+$yuf_00b323302 |:| The Chaos should eat whoever canceled the show!
+$yuf_00b323303 |:| Tomorrow's show better be on!
+$yuf_00b323304 |:| This is outrageous! Only a drink can help now!
+$yuf_00b323305 |:| Shouldn't they be better prepared?
+$yuf_00b323306 |:| I'm gonna cry...
+$yuf_00b700000 |:| 
+$yuf_00b700001 |:| I don't wanna get involved!
+$yuf_00b700002 |:| Get 'em!
+$yuf_00b700003 |:| Another incident?
+$yuf_00b700004 |:| Go, flan corps!
+$yuf_00b700005 |:| 
+$yuf_00b700006 |:| Do it!
+$yuf_00b700007 |:| Is that the savior?
+$yuf_00b700008 |:| Catch her!
+$yuf_00b700009 |:| Leave us alone!
+$yuf_00b700010 |:| Huh? What?
+$yuf_00b700011 |:| I'm outta here!
+$yuf_00b700012 |:| What now?
+$yuf_00b700013 |:| Stay away!
+$yuf_00b800000 |:| Not again.
+$yuf_00b800001 |:| The savior?
+$yuf_00b800002 |:| Is this for the show?
+$yuf_00b800003 |:| That's not the real savior, is it?
+$yuf_00b800004 |:| It's none of my business.
+$yuf_00b800005 |:| That's a relief!
+$yuf_00b800006 |:| That's going too far!
+$yuf_00b800007 |:| Are you okay?
+$yuf_00b800008 |:| That was scary!
+$yuf_00b800009 |:| She's okay, right?
+$yuf_00b800010 |:| Did she get you?
+$yuf_00b800011 |:| I feel bad.
+$yuf_00b800012 |:| Don't disturb the peace!
+$yuf_00b800013 |:| Can I get a picture?
+$yuf_00b900000 |:| This is so disruptive!
+$yuf_00b900001 |:| This makes things much more exciting!
+$yuf_00b900002 |:| A performance with a fugitive, huh?
+$yuf_00b900003 |:| Is there a reward for her capture?
+$yuf_00b900004 |:| They're not coming after me, are they?
+$yuf_00b900005 |:| This must mean the world is ending real soon.
+$yuf_00b900006 |:| You don't want to get involved.
+$yuf_00b902000 |:| If only I could get a glance at Luxerion's own saint.
+$yuf_00b902001 |:| Things are happening all over Luxerion. Where's the savior when you need her?
+$yuf_00b902002 |:| There are hunters who ride around the Wildlands on their chocobos.
+$yuf_00b902003 |:| If you wanna see Fuzzy Sheep, head on out to the Wildlands!
+$yuf_00b902004 |:| What is this "sacred treasure" that's said to be buried in the Dead Dunes?
+$yuf_00b902005 |:| No one knows anything about the boss of the Dead Dunes' bandit gang.
+$yuf_00b909800 |:| They've closed off the industrial area due to the growing number of monsters.
+$yuf_00b909801 |:| The fal'Cie in the industrial area provides us with all our goods.
+$yuf_00b909802 |:| What will happen to us if the fal'Cie gets swallowed up by the Chaos?
+$yuf_00b909803 |:| Some people claim that the Chaos is emerging from the palace.
+$yuf_00b909804 |:| Lord Snow is the last remaining l'Cie in this world.
+$yuf_00b909805 |:| People say Lord Snow's power as a l'Cie is what's causing the Chaos.
+$yuf_00b909806 |:| The fal'Cie and l'Cie are both God's servants who wrought disaster upon our old world.
+$yuf_00b909807 |:| A lot of residents cling to the beliefs of ancient gods.
+$yuf_00b909808 |:| People don't understand how much the Patron had to sacrifice. He gave us a city where we can forget about the coming end.
+$yuf_00b909809 |:| I heard a rumor that there's a fountain spouting Chaos right inside the palace!
+$yuf_00b909810 |:| The guards have the industrial area closed off. They're investigating the source of all that Chaos.
+$yuf_00b909811 |:| The Patron wanted to create a town that could help you forget about the horrible reality of things.
+$yuf_00b909812 |:| After the Patron holed himself up, the gap between the rich and the poor grew as the privileged few started keeping more of the fal'Cie's goods for themselves.
+$yuf_00b909813 |:| Is there a connection between the Chaos and what's happening to Lord Snow?
+$yuf_00b909814 |:| If the Patron disappears on us, what will happen to us? What will happen to the world?
+$yuf_00b909815 |:| Yusnaan's fireworks show has something to do with Lord Snow's memories of better times.
+$yuf_00b909816 |:| If you make a wish upon fireworks, it'll come true someday!
+$yuf_00b909b04 |:| He protects Yusnaan with his powers.
+$yuf_00b919600 |:| I'm going to make the volunteers a home-cooked meal.
+$yuf_00b919601 |:| I hope all this delicious food cheers everyone up.
+$yuf_00b919602 |:| Even though the show's been canceled, we can still have fun!
+$yuf_00b919603 |:| This is Yusnaan's kitchen. You can get a home-cooked meal any time.
+$yuf_00b919604 |:| Don't worry{—}I'll smile and greet my customers as usual.
+$yuf_00b919605 |:| There's no show, but we can still enjoy the food!
+$yuf_00b919606 |:| The accident in the Augur's Quarter created so much smoke!
+$yuf_00b919607 |:| I don't want to die with regrets. So I eat what I want!
+$yuf_00b919608 |:| Maybe the savior has a sense of fun, to cause that kind of commotion.
+$yuf_00b919609 |:| I wonder what the savior's favorite dish is. I want to have what she's having!
+$yuf_00b919610 |:| There are all sorts of things going on these days. I should check them out!
+$yuf_00b930000 |:| The charges against the savior were lifted. I wonder why.
+$yuf_00b930001 |:| The divine statue was broken, but seeing Lord Snow back to his normal self has helped us regain our faith.
+$yuf_00b930002 |:| The savior and Lord Snow are on good terms. Hopefully, she can help make our city a better place!
+$yuf_00b930003 |:| Some of the residents of the Augur's Quarter up and left for a different part of the world.
+$yuf_00b930004 |:| I do nothing but go out and have fun. Maybe it's time to rethink my life.
+$yuf_00b930005 |:| I'm going to volunteer to help rebuild the divine statue{—}to make Yusnaan the city it once was!
+$yuf_00b930006 |:| You can have fun in Yusnaan even without the play.
+$yuf_00b930007 |:| The savior defeats God? Is that how it ends?
+$yuf_00b930008 |:| The savior's involved in various other incidents in the world. Maybe I should go see for myself.
+$yuf_00b930009 |:| We can't change overnight, but we'll try to be better!
+$yuf_00b930010 |:| There are things we can all do before the end.
+$yuf_00b930011 |:| All hail Lord Snow!
+$yuf_00b930012 |:| We all need to support Lord Snow!
+$yuf_00b930013 |:| Please, help us rebuild Yusnaan!
+$yuf_00b930014 |:| We need to show the tourists a good time, even with everything in disarray.
+$yuf_00b930015 |:| Welcome to Yusnaan! Please, enjoy everything our exciting city has to offer!
+$yuf_00b930016 |:| I hear Lord Snow looks better. I wish I could see for myself!
+$yuf_00b930017 |:| The nights are so quiet without the play.
+$yuf_00b930018 |:| The theme song from the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC} was our lullaby.
+$yuf_00b930019 |:| Knocking over the divine statue is sure to anger God.
+$yuf_00b930020 |:| The real savior came and made a scene? I can't believe she knocked over the statue!
+$yuf_00b930021 |:| I wonder if the savior will save us too!
+$yuf_00b930022 |:| Will we be more intelligent when we're reborn?
+$yuf_00b930023 |:| Even without the play, Yusnaan is still a fun place to be.
+$yuf_00b930024 |:| Seeing people smile and come together is better than any tourist attraction!
+$yuf_00b930025 |:| I hear the famous director Sarzhak is writing a screenplay for the sequel!
+$yuf_00b930026 |:| Until the Augur's Quarter gets restored, they're moving the festivities elsewhere.
+$yuf_00b930027 |:| The {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC} will be performed again someday!
+$yuf_00b930028 |:| Even if the world is destroyed, we have nothing to fear if we stick together!
+$yuf_00b930029 |:| I can't wait till the city is restored!
+$yuf_00b930030 |:| Maybe the Chaos appears because we've all lost hope and promise.
+$yuf_00b930031 |:| The savior is bringing hope to the whole world!
+$yuf_00b930032 |:| If the savior destroyed the divine statue, does that mean we should defy God?
+$yuf_00b930033 |:| It's true that you can regain lost hopes and dreams in the glittering city of Yusnaan!
+$yuf_00b930034 |:| The battle arena in the Champion's Quarter is as exciting as ever!
+$yuf_00b930035 |:| The restaurants in the Glutton's Quarter will open their doors as usual.
+$yuf_00b930036 |:| The Reveler's Quarter seems less crowded than usual, but I think I like it!
+$yuf_99_104100 |:| So pretty!
+$yuf_99_104101 |:| 
+$yuf_99_104102 |:| Higher!
+$yuf_99_104103 |:| 
+$yuf_99_104104 |:| 
+$yuf_99_104105 |:| 
+$yuf_99_104106 |:| 
+$yuf_99_104107 |:| 
+$yuf_99_104108 |:| 
+$yuf_99_104109 |:| 
+$yuf_99_104200 |:| 
+$yuf_99_104201 |:| 
+$yuf_99_104202 |:| 
+$yuf_99_104203 |:| 
+$yuf_99_104204 |:| 
+$yuf_99_104300 |:| Congratulations!
+$yuf_99_104301 |:| Beat the next one, too!
+$yuf_99_104302 |:| Thanks! I had money on you!
+$yuf_99_104303 |:| That was exciting!
+$yuf_99_104304 |:| Amazing!
+$yuf_99_104305 |:| Lightning! Lightning!
+$yuf_99_104306 |:| Lightning!
+$yuf_99_104307 |:| Lightning!
+$yuf_99_104308 |:| It's the victory fanfare!
+$yuf_99_104309 |:| 
+$yuf_99_104310 |:| 
+$yuf_99_104311 |:| Lightning! Lightning!
+$yuf_99_104312 |:| Lightning! Lightning!
+$yuf_99_104313 |:| Lightning! Lightning!
+$yuf_99_104314 |:| Lightning! Lightning!
+$yuf_99_104315 |:| Lightning! Lightning!
+$yuf_99_104316 |:| Lightning! Lightning!
+$yuf_99_104317 |:| Lightning! Lightning!
+$yuf_99_104318 |:| Lightning! Lightning!
+$yuf_99_104319 |:| Lightning!
+$yuf_99_104320 |:| Lightning!
+$yuf_99_104321 |:| Lightning!
+$yuf_99_104322 |:| Lightning!
+$yuf_99_104323 |:| Lightning!
+$yuf_99_104324 |:| Lightning!
+$yuf_99_104325 |:| Lightning!
+$yuf_99_104326 |:| It's the victory fanfare!
+$yuf_99_104327 |:| It's the victory fanfare!
+$yuf_99_104328 |:| It's the victory fanfare!
+$yuf_99_104329 |:| It's the victory fanfare!
+$yuf_99_104330 |:| It's the victory fanfare!
+$yuf_99_104331 |:| It's the victory fanfare!
+$yuf_99_104332 |:| It's the victory fanfare!
+$yuf_99_104333 |:| 
+$yuf_99_104334 |:| 
+$yuf_99_104400 |:| That must've hurt.
+$yuf_99_104401 |:| That sucked.
+$yuf_99_104402 |:| Game over?
+$yuf_99_104403 |:| That was pathetic.
+$yuf_99_104404 |:| You look strong...
+$yuf_99_104405 |:| That was uneventful.
+$yuf_99_104406 |:| You sick or something?
+$yuf_99_104407 |:| Even I can do better.
+$yuf_99_104408 |:| You sucked.
+$yuf_99_104409 |:| Did you even train?
+$yug_00b009900 |:| Morning!
+$yug_00b009901 |:| Morning!
+$yug_00b009902 |:| Morning!
+$yug_00b009903 |:| Good morning!
+$yug_00b109900 |:| Hello!
+$yug_00b109901 |:| Good to see you!
+$yug_00b109902 |:| Good-bye!
+$yug_00b109903 |:| I'm starving!
+$yug_00b109904 |:| Choco-boco-lina!
+$yug_00b209900 |:| Hello!
+$yug_00b209901 |:| Fireworks!
+$yug_00b209902 |:| I wanna stay up!
+$yug_00b209903 |:| I'm not tired.
+$yug_00b209904 |:| It's so pretty!
+$yug_00b309900 |:| It's beautiful!
+$yug_00b309901 |:| I'm hungry...
+$yug_00b309902 |:| Bye!
+$yug_00b309903 |:| Wait for me!
+$yug_00b309904 |:| Let's play!
+$yug_00b700000 |:| 
+$yug_00b700001 |:| 
+$yug_00b700002 |:| 
+$yug_00b700003 |:| 
+$yug_00b700004 |:| 
+$yug_00b909900 |:| This is fun!
+$yug_00b909901 |:| Where should I go next?
+$yug_00b909902 |:| 
+$yug_00b909903 |:| 
+$yug_00b909904 |:| 
+$yug_00b909905 |:| This one!
+$yug_00b909906 |:| Wanna play?
+$yug_00b909907 |:| Where should we go?
+$yug_00b909908 |:| 
+$yug_00b909909 |:| Time for a walk!
+$yug_00b909910 |:| Run faster!
+$yug_00b909911 |:| 
+$yug_00b909912 |:| 
+$yug_00b909913 |:| 
+$yug_00b909914 |:| Which way?
+$yug_00b909915 |:| Let's race!
+$yug_00b909916 |:| Buy me that toy!
+$yug_99_103700 |:| 
+$yug_99_103701 |:| 
+$yug_99_103702 |:| That's weird...
+$yug_99_103703 |:| Cool!
+$yug_99_103704 |:| 
+$yug_99_103800 |:| They're so cute!
+$yug_99_103801 |:| Meow-meow, choco-chow!
+$yug_99_103802 |:| Choco-boco-lina!
+$yug_99_103803 |:| Miss Chocobo!
+$yug_99_103804 |:| Let's play!
+$yug_99_104100 |:| 
+$yug_99_104101 |:| 
+$yug_99_104102 |:| 
+$yug_99_104103 |:| 
+$yug_99_104104 |:| 
+$yug_99_104200 |:| 
+$yug_99_104201 |:| 
+$yug_99_104202 |:| 
+$yug_99_104203 |:| 
+$yug_99_104204 |:| 
+$yum_00b002000 |:| There's so much Chaos around here lately. The world really is ending.
+$yum_00b002001 |:| Yusnaan's doing its best to keep shining till the very end.
+$yum_00b002002 |:| It's not safe everywhere, be careful.
+$yum_00b002003 |:| I like to work, play, and eat!
+$yum_00b002004 |:| Morning! I can't wait till tonight.
+$yum_00b002005 |:| It's always been my dream to live big in Yusnaan!
+$yum_00b002006 |:| You need an ID card to get into the Augur's Quarter.
+$yum_00b002007 |:| I gotta head off to Luxerion.
+$yum_00b002008 |:| When's the next Luxerion-bound train?
+$yum_00b002009 |:| As long as I'm alive, I'm gonna have fun!
+$yum_00b002010 |:| People say the world is ending, but it's hard to believe that's true.
+$yum_00b002011 |:| There are a lot of tired-looking people around in the mornings. They musta had fun the night before.
+$yum_00b002012 |:| Where should I stay tonight? Finding a place to sleep is the best part of travel!
+$yum_00b002013 |:| For a city that never sleeps, I don't see a lot of people.
+$yum_00b002014 |:| It's awfully quiet in the mornings. Is there anything to do at this hour?
+$yum_00b002015 |:| When noon comes around, I'm gonna eat my heart out!
+$yum_00b002016 |:| I've seen a lot of beautiful posters on the walls.
+$yum_00b002017 |:| I wonder where they hold the show.
+$yum_00b002018 |:| Is it true that the tickets for the show are extremely expensive?
+$yum_00b002019 |:| I heard the chocobo girls are a must-see.
+$yum_00b002020 |:| I'm here to see the phantasmical fountain show!
+$yum_00b002200 |:| This area's pretty quiet in the mornings.
+$yum_00b002201 |:| Most shops open from noon.
+$yum_00b002202 |:| Everyone stays out all night, no one's awake to open up shop.
+$yum_00b002203 |:| I like to take a breather on my way to work.
+$yum_00b002204 |:| No breakfast for me today.
+$yum_00b002205 |:| I've experienced delicacies from far and wide. I have quite a refined palate.
+$yum_00b002206 |:| I like walking around and taking in the smells! A real foodie knows patience.
+$yum_00b002207 |:| You can get all kinds of dishes here! I can't wait to taste a few tonight!
+$yum_00b002208 |:| I wonder what a bandit platter is. Oh, and that Cactuar tequila? No thanks!
+$yum_00b002209 |:| Some places even serve famous Cocoon dishes!
+$yum_00b002211 |:| The Gran Pulse tray? I'll bet that's all organic vegetables and stuff.
+$yum_00b002212 |:| I can't stop shivering! I'm not cold, I just can't forget about the Chaos I saw last night!
+$yum_00b002300 |:| I love the tension before a big fight!
+$yum_00b002301 |:| The coliseum opens at night.
+$yum_00b002302 |:| I'm sitting here till the sun sets.
+$yum_00b002303 |:| Who should I put my money on?
+$yum_00b002304 |:| I'm a big fan of the owner, Zoe.
+$yum_00b002305 |:| Soldiers come from far and wide.
+$yum_00b002306 |:| People have a natural instinct to survive.
+$yum_00b002307 |:| I won't let anyone take my seat in the very front row!
+$yum_00b002308 |:| Oh, no... I think I'm lost...
+$yum_00b002309 |:| What is this creepy place?
+$yum_00b002310 |:| Come on, you can do it! I'm just practicing for tonight's show.
+$yum_00b002311 |:| The women can watch the fireworks{—}I'm here to see some fighting!
+$yum_00b003100 |:| If you want to see the play, you should come back in the afternoon.
+$yum_00b003101 |:| The mornings here are so humdrum.
+$yum_00b003102 |:| It's hard to forget the night's fun!
+$yum_00b003103 |:| If only I could dream and never wake up.
+$yum_00b003104 |:| Time to go home and sleep till tonight. Festivities are my life!
+$yum_00b003105 |:| It's so boring during the day. Just the same old, same old.
+$yum_00b003106 |:| It's like the night's magic disappeared. I didn't even get her number!
+$yum_00b003107 |:| I have become such a night owl! Not like it matters anymore.
+$yum_00b003108 |:| I'm gonna sleep till the sun sets. No point in working anymore.
+$yum_00b003109 |:| I can't wait for tonight!
+$yum_00b003110 |:| Now that the sun has come up, everything feels so desolate.
+$yum_00b003111 |:| They should hold festivities throughout the day!
+$yum_00b003112 |:| The city lights mask the darkness of the world{—}and the people.
+$yum_00b003113 |:| I haven't seen Lord Snow lately. Heard he's been holed up in his palace.
+$yum_00b003114 |:| The savior's a wanted woman. And a beautiful one, according to rumors.
+$yum_00b003115 |:| The flan corps keeps the peace in this great city.
+$yum_00b003118 |:| Is there really a way to sneak into the Augur's Quarter to see the play?
+$yum_00b003119 |:| I can't believe this is the same city as last night.
+$yum_00b003120 |:| I shouldn't have gotten up so early. All I see are tired faces.
+$yum_00b003121 |:| Isn't there anything to do?
+$yum_00b003122 |:| Hey, you wanna grab a cup of coffee?
+$yum_00b003123 |:| The Patron isn't gonna be around much longer.
+$yum_00b003124 |:| I should prank the security guards!
+$yum_00b003125 |:| They're looking for the savior.
+$yum_00b003126 |:| Nothing else to do here. Might as well go back to the hotel.
+$yum_00b003127 |:| This city shines at night! After all, it's called "the glimmering city."
+$yum_00b003128 |:| The city didn't get swallowed up by the Chaos.
+$yum_00b003129 |:| Now that I see you in the light, you're still as beautiful as you were last night.
+$yum_00b003130 |:| Love doesn't care about age!
+$yum_00b003300 |:| I love the fresh morning air.
+$yum_00b003301 |:| I always take a walk after breakfast.
+$yum_00b003302 |:| What a great morning.
+$yum_00b003303 |:| Good morning.
+$yum_00b003304 |:| How are you today?
+$yum_00b003305 |:| You must be a tourist. Have fun!
+$yum_00b003306 |:| I don't usually run into travelers so early in the morning.
+$yum_00b003307 |:| Are you enjoying the Augur's Quarter?
+$yum_00b003308 |:| You'll find all sorts of people around here. I wouldn't ask too many questions if I were you.
+$yum_00b003309 |:| My only complaint is that life is a little boring.
+$yum_00b003310 |:| Every morning, I thank my lucky stars I live here.
+$yum_00b003311 |:| The air is so much more refreshing here in the Augur's Quarter.
+$yum_00b003312 |:| This is where I'm most comfortable.
+$yum_00b003313 |:| An ID card proves you belong among the upper class.
+$yum_00b003800 |:| What'll happen to us if the Chaos appears?
+$yum_00b003801 |:| What am I supposed to do if I can't leave this place?
+$yum_00b003802 |:| Please, do away with the Chaos!
+$yum_00b003803 |:| Who is she?
+$yum_00b003804 |:| No way...
+$yum_00b003805 |:| This isn't looking good.
+$yum_00b004000 |:| I've come all this way to see the play.
+$yum_00b004001 |:| It really is as risky a tour as rumored...
+$yum_00b004002 |:| It should be safe here... Now I just have to pray the show is still on!
+$yum_00b004003 |:| I'm so out of breath... No more...
+$yum_00b004004 |:| All this hard work{—}I can't believe I actually paid good money for this!
+$yum_00b004005 |:| I hope tonight's performance is spectacular!
+$yum_00b004006 |:| I'll remember this forever{—}but not as a great memory!
+$yum_00b004007 |:| When I saw the Chaos, I thought I was done for!
+$yum_00b004008 |:| When the Chaos is too thick, they cancel the show.
+$yum_00b004009 |:| I'm going to watch the finale of the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC} right here!
+$yum_00b004010 |:| I came to Yusnaan to watch the play. What a trek!
+$yum_00b004011 |:| I lost sight of my girlfriend. Where could she be?
+$yum_00b004012 |:| I risked my life to come out here. I have to make it worth the trip!
+$yum_00b004013 |:| I didn't realize it would be such a pain to take part in the festivities!
+$yum_00b004014 |:| Sneaking in to see the play: Mission complete!
+$yum_00b004015 |:| I didn't know sneaking in would be such hard work!
+$yum_00b004100 |:| So this is where I sign up for the tour.
+$yum_00b004101 |:| Finally! Didn't think I'd make it this far...
+$yum_00b004102 |:| I hope I can get a glimpse of the show!
+$yum_00b004103 |:| I didn't realize I was so exhausted!
+$yum_00b004104 |:| Come on! Open up!
+$yum_00b004105 |:| Huh? There are more monsters up ahead?
+$yum_00b004106 |:| I hope I'm safe. The sentries will look after us, right?
+$yum_00b004107 |:| What? I have to watch my own back? No way!
+$yum_00b004108 |:| What'll happen to us if the Chaos appears?
+$yum_00b004109 |:| Should I keep going? Or just go home?
+$yum_00b004110 |:| There's no getting through the industrial area.
+$yum_00b004111 |:| All right, I've worked up the courage. I'm doing it!
+$yum_00b004112 |:| The Sneaking-In Special, huh? The name says it all!
+$yum_00b004113 |:| The tour is called the Sneaking-In Special.
+$yum_00b033300 |:| It's dangerous here. Leave it to the pros.
+$yum_00b033301 |:| 
+$yum_00b033302 |:| So we're to disassemble the divine statue and erect one of Lord Snow, right? ...No?
+$yum_00b033303 |:| This place is in disarray, but the show was fantastic!
+$yum_00b033304 |:| I thought the collapse of the divine statue was symbolic in some way.
+$yum_00b033305 |:| I don't care how long it takes. We'll fix this!
+$yum_00b033306 |:| The Patron's back to his old self.
+$yum_00b033307 |:| Lord Snow's working harder than anyone!
+$yum_00b033308 |:| 
+$yum_00b033309 |:| 
+$yum_00b033310 |:| Head's up!
+$yum_00b033311 |:| Man, I'm tired!
+$yum_00b033312 |:| There's no slacking off with Lord Snow here.
+$yum_00b102000 |:| I've been partying for 500 years. I don't have time to be bored!
+$yum_00b102001 |:| I'm getting hungry. Time to head to the Glutton's Quarter for some grub.
+$yum_00b102002 |:| It's helpful to nap during the afternoon, so you'll have energy for the night's festivities.
+$yum_00b102003 |:| You wanna see the show? I'm afraid you'll need an ID card to get into the Augur's Quarter.
+$yum_00b102004 |:| This is a glamorous city, but there's so much disparity between the rich and the poor.
+$yum_00b102005 |:| Lord Snow keeps the peace while also controlling economic activity.
+$yum_00b102006 |:| The industrial area is built around the fal'Cie that produces all our goods.
+$yum_00b102007 |:| They're showing the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC} at the stage in the Augur's Quarter.
+$yum_00b102008 |:| I hear there was a ruckus at the ball. That's why they've increased the area's security.
+$yum_00b102009 |:| Lord Snow's palace is nothing short of extravagant!
+$yum_00b102010 |:| I hope today's the day I can finally snag myself a date!
+$yum_00b102011 |:| I've read about old Nautilus and its attractions, but I bet it wasn't a scratch on Yusnaan!
+$yum_00b102012 |:| My wallet was stolen by a pickpocket.
+$yum_00b102013 |:| This city's purpose is to allow people to face the end with excitement and joy.
+$yum_00b102014 |:| The heavy security is what makes things safe in such a populated city.
+$yum_00b102015 |:| Even while having fun, we have to be wary of the ever-growing Chaos infusions.
+$yum_00b102016 |:| I'd love for a chance to talk to Lord Snow, but he's been holed up in his palace lately.
+$yum_00b102017 |:| I wanna enjoy the days I have left.
+$yum_00b102018 |:| No matter how long your life, you only get one. Might as well enjoy it!
+$yum_00b102019 |:| If you say the magic words to the chocobo girls, they'll give you something special!
+$yum_00b102200 |:| What should I do for lunch?
+$yum_00b102201 |:| I'm in the mood for some dessert grub.
+$yum_00b102202 |:| I'm craving some fried Crawler.
+$yum_00b102203 |:| I'd like it to go.
+$yum_00b102204 |:| Can't forget about dessert!
+$yum_00b102205 |:| It all smells good!
+$yum_00b102206 |:| Their dinner menu is amazing.
+$yum_00b102207 |:| Let's see how much money I have first.
+$yum_00b102208 |:| I love that dish!
+$yum_00b102209 |:| The exotic dishes are pretty tasty!
+$yum_00b102210 |:| That chef has got the recipe down pat!
+$yum_00b102211 |:| It's not called the Glutton's Quarter for nothing!
+$yum_00b102212 |:| I guess you can eat just about anything.
+$yum_00b102213 |:| A dish composed of the flesh of a beast so rare, it only appears in the world once every century...
+$yum_00b102214 |:| I don't eat much for lunch so I can gorge at night!
+$yum_00b102215 |:| I wonder which one is the most popular.
+$yum_00b102216 |:| I want to eat somewhere famous.
+$yum_00b102217 |:| Anyone have any recommendations?
+$yum_00b102218 |:| The Banquet of the Lord has great beverages and food!
+$yum_00b102219 |:| Where can I get marinated Miniflan?
+$yum_00b102220 |:| When did I get this belly?
+$yum_00b102221 |:| Young people love adamansticks.
+$yum_00b102222 |:| The staff is well-trained in Yusnaan.
+$yum_00b102223 |:| Should I go somewhere with great food, or cute waitstaff?
+$yum_00b102224 |:| It'll take a while to become a regular here.
+$yum_00b102225 |:| I got an extra serving for free!
+$yum_00b102300 |:| The fights are starting soon!
+$yum_00b102301 |:| This really gets my blood pumping!
+$yum_00b102302 |:| I love the tense atmosphere of the Champion's Quarter!
+$yum_00b102303 |:| Some contestants are already warming up.
+$yum_00b102304 |:| The tournament's about to start! I can't wait to see a bloodbath!
+$yum_00b102305 |:| I'm looking for a strong, brave warrior. Someone I can hire to protect me.
+$yum_00b102306 |:| I thank God for my wealth. Without that, I'd be fighting in the arena, too!
+$yum_00b102307 |:| The fighting's already begun! It's always a good idea to check out your opponents before you join in...
+$yum_00b102308 |:| There's going to be a lot of bloodshed today, whether it's the contestants' or the monsters'.
+$yum_00b102309 |:| I'm not scared, I'm just really excited!
+$yum_00b102310 |:| This is too brutal to be called entertainment.
+$yum_00b102311 |:| I'm so nervous, I can't stand it!
+$yum_00b102312 |:| Feel that excitement in the air!
+$yum_00b102313 |:| It hasn't even started yet and everyone's riled up!
+$yum_00b102314 |:| If I had a little more muscle, I could see myself signing up.
+$yum_00b102315 |:| Go! You can do it! I'm rehearsing my cheers.
+$yum_00b102316 |:| I don't know if I feel warm because of the torches or because I'm all fired up!
+$yum_00b102b13 |:| Few know more about food than I do.
+$yum_00b103101 |:| I'm excited to see the {TEXT_ITALIC}real{TEXT_ITALIC} side of the glittering city of Yusnaan!
+$yum_00b103102 |:| Why doesn't the sun set already? Night time's where it's at!
+$yum_00b103103 |:| I'm tired already. What to do?
+$yum_00b103104 |:| I know the real fun starts at night, but I can't wait any longer!
+$yum_00b103105 |:| I'm off to find myself a date for tonight!
+$yum_00b103106 |:| Spending time with you is all I want before the world ends.
+$yum_00b103107 |:| This is a great time to run some errands.
+$yum_00b103108 |:| I heard the night lights are almost blinding! I can't wait!
+$yum_00b103109 |:| I love how empty the streets are during the day.
+$yum_00b103110 |:| I lost all my money! But I know I'll get it back tonight!
+$yum_00b103111 |:| Huh. I didn't know the flan corps was still around.
+$yum_00b103112 |:| No one's seen the Patron in a while.
+$yum_00b103113 |:| There's a reward for information leading to the savior's capture!
+$yum_00b103114 |:| I'm so bored! I've already done and experienced everything!
+$yum_00b103117 |:| There has to be a way to sneak into the Augur's Quarter.
+$yum_00b103118 |:| I came for the festivities, but no one told me they're only held at night!
+$yum_00b103119 |:| I like the mellow vibe of the city in the daytime.
+$yum_00b103120 |:| The chocobo girls didn't give me the time of day.
+$yum_00b103121 |:| Eternal life, surrounded by festivities... What more can I ask for?
+$yum_00b103122 |:| Some people want to work hard till the very end. I'm not one of them.
+$yum_00b103123 |:| It's so quiet around here during the day.
+$yum_00b103124 |:| Almost time for lunch. It's become habit to eat my troubles away.
+$yum_00b103125 |:| I hear there's a pickpocket who targets only tourists.
+$yum_00b103126 |:| There's more to life than hard work.
+$yum_00b103127 |:| A lot of travelers come here to get away from reality.
+$yum_00b103128 |:| I don't want a fling. I'm looking for the love of my life!
+$yum_00b103129 |:| A former actress lives here. I hear she's beautiful!
+$yum_00b103300 |:| Hello there.
+$yum_00b103301 |:| I'm looking forward to tonight's play. It's unfortunate so many shows have gotten canceled.
+$yum_00b103302 |:| It's a privilege to have such a grand seat to watch the performance.
+$yum_00b103303 |:| I'm so glad I was able to get myself an ID card.
+$yum_00b103304 |:| I haven't been here long. I still don't quite fit in.
+$yum_00b103305 |:| It's always been my dream to live here. And now that dream's come true!
+$yum_00b103306 |:| Job number one? Grab a good seat for tonight's performance!
+$yum_00b103307 |:| I remember how life was back then... I wouldn't give this up for anything!
+$yum_00b103308 |:| Hello! You must be visiting.
+$yum_00b103309 |:| In the Augur's Quarter, you have to look and act like you belong.
+$yum_00b103310 |:| My family's loaded. I come here all the time.
+$yum_00b103311 |:| You know you've won in life when you can access this area.
+$yum_00b103312 |:| They're not issuing new ID cards anymore. And no one's willing to give theirs up, either!
+$yum_00b103313 |:| I'm relieved that only folks of a certain status can step foot in here.
+$yum_00b103314 |:| The ones who live here were chosen. Of course, we're going to be the first ones to be saved and see the new world.
+$yum_00b103315 |:| When's the dancing chocobo show going to start?
+$yum_00b103316 |:| People adapt easily to their environment. That's why people who come here blend in quickly.
+$yum_00b103700 |:| The food here at the Banquet of the Lord is exquisite!
+$yum_00b103701 |:| Good drinks, good food, good view{—}this is amazing!
+$yum_00b103702 |:| The Snow Special is full of protein!
+$yum_00b103703 |:| The NORA Special is a little salty for my taste.
+$yum_00b103704 |:| It sure is getting hot in here!
+$yum_00b103705 |:| Lord Snow! Thank you for this wonderful meal!
+$yum_00b103706 |:| The waiters are enthusiastic and the service is fantastic!
+$yum_00b103707 |:| This is delicious!
+$yum_00b103708 |:| I'd like another!
+$yum_00b103709 |:| The dishes are all from the Patron's hometown.
+$yum_00b103710 |:| The palace is pretty ritzy, huh?
+$yum_00b103711 |:| This place is expensive, but without the pompous atmosphere.
+$yum_00b202000 |:| The sun's finally set! Time to get this party started!
+$yum_00b202001 |:| Tonight's matches at the battle arena are sure to be exciting!
+$yum_00b202002 |:| Sun's down{—}time to have fun!
+$yum_00b202003 |:| My plan is to gorge myself in the Glutton's Quarter and head out into town afterwards!
+$yum_00b202004 |:| I'm waiting for my girl at the Cactuar statue in the Reveler's Quarter.
+$yum_00b202005 |:| The fountain in the Reveler's Quarter is a romantic spot popular with couples.
+$yum_00b202006 |:| Work is finally over! Where should I go now?
+$yum_00b202007 |:| Nothing better than sipping a NORA Special cocktail at the Banquet of the Lord to kick-start your evening!
+$yum_00b202008 |:| I need to do a little shopping. The Reveler's Quarter is my best bet.
+$yum_00b202009 |:| The savior caused a commotion at the ball, and now there's security everywhere!
+$yum_00b202010 |:| I work hard during the day, and have plenty of fun at night.
+$yum_00b202011 |:| What? The palace is on lockdown? Because of the savior?
+$yum_00b202012 |:| The Chaos becomes thick at night, but we can forget it exists by having fun!
+$yum_00b202013 |:| It's said that the fountain is where one will meet their soul mate. Not for me, thanks! I don't want to get tied down!
+$yum_00b202014 |:| The chocobo girls love it when people know the magic words!
+$yum_00b202015 |:| I was told to report to an official if I saw the savior.
+$yum_00b202016 |:| I don't care if the world's ending soon. I just want to party!
+$yum_00b202017 |:| There has to be some way to sneak into the Augur's Quarter to catch the play!
+$yum_00b202018 |:| You can feel the excitement in the air as soon as you step off the train!
+$yum_00b202019 |:| There's just so much to do here! And they have new events every day!
+$yum_00b202200 |:| That smells amazing! I'm starving!
+$yum_00b202201 |:| All this excitement stirs up my appetite!
+$yum_00b202202 |:| I think I gained weight... Time to diet.
+$yum_00b202203 |:| Cultured Flan isn't for me. I like organic, healthy foods!
+$yum_00b202204 |:| I feel nothing but fear at night. What's gonna happen to us all!?
+$yum_00b202205 |:| We don't know if there'll be a tomorrow. So we might as well stuff ourselves to bursting today!
+$yum_00b202206 |:| I can still eat. Time to hit the next shop.
+$yum_00b202207 |:| An extra plate for free? Nice!
+$yum_00b202208 |:| I want to take my girl there someday.
+$yum_00b202209 |:| I should make a reservation.
+$yum_00b202210 |:| I don't want to wait for a table.
+$yum_00b202211 |:| It's so crowded!
+$yum_00b202212 |:| I ate too many Goblin apples...
+$yum_00b202213 |:| I've been coming here for a century.
+$yum_00b202214 |:| Maybe the exotic places are less crowded.
+$yum_00b202215 |:| The world's almost ending. I need to eat as much as I can before it does!
+$yum_00b202216 |:| When I think of the world coming to an end, it makes it hard to swallow my food.
+$yum_00b202217 |:| So many famous delicacies!
+$yum_00b202218 |:| Most of my vacation money will be spent on food.
+$yum_00b202219 |:| That dish was sure spicy!
+$yum_00b202220 |:| I'd like to find a quiet restaurant. Atmosphere is crucial.
+$yum_00b202221 |:| I want a table with a view of the fireworks.
+$yum_00b202222 |:| I'm in the market for some extra spicy dishes!
+$yum_00b202223 |:| Everyone looks so happy!
+$yum_00b202224 |:| This could be my last meal! I'm gonna eat every morsel.
+$yum_00b202225 |:| I doubt I'll find anything better than my wife's cooking.
+$yum_00b202226 |:| When I order, I always keep in mind this could be my last meal.
+$yum_00b202227 |:| I'm gonna eat, then eat, then eat some more!
+$yum_00b202228 |:| I'm gonna eat as though the world is ending tomorrow!
+$yum_00b202229 |:| It's always been my dream to eat a behemoth from head to tail!
+$yum_00b202230 |:| I'm stuffed... I can't eat another bite.
+$yum_00b202231 |:| To me, the Glutton's Quarter is like heaven. I can't ask for a better place to be.
+$yum_00b202232 |:| A gentleman schedules his day's meals to make sure he has an empty stomach by dinnertime.
+$yum_00b202300 |:| Watching these fights makes me feel alive!
+$yum_00b202301 |:| Today's monsters look especially ferocious!
+$yum_00b202302 |:| I hope I'm in the front row!
+$yum_00b202303 |:| I hope to compete one day.
+$yum_00b202304 |:| Anyone care to make a bet?
+$yum_00b202305 |:| I love the savage feel of it all!
+$yum_00b202306 |:| Just watching the fights makes me feel stronger too.
+$yum_00b202307 |:| They pit the contestants against monsters from the Chaos.
+$yum_00b202308 |:| Our Patron Snow is the reigning champion.
+$yum_00b202309 |:| Soldiers in the Patron's army train here.
+$yum_00b202310 |:| Don't forget to replenish yourself between fights.
+$yum_00b202311 |:| I trained that fighter! Anyone else want some lessons?
+$yum_00b202312 |:| I want to see what a real fight looks like!
+$yum_00b202313 |:| Don't hold back! Do it!
+$yum_00b202314 |:| Get out of my way!
+$yum_00b202315 |:| You bumped into me on purpose!
+$yum_00b202316 |:| Someone stepped on my foot!
+$yum_00b202317 |:| Give 'em a good beatdown!
+$yum_00b202318 |:| You've got my support!
+$yum_00b202319 |:| You can do better!
+$yum_00b202320 |:| There! Get 'em!
+$yum_00b202321 |:| Knock 'em out!
+$yum_00b202322 |:| Hit 'em where it hurts!
+$yum_00b202323 |:| My entire life's savings is on the line{—}I can't lose!
+$yum_00b202324 |:| Come on, monsters! My money's on you tonight!
+$yum_00b202325 |:| People are really excited.
+$yum_00b202326 |:| The spectators are rather...animated.
+$yum_00b202327 |:| So this is the famous coliseum.
+$yum_00b202328 |:| I don't ever wanna go home!
+$yum_00b202329 |:| It's happening around here!
+$yum_00b202330 |:| Do it! More! You got it!
+$yum_00b202331 |:| These fights are bad for my heart!
+$yum_00b202332 |:| I want to meet the combatants.
+$yum_00b202333 |:| I'm looking forward to a thrilling battle.
+$yum_00b202334 |:| Are you signing up? Oh, then my money's on you!
+$yum_00b202335 |:| I'm a lover, not a fighter.
+$yum_00b202336 |:| Fight for your pride!
+$yum_00b202337 |:| Yusnaan's famed fireworks are up for grabs.
+$yum_00b202338 |:| There! Hit him now!
+$yum_00b202339 |:| Let's see some spirit!
+$yum_00b203100 |:| The industrial area gate is usually closed, but it opens for a little while around 6 PM.
+$yum_00b203102 |:| If only someone would think of a new form of entertainment.
+$yum_00b203103 |:| The restaurants are opening their doors. It's time to eat!
+$yum_00b203104 |:| It's time for the grown-ups to have fun! Hello there, would you like to join me for dinner?
+$yum_00b203105 |:| The night brings with it fun and excitement!
+$yum_00b203106 |:| I should find myself a spot to watch the fireworks before it gets too crowded.
+$yum_00b203107 |:| When the end comes, I want to be right here in the Reveler's Quarter.
+$yum_00b203108 |:| Gambling has ruined my life. There's no way I can pay back all the money I owe.
+$yum_00b203109 |:| I need to blow off steam and have fun like there's no tomorrow because there might not {TEXT_ITALIC}be{TEXT_ITALIC} a tomorrow!
+$yum_00b203112 |:| You can slip into the Augur's Quarter through the gate in the industrial area!
+$yum_00b203113 |:| There's a way to sneak into the Augur's Quarter, but it's dangerous.
+$yum_00b203114 |:| You can watch the play from the tracks. It's for people who can't afford tickets.
+$yum_00b203115 |:| It's like people have been left behind and forgotten, while the world slowly dies.
+$yum_00b203116 |:| Will the chocobo girls agree to go out with you if you say the magic words?
+$yum_00b203117 |:| If the beautiful savior comes for me, that's all I can ask for.
+$yum_00b203118 |:| I'm getting excited about tonight!
+$yum_00b203119 |:| Let's all have fun! Come on, who's with me!?
+$yum_00b203120 |:| People spend the afternoon preparing for the fun to be had later at night.
+$yum_00b203121 |:| I want to see the Cactuar statue light up!
+$yum_00b203122 |:| I want to grab a good spot in front of the fountain.
+$yum_00b203300 |:| Good morning. Although it's not quite morning, is it?
+$yum_00b203301 |:| I hope tonight is a wonderful night for you.
+$yum_00b203302 |:| They've started prepping for the show. I hope it's another great performance tonight.
+$yum_00b203303 |:| I have no shame spending money on lavish festivities every night.
+$yum_00b203304 |:| When I watch the sun set, I remember all the women I've loved in the past.
+$yum_00b203305 |:| I try to forget about the day's problems and worries by the time the sun sets.
+$yum_00b203306 |:| Will Lord Snow make an appearance tonight?
+$yum_00b203307 |:| The Chaos is thick today. I can even smell it.
+$yum_00b203308 |:| What is that I smell? A grand feast?
+$yum_00b203309 |:| Which party should I attend tonight?
+$yum_00b203310 |:| You don't look like you belong here.
+$yum_00b203311 |:| I'm a big fan of the actress who plays the savior. I send her flowers all the time.
+$yum_00b203312 |:| I find it strange that everyone gets to go to the new world.
+$yum_00b203b12 |:| There should be some sort of standard, don't you think?
+$yum_00b302300 |:| I wish it didn't have to end.
+$yum_00b302301 |:| I can't wait for tomorrow!
+$yum_00b302302 |:| Those were some good fights!
+$yum_00b302303 |:| I lost my money...
+$yum_00b302304 |:| Zoe did a fantastic job again today!
+$yum_00b302305 |:| Dammit! The combatant I was going to hire got whisked away by someone else!
+$yum_00b302306 |:| When the end comes, will it be everyone for themselves?
+$yum_00b302307 |:| Wow! What a fun night!
+$yum_00b302308 |:| I love the Slaughterhouse!
+$yum_00b302309 |:| I'm thirsty.
+$yum_00b302310 |:| I guess it's time to head home.
+$yum_00b302311 |:| That was exciting!
+$yum_00b303100 |:| It's time to party!
+$yum_00b303101 |:| Tonight, I bet everything I have!
+$yum_00b303102 |:| Excuse me, are you alone?
+$yum_00b303103 |:| You're a pretty girl. How about some dinner?
+$yum_00b303104 |:| Let's eat, drink, and be merry! If the world is gonna end, let it!
+$yum_00b303105 |:| This is sad... Such a romantic night and I'm all alone...
+$yum_00b303106 |:| You're absolutely gorgeous, baby. This love we have is one for the ages.
+$yum_00b303107 |:| Attending these festivities makes me glad to be one of the fortunate ones.
+$yum_00b303108 |:| The Chaos is a part of the city. It makes people realize their mortality and how valuable life is.
+$yum_00b303109 |:| Want to play a game? A game called love?
+$yum_00b303110 |:| Do you need to borrow some money?
+$yum_00b303111 |:| Oh, no! I'm gonna be late!
+$yum_00b303112 |:| Looking at the Cactuar statue makes me forget about all my problems in life.
+$yum_00b303113 |:| I'd love to have someone watch the fountain show with me!
+$yum_00b303114 |:| I'm gonna go peek at the show in the Augur's Quarter.
+$yum_00b303115 |:| I'm living life the way I want to{—}partying in Yusnaan!
+$yum_00b303116 |:| Only residents who've lived here for a while have ID cards.
+$yum_00b303117 |:| Having fun tonight?
+$yum_00b303118 |:| Wow, it's pretty loud.
+$yum_00b303119 |:| The guides in Yusnaan get paid by tourists {TEXT_ITALIC}and{TEXT_ITALIC} shop owners. Not a bad deal.
+$yum_00b303120 |:| Hey, come on in!
+$yum_00b303123 |:| What a gorgeous fountain! It really {TEXT_ITALIC}is{TEXT_ITALIC} luminous!
+$yum_00b303124 |:| These Yusnaan nights feel like a dream...
+$yum_00b303125 |:| So this is a feast.
+$yum_00b303126 |:| You're the only one I want by my side.
+$yum_00b303127 |:| Being here is a dream come true!
+$yum_00b303128 |:| Let me confess my eternal love!
+$yum_00b303129 |:| If the world is ending, I want to have as much fun as I can before it does.
+$yum_00b303130 |:| I wish I could live here forever.
+$yum_00b303131 |:| That's amazing!
+$yum_00b303132 |:| Wow! This was totally worth the trip!
+$yum_00b303133 |:| How can anything be so beautiful?
+$yum_00b303134 |:| Where do you want to go?
+$yum_00b303135 |:| It's fun just walking around.
+$yum_00b303136 |:| The city itself seems like a dream.
+$yum_00b303137 |:| Yusnaan is what it is, thanks to Lord Snow.
+$yum_00b303138 |:| Time flies when you're having fun. I could spend every day here!
+$yum_00b303139 |:| Have I been stood up...?
+$yum_00b303140 |:| The Cactuar statue is calming for some reason.
+$yum_00b303141 |:| The chocobo girls are so cute!
+$yum_00b303142 |:| I hear the posters display some valuable information.
+$yum_00b303143 |:| Did something happen? There's so much security.
+$yum_00b303144 |:| I know I'm going to get lost here!
+$yum_00b303145 |:| Give in to all your desires!
+$yum_00b303146 |:| Where's my wallet?
+$yum_00b303147 |:| Who was it? Who stole my money!?
+$yum_00b303300 |:| Oh, good evening. Enjoy the festivities!
+$yum_00b303301 |:| The show often gets canceled due to the Chaos. I hope tonight's performance is still on!
+$yum_00b303302 |:| Any show devoted to God is okay in my book.
+$yum_00b303303 |:| The show's finale is the best part!
+$yum_00b303304 |:| I'm a big fan of the backup dancers!
+$yum_00b303305 |:| I hear the actress who plays the savior is quite talented.
+$yum_00b303306 |:| I'll bet tonight's show will be good!
+$yum_00b303307 |:| Another exciting night!
+$yum_00b303308 |:| The show has great direction and choreography!
+$yum_00b303309 |:| Would the actors enjoy a fruit basket?
+$yum_00b303310 |:| Have you danced with the chocobo dancers yet?
+$yum_00b303311 |:| The actors were all either chocobo girls or street performers at one time.
+$yum_00b303312 |:| I would love to take the leading actress out on a date in the Reveler's Quarter.
+$yum_00b303313 |:| Screw my ID card! I'd rather be promised a spot in the new world!
+$yum_00b303314 |:| I haven't seen this play in over a century!
+$yum_00b303315 |:| It's good to have friends all over. No other way I could've bought myself an ID card!
+$yum_00b303316 |:| The show is complicated to put on{—}any sign of Chaos and it gets canceled. Too much to lose, you see.
+$yum_00b303317 |:| The performers are all so talented!
+$yum_00b303318 |:| I'd love to meet the actress!
+$yum_00b303319 |:| I hope the play doesn't get canceled again... I have tickets!
+$yum_00b303320 |:| What a wonderful stage! This is where all the magic happens.
+$yum_00b303321 |:| The divine statue is part of the stage? Gosh. This production must have cost a bundle!
+$yum_00b303322 |:| The director is one picky man. If he doesn't feel good about the play, he'll cancel it without a second thought.
+$yum_00b303323 |:| I'll never forget this view of Yusnaan's night sky.
+$yum_00b303324 |:| I should buy a house here so I don't have to leave the city.
+$yum_00b303325 |:| All that's left to do is pray that the performance is still on!
+$yum_00b303326 |:| The residents here think they're better than everyone else.
+$yum_00b309700 |:| Where is she?
+$yum_00b309701 |:| So many people!
+$yum_00b309702 |:| I'm late!
+$yum_00b309703 |:| I can't wait!
+$yum_00b309704 |:| What should I do today?
+$yum_00b309705 |:| Wow, she's cute!
+$yum_00b309706 |:| Look at her!
+$yum_00b309707 |:| Where to?
+$yum_00b309708 |:| Huh, a Cactuar.
+$yum_00b309709 |:| She's beautiful.
+$yum_00b313300 |:| Probably due to the Chaos...
+$yum_00b313301 |:| It can't be helped.
+$yum_00b313302 |:| Too bad.
+$yum_00b313303 |:| What's the director thinking?
+$yum_00b313304 |:| Oh, come on!
+$yum_00b313305 |:| No way!
+$yum_00b313306 |:| Gimme a refund!
+$yum_00b313307 |:| Why would this happen?
+$yum_00b313308 |:| Was it really the Chaos?
+$yum_00b313309 |:| What!?
+$yum_00b323300 |:| I had a bad feeling about this...
+$yum_00b323301 |:| Is tomorrow's show on?
+$yum_00b323302 |:| No festivities, no show... The world really is ending.
+$yum_00b323303 |:| Blame the Chaos.
+$yum_00b323304 |:| The show isn't the only event.
+$yum_00b323305 |:| This was supposed to be a perfect night!
+$yum_00b323306 |:| I spent all my money on these tickets!
+$yum_00b700000 |:| What's going on!?
+$yum_00b700001 |:| Is it the savior?
+$yum_00b700002 |:| Run!
+$yum_00b700003 |:| Is this a show?
+$yum_00b700004 |:| Do it!
+$yum_00b700005 |:| Get 'em!
+$yum_00b700006 |:| Stay out of their way!
+$yum_00b700007 |:| Get 'em!
+$yum_00b700008 |:| 
+$yum_00b700009 |:| What!?
+$yum_00b700010 |:| W-wait!
+$yum_00b700011 |:| I didn't do anything!
+$yum_00b700012 |:| Is this for show?
+$yum_00b700013 |:| Watch it!
+$yum_00b800000 |:| Is it over?
+$yum_00b800001 |:| What was that about?
+$yum_00b800002 |:| I wish they'd stop...
+$yum_00b800003 |:| Is everything okay?
+$yum_00b800004 |:| No more surprises, okay?
+$yum_00b800005 |:| Come on...
+$yum_00b800006 |:| Oh, well.
+$yum_00b800007 |:| I didn't see anything.
+$yum_00b800008 |:| Time to run!
+$yum_00b800009 |:| Is it over?
+$yum_00b800010 |:| The savior!?
+$yum_00b800011 |:| They're so tough!
+$yum_00b800012 |:| Did you lose her?
+$yum_00b800013 |:| Noisy much?
+$yum_00b900000 |:| Hey, that's not her, is it?
+$yum_00b900001 |:| Hey, should we tell an official?
+$yum_00b900002 |:| She's looking right at me!
+$yum_00b900003 |:| The savior's here, huh? I'd like to see her!
+$yum_00b900004 |:| Where was that wanted poster?
+$yum_00b900005 |:| Yusnaan's not so safe after all.
+$yum_00b900006 |:| I thought the savior was here to save us.
+$yum_00b902000 |:| After I eat, I'm off to Luxerion to offer my prayers.
+$yum_00b902001 |:| I heard there was some sort of incident in Luxerion. I hope everything's okay.
+$yum_00b902002 |:| There's a scientist in the Wildlands who knows everything about Fuzzy Sheep.
+$yum_00b902003 |:| The people in the Wildlands are friendly and sincere{—}qualities you don't find out here.
+$yum_00b902004 |:| Have you seen the sandstorm in the Dead Dunes? Is that what the world's end will look like?
+$yum_00b902005 |:| Rumor has it, there's sacred treasure buried in the Dead Dunes.
+$yum_00b909800 |:| Chaos seems to appear everywhere in Yusnaan. What's going on?
+$yum_00b909801 |:| When the Chaos gets thick, it's time to have fun and forget about it all!
+$yum_00b909802 |:| Lord Snow used to protect the city, but it hasn't been safe for a while.
+$yum_00b909803 |:| The city isn't safe anymore. The end must be near.
+$yum_00b909804 |:| Monsters emerge from the Chaos at every turn. It's not safe.
+$yum_00b909805 |:| My life may be in danger, but as long as I can have fun, who cares?
+$yum_00b909806 |:| The guards have closed off the gate to the industrial area because of the growing number of monsters.
+$yum_00b909807 |:| Of course the Chaos scares me, but there's nothing I can do about it, so I just accept it.
+$yum_00b909808 |:| People bury themselves in the festivities to forget their fears.
+$yum_00b909809 |:| The guards are always chasing after someone.
+$yum_00b909810 |:| You need an ID card to get into the Augur's Quarter? Is the Patron trying to remove people from around the palace?
+$yum_00b909811 |:| I want to keep dreaming and holding on to hope till the very end.
+$yum_00b909812 |:| The residents here are people who have decided to spend their last days enjoying life.
+$yum_00b909813 |:| Thanks to the world's last fal'Cie, the city has remained quite prosperous.
+$yum_00b909814 |:| There was a time when people fought over the fal'Cie's production.
+$yum_00b909815 |:| Sitting here watching the fireworks makes me ponder a lot of things.
+$yum_00b909816 |:| Fireworks are beautiful because they're fleeting. I remember seeing fireworks on the day I proposed...
+$yum_00b909b14 |:| Lord Snow is the one who put a stop to all the fighting.
+$yum_00b909b15 |:| The only valuable thing in life is the memories you carry with you.
+$yum_00b919600 |:| The restaurants will provide free meals for the laborers helping with the reconstruction.
+$yum_00b919601 |:| They're looking for volunteers to help rebuild the statue in the Augur's Quarter.
+$yum_00b919602 |:| Come on, chin up! Eat something. You'll feel better.
+$yum_00b919603 |:| Let's remember how good it is to have a full stomach.
+$yum_00b919604 |:| When things are bad, that's when you want to eat something tasty.
+$yum_00b919605 |:| The restaurants of the Glutton's Quarter use only the most expensive ingredients.
+$yum_00b919606 |:| Apparently, there's a new dish called the savior special at the Banquet of the Lord.
+$yum_00b919607 |:| No matter what happens, this place is always alive with excitement.
+$yum_00b919608 |:| A tasty meal can cheer anyone up in a second!
+$yum_00b919609 |:| I wanted a taste of the expensive dishes served in the Augur's Quarter...
+$yum_00b919610 |:| I heard about the incident in Luxerion. What a world we live in...
+$yum_00b930000 |:| Charges against the savior have been dropped, by order of Lord Snow.
+$yum_00b930001 |:| The real savior actually appeared on stage!
+$yum_00b930002 |:| I heard the savior toppled the statue. Does that mean she'll defy God?
+$yum_00b930003 |:| The Augur's Quarter is a mess. Everything needs to be rebuilt.
+$yum_00b930004 |:| Lord Snow seems a little better. Maybe all isn't lost.
+$yum_00b930005 |:| If it breaks, we fix it. What else are we gonna do with our time?
+$yum_00b930006 |:| This is proof that the end is close.
+$yum_00b930007 |:| Even if the end comes, should we look to God or the savior for help?
+$yum_00b930008 |:| I don't want to pray every day like they do in Luxerion.
+$yum_00b930009 |:| People were able to rebuild their lives 500 years ago.
+$yum_00b930010 |:| Lord Snow was using his powers as a l'Cie to keep the Chaos at bay. What an inspiration!
+$yum_00b930011 |:| Lord Snow's doing well in the palace. Hope we can see him out and about soon!
+$yum_00b930012 |:| I'm gonna help in any way I can!
+$yum_00b930013 |:| The divine statue fell over? The end really is near.
+$yum_00b930014 |:| The world's not over yet, people!
+$yum_00b930015 |:| God bless Lord Snow!
+$yum_00b930016 |:| I believe in our Patron!
+$yum_00b930017 |:| Don't just stand around. Everyone's gotta help with the restoration!
+$yum_00b930018 |:| It's time to rebuild Yusnaan into what it once was.
+$yum_00b930019 |:| The play is canceled. Maybe I should have a quiet night in.
+$yum_00b930020 |:| Things seem livelier than before!
+$yum_00b930021 |:| The people of Yusnaan really stepped up when it mattered.
+$yum_00b930022 |:| The savior is helping people everywhere in the world. Who is she?
+$yum_00b930023 |:| I didn't get a chance to see the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC}'s finale!
+$yum_00b930024 |:| I look forward to the day when I get to see the play again!
+$yum_00b930025 |:| I'm going to make a new wish on the fireworks today.
+$yum_00b930026 |:| I came here to sightsee, but I think I'll volunteer to reconstruct the city instead.
+$yum_00b930027 |:| Rebuilding the city has brought everyone together. I see hope and promise.
+$yum_00b930028 |:| I wanna wish everyone luck!
+$yum_00b930029 |:| By destroying the statue, the savior opened our eyes to the important things.
+$yum_00b930030 |:| The Chaos seems to have retreated a little. Thanks to Lord Snow, I'll bet.
+$yum_00b930031 |:| This trip has been a memorable one, thanks to everyone here!
+$yum_00b930032 |:| The end has always scared me, but I've learned the importance of looking on the bright side.
+$yum_00b930033 |:| I hear they're making a sequel to the {TEXT_ITALIC}Song of the Savior{TEXT_ITALIC}.
+$yum_00b930b09 |:| A broken statue or two is nothing!
+$yum_99_104100 |:| 
+$yum_99_104101 |:| They're amazing!
+$yum_99_104102 |:| Nice one!
+$yum_99_104103 |:| They're the best!
+$yum_99_104104 |:| 
+$yum_99_104105 |:| 
+$yum_99_104106 |:| 
+$yum_99_104107 |:| 
+$yum_99_104108 |:| 
+$yum_99_104200 |:| 
+$yum_99_104201 |:| 
+$yum_99_104202 |:| 
+$yum_99_104203 |:| 
+$yum_99_104204 |:| 
+$yum_99_104300 |:| What a great fight!
+$yum_99_104301 |:| Looking good!
+$yum_99_104302 |:| Good job!
+$yum_99_104303 |:| You're good!
+$yum_99_104304 |:| You're awesome!
+$yum_99_104305 |:| It's the victory fanfare!
+$yum_99_104306 |:| Lightning!
+$yum_99_104307 |:| Lightning!
+$yum_99_104308 |:| Lightning! Lightning!
+$yum_99_104309 |:| 
+$yum_99_104310 |:| 
+$yum_99_104311 |:| It's the victory fanfare!
+$yum_99_104312 |:| It's the victory fanfare!
+$yum_99_104313 |:| Lightning!
+$yum_99_104314 |:| Lightning!
+$yum_99_104315 |:| Lightning!
+$yum_99_104316 |:| Lightning!
+$yum_99_104317 |:| Lightning! Lightning!
+$yum_99_104318 |:| Lightning! Lightning!
+$yum_99_104319 |:| Lightning! Lightning!
+$yum_99_104320 |:| Lightning! Lightning!
+$yum_99_104321 |:| Lightning! Lightning!
+$yum_99_104322 |:| 
+$yum_99_104323 |:| 
+$yum_99_104400 |:| Well, that was disappointing!
+$yum_99_104401 |:| Wasn't worth my time.
+$yum_99_104402 |:| Better luck next time!
+$yum_99_104403 |:| What a gyp!
+$yum_99_104404 |:| That was too bad.
+$yum_99_104405 |:| Train a little harder!
+$yum_99_104406 |:| Get outta here!
+$yum_99_104407 |:| You better train harder!
+$yum_99_104408 |:| There's always tomorrow.
+$yum_99_104409 |:| What was that!?
