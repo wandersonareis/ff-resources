@@ -18,6 +18,23 @@ export type { TagCatalog };
 export const TAG_NAMES = ['PC', 'MCR', 'BUTTON', 'ICON'] as const;
 export type TagName = (typeof TAG_NAMES)[number];
 
+/**
+ * Classes do FF13 (codec `ztr/encoding`): pares de bytes com hex
+ * autoritativo. Entram no estágio 1 quando o catálogo da versão as serve —
+ * o FFX nunca as emite, então a lista efetiva vem do catálogo.
+ */
+export const FF13_TAG_NAMES = [
+  'COLOR',
+  'ICON',
+  'BTN',
+  'VAR',
+  'CTR',
+  'KEY',
+  'PAGE',
+  'NL',
+  'TAB',
+] as const;
+
 /** Máximo de itens do estágio 2 por query (filtre para ver mais). */
 const MAX_VALUES = 200;
 
@@ -83,14 +100,18 @@ const EXACT_TAGS = new Set([
 const GRAMMAR_RULES: RegExp[] = [
   /^(?:SPACE|TIME):[0-9A-Fa-f]{1,2}$/,
   /^CLR:/, // qualquer nome de cor: ColorToByte nunca falha
-  /^COLOR:/,
-  /^(?:ICON|BUTTON):[0-9A-Fa-f]{1,2}:.*$/,
+  /^COLOR:.+$/, // FF13: qualquer nome da paleta
+  /^(?:ICON|BUTTON):[0-9A-Fa-f]{1,2}:.*$/, // FFX (1 byte + nome)
+  /^(?:ICON|BTN):[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}(?::.*)?$/, // FF13 (par + nome)
   /^CHOICE:[0-9A-Fa-f]{1,2}$/,
-  /^VAR:[0-9A-Fa-f]{1,2}$/,
+  /^VAR:[0-9A-Fa-f]{1,2}$/, // FFX
+  /^(?:VAR|CTR|KEY|PAGE|NL|TAB):[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$/, // FF13
   /^PC:[0-9A-Fa-f]{1,2}:.*$/,
   /^MCR:s[0-9A-Fa-f]{1,2}:l[0-9A-Fa-f]{1,2}:.*$/,
   /^KEY:[0-9A-Fa-f]{2}$/,
   /^CMD:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}$/,
+  /^RAW:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$/, // FF13: bytes crus
+  /^B:[0-9A-Fa-f]{2}$/, // FF13: byte isolado
   /^UNKCHR:[0-9A-Fa-f]{2}$/,
   /^UNKDBLCHR:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$/,
   /^HEX:[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2})*$/,
@@ -117,6 +138,12 @@ function matchesGrammar(inner: string): boolean {
 
 /** Identidade do valor dentro do catálogo: ["PC","01"] / ["MCR","s01:l05"]. */
 function semanticKey(inner: string): [tag: string, key: string] | null {
+  // FF13 primeiro: o par de bytes (`ICON:F0:40:Clock`) também casa o padrão
+  // do FFX (`ICON:01:Nome`) — e o par é a identidade que manda lá.
+  const pair = /^(ICON|BTN|VAR|CTR|KEY|PAGE|NL|TAB):([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})(?::|$)/.exec(inner);
+  if (pair) return [pair[1], pair[2].toUpperCase()];
+  const color = /^COLOR:(.+)$/.exec(inner);
+  if (color) return ['COLOR', color[1].trim().toUpperCase()];
   const named = /^(PC|BUTTON|ICON):([0-9A-Fa-f]{1,2}):/.exec(inner);
   if (named) return [named[1], named[2].toUpperCase()];
   const mcr = /^MCR:s([0-9A-Fa-f]{1,2}):l([0-9A-Fa-f]{1,2}):/.exec(inner);
@@ -199,6 +226,18 @@ export function isPartialTagQuery(query: string): boolean {
 }
 
 /**
+ * Nomes do estágio 1: os do catálogo da versão quando ele carregou (o FFX
+ * serve PC/MCR/BUTTON/ICON; o FF13 serve COLOR/ICON/BTN/VAR/CTR/KEY/PAGE/NL/
+ * TAB), com fallback para a lista estática do FFX.
+ */
+function stage1Names(catalog: TagCatalog | null): string[] {
+  const fromCatalog = (catalog?.tags ?? [])
+    .map((t) => t.tag.toUpperCase())
+    .filter((name) => name.length > 0);
+  return fromCatalog.length > 0 ? fromCatalog : [...TAG_NAMES];
+}
+
+/**
  * Itens do popup para a query atual. Query sem `:` → estágio 1 (nomes);
  * `TAG:filtro` → valores do catálogo filtrados por índice ou texto.
  */
@@ -207,20 +246,22 @@ export function computeSuggestions(query: string, catalog: TagCatalog | null): T
 
   if (colon < 0) {
     const upper = query.toUpperCase();
-    return TAG_NAMES.filter((name) => name.startsWith(upper)).map((name) => {
-      const entry = catalog?.tags?.find((t) => t.tag === name);
-      return {
-        kind: 'tag' as const,
-        insert: entry?.prefix ?? `{${name}:`,
-        label: name,
-        detail: entry?.hint ?? '',
-      };
-    });
+    return stage1Names(catalog)
+      .filter((name) => name.startsWith(upper))
+      .map((name) => {
+        const entry = catalog?.tags?.find((t) => t.tag.toUpperCase() === name);
+        return {
+          kind: 'tag' as const,
+          insert: entry?.prefix ?? `{${name}:`,
+          label: name,
+          detail: entry?.hint ?? '',
+        };
+      });
   }
 
   const name = query.slice(0, colon).toUpperCase();
-  if (!(TAG_NAMES as readonly string[]).includes(name)) return [];
-  const entry = catalog?.tags?.find((t) => t.tag === name);
+  if (!stage1Names(catalog).includes(name)) return [];
+  const entry = catalog?.tags?.find((t) => t.tag.toUpperCase() === name);
   if (!entry) return [];
 
   const filter = query

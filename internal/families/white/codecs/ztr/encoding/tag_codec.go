@@ -77,6 +77,12 @@ func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
 	return nil, false
 }
 
+// EncodeTag é a face pública de encodeTag: os bytes de uma tag (sem as
+// chaves). Serve para validar uma tag digitada/sugerida sem passar pela
+// máquina de estados inteira — é o que o catálogo e o e2e usam para garantir
+// que nada é sugerido sem codificar.
+func (ks *KeySet) EncodeTag(inner string) ([]byte, bool) { return ks.encodeTag(inner) }
+
 // closeBrace encontra o '}' de uma tag aberta em `open`, limitando o
 // conteúdo interno a 32 runas (o mesmo limite do DeriveSymbolString do C#).
 // Devolve o índice do '}' ou false quando não há fechamento no limite — o

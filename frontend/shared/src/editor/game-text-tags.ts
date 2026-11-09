@@ -395,15 +395,19 @@ export function extractChipLabel(inner: string): string {
   if (LOCKED_ASIS_PREFIXES.some((p) => upper.startsWith(p))) {
     return `{${trimmed}}`;
   }
+  const segments = trimmed.split(':');
+  // FF13 sem nome (`{VAR:F4:40}`, `{RAW:81:40}`, `{B:FF}`): o último segmento
+  // seria o 2º byte do par, que não diz nada — mostra a tag inteira. Vem
+  // ANTES do atalho do FFX, cujo `{VAR:01}` tem um byte só.
+  const head = segments[0].toUpperCase();
+  const pairClass = ['VAR', 'CTR', 'KEY', 'PAGE', 'NL', 'TAB', 'RAW', 'ICON', 'BTN'].includes(head);
+  const namelessFf13 =
+    (pairClass && segments.length === 3) || (head === 'B' && segments.length === 2);
+  if (namelessFf13) return `{${trimmed}}`;
   if (upper === 'VAR' || upper.startsWith('VAR:')) {
     return 'Variável';
   }
-  const segments = trimmed.split(':');
   if (segments.length === 1) return trimmed || `{${trimmed}}`;
-  // Classe:hex:hex (sem nome) — FF13 (VAR/CTR/KEY/RAW/B/PAGE/NL/TAB).
-  if (FF13_LOCKED_PREFIXES.some((p) => upper.startsWith(p))) {
-    return `{${trimmed}}`;
-  }
   const last = segments[segments.length - 1].trim();
   const unquoted = last.replace(/^"|"$/g, '').trim();
   return unquoted || trimmed;
