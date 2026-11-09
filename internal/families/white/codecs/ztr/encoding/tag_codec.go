@@ -39,7 +39,17 @@ func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
 	if class, ok := tagClassOf(upper); ok {
 		if class == ClassColor {
 			// Única classe resolvida por nome.
-			tag, found := ks.tagByName(ClassColor, strings.TrimSpace(rest))
+			name := strings.TrimSpace(rest)
+			tag, found := ks.tagByName(ClassColor, name)
+			if !found {
+				// Aceita qualquer caixa ("gold" -> "Gold").
+				for _, t := range ks.Color {
+					if strings.EqualFold(t.Name, name) {
+						tag, found = t, true
+						break
+					}
+				}
+			}
 			if !found {
 				return nil, false
 			}
