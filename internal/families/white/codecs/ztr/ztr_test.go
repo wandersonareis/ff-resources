@@ -197,6 +197,14 @@ func TestTextDecodeEncode(t *testing.T) {
 				}
 				t.Errorf("txt diverge do oráculo no byte %d: got %q, want %q",
 					i, snippet(got, i), snippet(want, i))
+				// Atualiza os oráculos com UPDATE_ORACLES=1 (a troca de
+				// sintaxe das tags exige regenerar os .txt).
+				if os.Getenv("UPDATE_ORACLES") != "" {
+					if err := os.WriteFile(testdata(fx.dir, fx.txt), got, 0o644); err != nil {
+						t.Fatalf("gravando oráculo: %v", err)
+					}
+					t.Logf("oráculo atualizado: %s", fx.txt)
+				}
 			}
 
 			// round-trip por linha: encode(decode(raw)) == raw
@@ -243,6 +251,12 @@ func TestV2PerGame(t *testing.T) {
 		want := stripCharaTags(ks, readFixture(t, filepath.Join("v2", txtName)))
 		if got := ztr.WriteTxt(f.IDs, texts); !bytes.Equal(got, want) {
 			t.Errorf("%s: txt diverge do oráculo (%d vs %d bytes)", game, len(got), len(want))
+			if os.Getenv("UPDATE_ORACLES") != "" {
+				if err := os.WriteFile(testdata("v2", txtName), got, 0o644); err != nil {
+					t.Fatalf("gravando oráculo: %v", err)
+				}
+				t.Logf("oráculo atualizado: %s", txtName)
+			}
 		}
 	}
 }

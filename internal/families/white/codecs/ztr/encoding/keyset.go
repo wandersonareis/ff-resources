@@ -3,47 +3,43 @@ package encoding
 // KeySet é a composição de dicionários usada por um par (game, codepage),
 // equivalente aos switches dos helpers C# (KeysDecoder/KeysEncoder LJ/Ch/Kr).
 //
-// As ordens de consulta preservam a sequência de condições do C# — repare
-// que decode e encode NÃO coincidem (exchara/special invertidos) e que o
-// chara fica no meio da ordem de decode, antes de special.
+// Os pares agora são Tag (classe + bytes + nome de display): a identidade é
+// o PAR, e a consulta é por CLASSE numa ordem única (ver indexes.go). O
+// chara fica no meio da ordem, como no C#.
 type KeySet struct {
 	Game     GameCode
 	Codepage Codepage
 	Charset  Charset // codepage física (texto comum)
 
-	Single  []KVByte // SingleKeys (comum): 0x00..0x05
-	Color   []KVPair // por jogo + codepage
-	Icon    []KVPair
-	Btn     []KVPair
-	ExChara []KVPair // comum
-	Special []KVPair // base comum + sufixo por codepage
-	Unk     []KVPair // comum
-	Unk2    []KVPair // comum; Ch não usa (nil), como no C#
+	Single  []KVByte // 0x00..0x05
+	Color   []Tag
+	Icon    []Tag
+	Btn     []Tag
+	Special []Tag // PAGE/NL/TAB + VAR/CTR/KEY
+	Raw     []Tag // exchara + unk
+	Raw2    []Tag // unk2; Ch não usa (nil), como no C#
+	Chara   []CharaEntry
 
-	// chara: trails comuns + lead por codepage.
-	Chara     []CharaEntry
 	charaLead byte
 
-	decodeOrder []string
-	encodeOrder []string
-
 	// Índices por categoria (montados por buildIndexes; imutáveis depois).
-	singleFwd map[byte]string
-	singleRev map[string]byte
-	pairFwd   map[string]map[uint16]string // categoria -> par -> tag
-	pairRev   map[string]map[string]uint16 // categoria -> tag -> par
-	charaFwd  map[uint16]rune              // par -> runa
-	charaRev  map[rune]uint16              // runa -> par (1ª ocorrência)
+	singleFwd map[byte]string             // byte -> tag de byte único
+	singleRev map[string]byte             // tag de byte único -> byte
+	pairFwd   map[TagClass]map[uint16]Tag // classe -> par -> tag
+	nameFwd   map[TagClass]map[string]Tag // classe -> nome -> tag (COLOR)
+	charaFwd  map[uint16]rune             // par -> runa
+	charaRev  map[rune]uint16             // runa -> par (1ª ocorrência)
 }
 
-// Categorias de pares, na ordem em que o C# as consulta por codepage.
-const (
-	catColor   = "color"
-	catIcon    = "icon"
-	catBtn     = "btn"
-	catChara   = "chara"
-	catExChara = "exchara"
-	catSpecial = "special"
-	catUnk     = "unk"
-	catUnk2    = "unk2"
+// Ordem de consulta dos pares. O C# intercalava o chara entre Btn e Special;
+// a ordem do encoder era exchara antes de special. Como NENHUM par aparece
+// em duas categorias (validado pelo gerador), uma ordem única serve para os
+// dois sentidos.
+var (
+	pairPreChara  = []TagClass{ClassColor, ClassIcon, ClassBtn}
+	pairPostChara = []TagClass{
+		ClassPage, ClassNL, ClassTab,
+		ClassVar, ClassCtr, ClassKey,
+		ClassRaw,
+	}
 )

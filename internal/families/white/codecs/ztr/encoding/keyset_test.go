@@ -27,20 +27,24 @@ func TestPrepareKeySet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if v, ok := ks.DecodeByte(0x00); !ok || v != "{End}" {
-		t.Errorf("DecodeByte(0x00) = %q, %v; queria {End}", v, ok)
+	if v, ok := ks.DecodeByte(0x00); !ok || v != "{END}" {
+		t.Errorf("DecodeByte(0x00) = %q, %v; queria {END}", v, ok)
 	}
-	if b, ok := ks.EncodeByte("{End}"); !ok || b != 0x00 {
-		t.Errorf("EncodeByte({End}) = %v, %v; queria 0", b, ok)
+	if b, ok := ks.EncodeByte("{END}"); !ok || b != 0x00 {
+		t.Errorf("EncodeByte({END}) = %v, %v; queria 0", b, ok)
 	}
 
-	// ColorKeys ff131 lj: (0xF9,0x32) -> "{Color Ex00}".
+	// ColorKeys ff131 lj: (0xF9,0x32) -> {COLOR:EXTRA00}.
 	tag, r, isRune, ok := ks.resolveDecodePair(0xF9, 0x32)
-	if !ok || isRune || tag != "{Color Ex00}" {
-		t.Errorf("resolveDecodePair(F9,32) = %q,%v,%v,%v; queria {Color Ex00}", tag, r, isRune, ok)
+	if !ok || isRune || tag.Class != ClassColor || tag.Name != "EXTRA00" || tag.Text() != "{COLOR:EXTRA00}" {
+		t.Errorf("resolveDecodePair(F9,32) = %+v,%v,%v,%v; queria COLOR:EXTRA00", tag, r, isRune, ok)
 	}
-	if b1, b2, ok := ks.resolveEncodeTag("{Color Ex00}"); !ok || b1 != 0xF9 || b2 != 0x32 {
-		t.Errorf("resolveEncodeTag({Color Ex00}) = %02X %02X, %v; queria F9 32", b1, b2, ok)
+	if b, ok := ks.encodeTag("COLOR:EXTRA00"); !ok || b[0] != 0xF9 || b[1] != 0x32 {
+		t.Errorf("encodeTag(COLOR:EXTRA00) = % X, %v; queria F9 32", b, ok)
+	}
+	// O mesmo nome em outra codepage resolve outro par (paleta compartilhada).
+	if b, ok := ks.encodeTag("COLOR:White"); !ok || b[0] != 0xF9 || b[1] != 0x40 {
+		t.Errorf("encodeTag(COLOR:White) = % X, %v; queria F9 40", b, ok)
 	}
 
 	// Chara (novo formato, sem chaves): par 0x85 0x40 -> '€'; e o reverse
@@ -84,12 +88,25 @@ func TestPrepareKeySet(t *testing.T) {
 	}
 
 	// Composição do special: base comum + sufixo LJ.
-	// (0x40,0x70) -> {TEXT_NEW_PAGE}; (0xF4,0x40) -> {Entity 1}.
-	if tag, _, _, ok := ks.resolveDecodePair(0x40, 0x70); !ok || tag != "{TEXT_NEW_PAGE}" {
-		t.Errorf("resolveDecodePair(40,70) = %q, %v; queria {TEXT_NEW_PAGE}", tag, ok)
+	// (0x40,0x70) -> {PAGE:40:70}; (0xF4,0x40) -> {VAR:F4:40}.
+	if tag, _, _, ok := ks.resolveDecodePair(0x40, 0x70); !ok || tag.Text() != "{PAGE:40:70}" {
+		t.Errorf("resolveDecodePair(40,70) = %+v, %v; queria {PAGE:40:70}", tag, ok)
 	}
-	if tag, _, _, ok := ks.resolveDecodePair(0xF4, 0x40); !ok || tag != "{Entity 1}" {
-		t.Errorf("resolveDecodePair(F4,40) = %q, %v; queria {Entity 1}", tag, ok)
+	if tag, _, _, ok := ks.resolveDecodePair(0xF4, 0x40); !ok || tag.Text() != "{VAR:F4:40}" {
+		t.Errorf("resolveDecodePair(F4,40) = %+v, %v; queria {VAR:F4:40}", tag, ok)
+	}
+	// Entity virou VAR: hex puro, SEM nome.
+	if b, ok := ks.encodeTag("VAR:F4:40"); !ok || b[0] != 0xF4 || b[1] != 0x40 {
+		t.Errorf("encodeTag(VAR:F4:40) = % X, %v; queria F4 40", b, ok)
+	}
+	// O MESMO nome de ícone existe em bytes diferentes por jogo: o hex é
+	// autoritativo (Icon Shield = F2:63 no ff132 e F2:5C no ff133).
+	ks3, err := KeySetFor(FF133, LatinJapanese)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if t3, _, _, ok := ks3.resolveDecodePair(0xF2, 0x5C); !ok || t3.Text() != "{ICON:F2:5C:Shield}" {
+		t.Errorf("resolveDecodePair(F2,5C) ff133 = %+v, %v; queria {ICON:F2:5C:Shield}", t3, ok)
 	}
 
 	// Contagens da composição (análise dos fontes C#).
@@ -103,14 +120,17 @@ func TestPrepareKeySet(t *testing.T) {
 	if len(ks.Special) != 11 {
 		t.Errorf("len(Special lj) = %d; queria 11", len(ks.Special))
 	}
+	if len(ks.Raw) != 60 || len(ks.Raw2) != 10 {
+		t.Errorf("ff131 lj: raw=%d raw2=%d; queria 60/10", len(ks.Raw), len(ks.Raw2))
+	}
 
 	// Ch não usa Unk2Keys (nulo no KeySet — igual ao C#).
 	ksCh, err := KeySetFor(FF131, Chinese)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ksCh.Unk2 != nil {
-		t.Error("KeySet ch deveria ter Unk2 nil")
+	if ksCh.Raw2 != nil {
+		t.Error("KeySet ch deveria ter Raw2 nil")
 	}
 	if len(ksCh.Special) != 10 {
 		t.Errorf("len(Special ch) = %d; queria 10", len(ksCh.Special))
@@ -127,12 +147,12 @@ func TestPrepareKeySet(t *testing.T) {
 	}
 	found := false
 	for _, e := range ksKr.Color {
-		if e.B1 == 0xAC && e.B2 == 0x93 && e.Value == "{Color Ex00}" {
+		if e.B1 == 0xAC && e.B2 == 0x93 && e.Class == ClassColor && e.Name == "EXTRA00" {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("color KR ff131 deveria ter (AC,93) -> {Color Ex00}")
+		t.Error("color KR ff131 deveria ter (AC,93) -> COLOR:EXTRA00")
 	}
 }
 
@@ -152,15 +172,15 @@ func TestDecodeEncodeLine(t *testing.T) {
 		{[]byte("Hello world\x00\x00"), "Hello world"},
 		// terminador isolado: consome 00 00 em silêncio.
 		{[]byte("\x00\x00"), ""},
-		// {End}: 00 isolado seguido de byte não-zero.
-		{[]byte("A\x00B\x00\x00"), "A{End}B"},
+		// {END}: 00 isolado seguido de byte não-zero.
+		{[]byte("A\x00B\x00\x00"), "A{END}B"},
 		// tag single {TEXT_ITALIC}.
 		{[]byte("\x02italico\x00\x00"), "{TEXT_ITALIC}italico"},
-		// color + chara + texto.
+		// color (por nome) + chara + texto.
 		{[]byte{0xF9, 0x40, 'X', 0x85, 0x57, 'Y', 0x00, 0x00},
-			"{Color White}X—Y"},
-		// {FF}.
-		{[]byte{0xFF, 'a', 0x00, 0x00}, "{FF}a"},
+			"{COLOR:White}X—Y"},
+		// {B:FF}.
+		{[]byte{0xFF, 'a', 0x00, 0x00}, "{B:FF}a"},
 		// katakana/fullwidth (multibyte do charset): 0x82 0x60 = 'Ａ'.
 		{[]byte{0x82, 0x60, 0x00, 0x00}, "Ａ"},
 		// multibyte cujo trail é 0x40..0x7e (não pode virar tag).
