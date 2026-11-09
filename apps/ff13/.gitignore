@@ -1,0 +1,9 @@
+.task
+.wails
+bin
+frontend/dist
+frontend/node_modules
+
+# Config local (caminhos de instalação dos jogos/binários): nunca versionada.
+# O app cria o arquivo com placeholders quando ele não existe.
+ff13.config.json

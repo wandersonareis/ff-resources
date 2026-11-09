@@ -1,0 +1,19 @@
+/* Tipografia do FF13: NewRodin Pro DB (fonte do jogo) no corpo e Fira Code no
+   slot mono. Os tokens --font-sans/--font-heading/--font-malva-medium e
+   --font-mono são redefinidos em src/app/theme.css. */
+
+@font-face {
+  font-family: 'NewRodin Pro DB';
+  src: url('/fonts/FOT-NewRodin-Pro-DB.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  src: url('/fonts/FiraCode-VF.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
