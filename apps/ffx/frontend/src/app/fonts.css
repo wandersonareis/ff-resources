@@ -1,0 +1,16 @@
+/* Geist Mono local (subconjunto latin) — slot mono do design do FFX.
+   Substitui o next/font/google do projeto antigo: no Wails não há SSR, então
+   a fonte é um arquivo local empacotado no public/. */
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
