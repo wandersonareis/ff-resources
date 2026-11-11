@@ -231,8 +231,9 @@ Regras do esquema:
 - a pasta `filelist/` de `data/partN` NÃO aparece em `/data`: os índices já
   estão no grupo "Filelist".
 
-`wails3 build` do app FF13 passa (Next build + bindings + exe). O binário fica
-em `apps/ff13/bin/ff13.exe`.
+`wails3 build` do app FF13 passa (Vite build + bindings + exe). O binário fica
+em `apps/ff13/bin/pulse.exe` (nome de distribuição; o launcher o copia para
+`apps/launcher/bin/ff13/pulse.exe`).
 
 ## Kinds de texto do FF13 (a régua é o DIRETÓRIO)
 
@@ -306,7 +307,8 @@ O app FFX deste repositório foi migrado de Next.js para **Vite + React**:
 - os imports da UI foram reescritos de `bindings/ffxresources/...` para
   `bindings/ffresources/...` (o módulo real do monorepo).
 
-O `wails3 build` do app FFX passa e o binário fica em `apps/ffx/bin/ffx.exe`.
+O `wails3 build` do app FFX passa e o binário fica em `apps/ffx/bin/spira.exe`
+(nome de distribuição; o launcher o copia para `apps/launcher/bin/ffx/spira.exe`).
 Para abrir com a MESMA árvore do projeto antigo, o `apps/ffx/bin/config/`
 recebeu o `config.json` antigo e `apps/ffx/bin/data` é um **junction** para
 `F:\ffxWails\FFX_Resources\build\bin\data` (o projeto antigo não é alterado).

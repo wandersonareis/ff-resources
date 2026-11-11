@@ -36,25 +36,43 @@ testdata/ffx/         fixtures Go do FFX (a trazer manualmente)
 
 ## Build
 
+Todos os comandos abaixo rodam **a partir da raiz**. O `Taskfile.yml` despacha
+para cada app — e como `wails3 task` embute o runner de tasks, funciona sem
+instalar o go-task (com o `task` instalado, troque `wails3 task` por `task`):
+
 ```powershell
 # Gate rápido (compila tudo, sem UI):
 go build ./...
 
-# App FFX (UI Vite + React puro):
-wails3 build -dir apps/ffx
+# Build dos três apps, já deixando ffx/ff13 acessíveis na distribuição do launcher:
+wails3 task build
 
-# App FF13 (UI copiada do FFX + backend White):
-wails3 build -dir apps/ff13
-wails3 build -dir apps/launcher
+# Um app só (saídas: spira.exe, pulse.exe, launcher.exe):
+wails3 task build:ffx
+wails3 task build:ff13
+wails3 task build:launcher
+
+# Só o stage (copia spira/pulse + manifest.json + assets/ para apps/launcher/bin/):
+wails3 task stage:launcher
+
+# Dev — `wails3 dev` não tem -dir, então cada task entra na pasta do app:
+wails3 task dev:ffx
+wails3 task dev:ff13
+wails3 task dev:launcher
+
+# Pacote de distribuição: dist/ com launcher + spira + pulse + manifest + assets
+wails3 task bundle
+```
+
+Nomes de distribuição (definidos em `manifest.json`): o FFX é **`spira.exe`** e
+o FF13 é **`pulse.exe`** — o launcher lê o `manifest.json` ao lado do
+executável e abre `ffx/spira.exe` ou `ff13/pulse.exe`.
 
 # Importar dados FF13 (7z -> mods/partN; filelist -> data/partN):
 go run ./scripts/ff13import -part part1 ^
   -game "D:\Steam\steamapps\common\FINAL FANTASY XIII" ^
   -data "F:\ff-resources\apps\ff13\bin\data\part1" ^
   -mods "F:\ff-resources\apps\ff13\bin\data\mods\part1"
-
-# App FFX (backend compila; UI real é a fase seguinte):
-go build ./apps/ffx
 ```
 
 ## Notas

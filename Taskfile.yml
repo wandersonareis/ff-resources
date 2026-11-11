@@ -1,49 +1,107 @@
 version: '3'
 
-# Orquestrador do monorepo ff-resources (Go + Wails v3, módulo raiz único).
-# Cada app tem o próprio build/ gerado pelo wails3 init; aqui só despachamos.
+# Orquestrador do monorepo ff-resources (Go + Wails v3, modulo raiz unico).
+# Cada app tem o proprio build/ gerado pelo wails3 init; aqui so despachamos.
+#
+# Nomes de distribuicao (manifest.json do launcher):
+#   ffx  -> apps/ffx/bin/spira.exe   -> apps/launcher/bin/ffx/spira.exe
+#   ff13 -> apps/ff13/bin/pulse.exe  -> apps/launcher/bin/ff13/pulse.exe
+#
+# O launcher e a tela de escolha: le manifest.json ao lado do executavel e abre
+# o app escolhido. Para dev e build funcionarem, os builds dos jogos tem de
+# estar acessiveis ao lado de launcher.exe - e o que `stage:launcher` faz.
+#
+# Notas do runner (wails3 task / go-task), verificadas nesta versao:
+#   - `dir` no nivel da task funciona; `dir` por comando e ignorado.
+#   - task chamada NAO herda o `dir` de quem chama, por isso `task: stage:launcher`
+#     roda na raiz mesmo quando chamada de dentro de uma task com `dir: apps/launcher`.
 
 vars:
-  BIN_FF13: apps/ff13/bin/ff13.exe
+  BIN_FFX: apps/ffx/bin/spira.exe
+  BIN_FF13: apps/ff13/bin/pulse.exe
   BIN_LAUNCHER: apps/launcher/bin/launcher.exe
+  STAGE_SCRIPT: scripts/stage-launcher.ps1
+  BUNDLE_SCRIPT: scripts/bundle.ps1
 
 tasks:
   compile:
-    desc: Compila tudo (gate rápido, sem UI): go build ./...
+    desc: "Compila tudo (gate rapido, sem UI): go build ./..."
+    run: once
     cmds:
       - go build ./...
 
   test:
-    desc: go test ./...  (ainda depende de testdata/ffx e do fixture build/bin/data)
+    desc: "go test ./... (ainda depende de testdata/ffx e do fixture build/bin/data)"
     cmds:
       - go test ./... -count=1
 
-  build:ff13:
-    desc: wails3 build do app FF13
-    dir: apps/ff13
-    cmds:
-      - wails3 build
-
-  build:launcher:
-    desc: wails3 build do launcher
-    dir: apps/launcher
-    cmds:
-      - wails3 build
-
   build:ffx:
-    desc: wails3 build do app FFX (ainda com frontend/out placeholder — UI real é fase seguinte)
-    dir: apps/ffx
+    desc: "wails3 build do FFX (saida: apps/ffx/bin/spira.exe)"
+    run: once
     cmds:
       - wails3 build
+    dir: apps/ffx
+
+  build:ff13:
+    desc: "wails3 build do FF13 (saida: apps/ff13/bin/pulse.exe)"
+    run: once
+    cmds:
+      - wails3 build
+    dir: apps/ff13
+
+  # Copia os builds dos jogos + manifest.json + assets/ para apps/launcher/bin/,
+  # que e a pasta de execucao do launcher (onde ele procura o manifest.json).
+  stage:launcher:
+    desc: "copia spira/pulse + manifest.json + assets/ para apps/launcher/bin/"
+    run: once
+    preconditions:
+      - sh: test -f {{.BIN_FFX}}
+        msg: "Build do FFX ausente ({{.BIN_FFX}}). Rode: task build:ffx"
+      - sh: test -f {{.BIN_FF13}}
+        msg: "Build do FF13 ausente ({{.BIN_FF13}}). Rode: task build:ff13"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.STAGE_SCRIPT}}
+
+  # `dir: apps/launcher` vale para o `wails3 build`; a task chamada roda na raiz.
+  build:launcher:
+    desc: "wails3 build do launcher, ja com os apps staged em bin/"
+    run: once
+    cmds:
+      - task: stage:launcher
+      - wails3 build
+    dir: apps/launcher
 
   build:
-    desc: build dos três apps
+    desc: "build dos tres apps (ffx, ff13, launcher) + stage no launcher"
+    run: once
     cmds:
+      - task: build:ffx
       - task: build:ff13
       - task: build:launcher
-      - task: build:ffx
+
+  # `wails3 dev` nao tem -dir: cada task entra na pasta do app. O dev nao
+  # rebuilda os jogos - stage:launcher so exige que os builds existam.
+  dev:ffx:
+    desc: "wails3 dev do FFX a partir da raiz"
+    cmds:
+      - wails3 dev
+    dir: apps/ffx
+
+  dev:ff13:
+    desc: "wails3 dev do FF13 a partir da raiz"
+    cmds:
+      - wails3 dev
+    dir: apps/ff13
+
+  dev:launcher:
+    desc: "wails3 dev do launcher (staged: apps + manifest + assets em bin/)"
+    cmds:
+      - task: stage:launcher
+      - wails3 dev
+    dir: apps/launcher
 
   bundle:
-    desc: monta dist/ com launcher + ffx + ff13 + manifest + assets
+    desc: "monta dist/ com launcher + spira + pulse + manifest + assets"
     cmds:
-      - echo "bundle: copiar binários, manifest.json e assets/ para dist/ (ver docs)"
+      - task: build
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.BUNDLE_SCRIPT}}
