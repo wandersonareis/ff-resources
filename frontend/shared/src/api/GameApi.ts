@@ -14,6 +14,14 @@ export interface TagSuggestion {
   tag: string;
   label: string;
   key: string;
+  /** Swatch representativo (só CLR); nunca vira byte. */
+  hex?: string;
+  /** Grupo de exibição (ex.: "ex" para as semitransparentes). */
+  group?: string;
+  /** Cor semitransparente no jogo (Ex*). */
+  semiTransparent?: boolean;
+  /** White: reset para a cor natural do texto. */
+  reset?: boolean;
 }
 
 export interface TagCatalogEntry {
@@ -25,6 +33,8 @@ export interface TagCatalogEntry {
 
 export interface TagCatalog {
   version: string;
+  /** Idioma da paleta/tabela servida (default "us"). */
+  lang?: string;
   tags: TagCatalogEntry[];
 }
 
@@ -96,7 +106,7 @@ export interface Language {
 
 export interface GameApi {
   /* ---- texto ---- */
-  getTagCatalog(version: string): Promise<TagCatalog | null>;
+  getTagCatalog(version: string, lang?: string): Promise<TagCatalog | null>;
   listEntries(kind: string, version: string): Promise<EntrySummary[]>;
   getEntry(kind: string, id: string, version: string, lang?: string): Promise<FileEntry>;
   getCollection(kind: string, ids: string[], version: string): Promise<Collection>;

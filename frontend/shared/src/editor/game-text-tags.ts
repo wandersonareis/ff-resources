@@ -6,6 +6,14 @@ export interface ColorDefinition {
   label: string;
   name: string;
   hex: string;
+  /** Tag canônica com bytes (FF13) ou {CLR:NOME} (FFX). */
+  tag?: string;
+  /** Grupo de exibição (ex.: "ex"). */
+  group?: string;
+  /** Cor semitransparente no jogo (Ex*). */
+  semiTransparent?: boolean;
+  /** White: reset para a cor natural do texto. */
+  reset?: boolean;
 }
 
 // Nomes canônicos em MAIÚSCULAS, como emitidos por GetColorString.
@@ -22,9 +30,9 @@ export const KNOWN_COLORS: Record<string, ColorDefinition> = {
 };
 
 /**
- * Paleta do FF13 (trilogia XIII) para o `{COLOR:Nome}` do codec novo. Os
- * hexes são só para o CHIP da UI — a cor real sai do jogo. `EXTRA00..28` são
- * slots que o ZTRtool deixou sem nome no ff131: cinza neutro até nomearem.
+ * Paleta do FF13 (trilogia XIII) para exibição de `{CLR:B1:B2:Nome}`. Os
+ * hexes são só representativos — a cor real sai do jogo. As `Ex*` são
+ * semitransparentes e ficam num grupo secundário do popover.
  */
 const FF13_COLOR_HEX: Record<string, string> = {
   White: '#ffffff',
@@ -60,15 +68,57 @@ const FF13_COLOR_HEX: Record<string, string> = {
   NavyBlue: '#2c3e70',
 };
 
-/** Paleta completa do FF13 (EXTRA00..28 entram como cinza neutro). */
+/**
+ * Cores Ex (semitransparentes, majoritariamente sem uso). Os hexes são a
+ * versão de UI amostrada da imagem da paleta; `Ex00` não aparece na imagem
+ * e fica como placeholder escuro.
+ */
+const FF13_EX_COLOR_HEX: Record<string, string> = {
+  Ex00: '#111111',
+  Ex01: '#6f8585',
+  Ex02: '#8a7a66',
+  Ex03: '#8a6f6f',
+  Ex04: '#7f7a55',
+  Ex05: '#5f7f72',
+  Ex06: '#7a7a7a',
+  Ex07: '#8a742e',
+  Ex08: '#7a4a4a',
+  Ex09: '#5f607a',
+  Ex10: '#6f6a2e',
+  Ex11: '#8a4a4a',
+  Ex12: '#4f7a5f',
+  Ex13: '#3f7a7a',
+  Ex14: '#2f5f5f',
+  Ex15: '#6f4a2e',
+  Ex16: '#8a5f5f',
+  Ex17: '#5f602e',
+  Ex18: '#2f6f2f',
+  Ex19: '#4a4a4a',
+  Ex20: '#6f6040',
+  Ex21: '#5a3a3a',
+  Ex22: '#3f3f6f',
+  Ex23: '#5a4a42',
+  Ex24: '#3f3f3f',
+  Ex25: '#3f1f6f',
+  Ex26: '#3f5f5a',
+  Ex27: '#2f2f3f',
+  Ex28: '#4f4f5a',
+};
+
+/** Paleta completa do FF13 (nomeadas + Ex semitransparentes). */
 export const FF13_KNOWN_COLORS: Record<string, ColorDefinition> = (() => {
   const out: Record<string, ColorDefinition> = {};
   for (const [name, hex] of Object.entries(FF13_COLOR_HEX)) {
     out[name.toUpperCase()] = { label: name, name, hex };
   }
-  for (let i = 0; i <= 28; i++) {
-    const name = `EXTRA${String(i).padStart(2, '0')}`;
-    out[name] = { label: name, name, hex: '#9ca3af' };
+  for (const [name, hex] of Object.entries(FF13_EX_COLOR_HEX)) {
+    out[name.toUpperCase()] = {
+      label: name,
+      name,
+      hex,
+      group: 'ex',
+      semiTransparent: true,
+    };
   }
   return out;
 })();
@@ -78,10 +128,20 @@ export function isFf13Version(version: string): boolean {
   return version === 'part1' || version === 'part2' || version === 'part3';
 }
 
-/** Paleta de cores da versão (FFX vs. FF13), sem o "reset". */
+/**
+ * Paleta de cores de DISPLAY da versão (FFX vs. FF13), sem o "reset".
+ *
+ * No FF13 os bytes vêm do catálogo do idioma; esta paleta só serve de
+ * fallback visual e para o FFX. O FFX usa `{CLR:NOME}`; o FF13 usa
+ * `{CLR:B1:B2:Nome}` e por isso não ganha `tag` aqui.
+ */
 export function colorsForVersion(version: string): ColorDefinition[] {
-  const table = isFf13Version(version) ? FF13_KNOWN_COLORS : KNOWN_COLORS;
-  return Object.values(table).filter((c) => !c.name.toUpperCase().endsWith('WHITE'));
+  const ff13 = isFf13Version(version);
+  const table = ff13 ? FF13_KNOWN_COLORS : KNOWN_COLORS;
+  return Object.values(table)
+    // Só `White` é reset; `PureWhite` (part2/3) é uma cor real.
+    .filter((c) => c.name.toUpperCase() !== 'WHITE')
+    .map((c) => (ff13 ? c : { ...c, tag: `{CLR:${c.name}}` }));
 }
 
 export const COLOR_RESET_TAG = 'WHITE';
@@ -318,7 +378,7 @@ export function getColorTagName(colorValue?: string | null): string | null {
  * `{CLR:RGB(...)}`): o rascunho antigo volta a ser cor em vez de chip.
  *
  * Conhece as DUAS paletas: a do FFX (`{CLR:BLUE}`) e a da trilogia FF13
- * (`{COLOR:IceBlue}`) — os nomes não colidem, então um mapa só serve.
+ * (`{CLR:F9:41:IceBlue}`) — os nomes não colidem, então um mapa só serve.
  */
 export function getResolvedColorFromTag(
   tagName: string,
@@ -364,8 +424,6 @@ const FF13_LOCKED_PREFIXES = [
   'RAW:',
   'B:',
   'PAGE:',
-  'NL:',
-  'TAB:',
 ];
 
 /**
@@ -400,7 +458,9 @@ export function extractChipLabel(inner: string): string {
   // seria o 2º byte do par, que não diz nada — mostra a tag inteira. Vem
   // ANTES do atalho do FFX, cujo `{VAR:01}` tem um byte só.
   const head = segments[0].toUpperCase();
-  const pairClass = ['VAR', 'CTR', 'KEY', 'PAGE', 'NL', 'TAB', 'RAW', 'ICON', 'BTN'].includes(head);
+  // Espaço sem quebra: um símbolo visível, nunca um tab.
+  if (head === 'SPACE') return '⍽';
+  const pairClass = ['VAR', 'CTR', 'KEY', 'PAGE', 'NL', 'SPACE', 'RAW', 'ICON', 'BTN'].includes(head);
   const namelessFf13 =
     (pairClass && segments.length === 3) || (head === 'B' && segments.length === 2);
   if (namelessFf13) return `{${trimmed}}`;

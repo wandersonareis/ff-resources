@@ -2,20 +2,9 @@
 
 import { Editor } from '@tiptap/core';
 import { Color } from '@tiptap/extension-color';
-import { TextStyle } from '@tiptap/extension-text-style';
 import StarterKit from '@tiptap/starter-kit';
-import {
-  ChevronDown,
-  DoorOpen,
-  Eraser,
-  Italic,
-  Palette,
-  Redo2,
-  RotateCcw,
-  Trash2,
-  Undo2,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, DoorOpen, Eraser, Italic, Redo2, Trash2, Undo2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../components/ui/button';
 import {
   DropdownMenu,
@@ -25,14 +14,21 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Separator } from '../components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
+import { ColorPopover } from './color-popover';
 import { gameTextParser } from './game-text-parser';
-import { colorsForVersion, extractChipLabel, isLockedTagInner } from './game-text-tags';
+import { extractChipLabel, isLockedTagInner, type ColorDefinition } from './game-text-tags';
 import { splitLeadingPadding, summarizePadding } from './leading-padding';
 import { useApi } from '../api/ApiProvider';
-import { getChipValidator, loadTagCatalog, type TagCatalog } from './tag-catalog';
+import {
+  getChipValidator,
+  loadTagCatalog,
+  paletteFromCatalog,
+  type TagCatalog,
+} from './tag-catalog';
 import { CleanMarksExtension } from './clean-marks.extension';
 import { createDoubleClickSelectionExtension } from './double-click-selection.extension';
 import { GameTagExtension } from './game-tag.extension';
+import { GameTextStyle } from './game-text-style.extension';
 import { LeadingEmptyBlockExtension } from './leading-empty-block.extension';
 import { LockedTagsExtension } from './locked-tags.extension';
 import { createPasteHandlerExtension } from './paste-handler.extension';
@@ -121,9 +117,16 @@ export interface GameTextEditorProps {
   onValueChange: (value: string) => void;
   /** Versão do jogo: define o catálogo de tags (autocomplete/validação). */
   version: string;
+  /** Idioma da paleta/tabela (default "us"). */
+  lang?: string;
 }
 
-export function GameTextEditor({ value, onValueChange, version }: GameTextEditorProps) {
+export function GameTextEditor({
+  value,
+  onValueChange,
+  version,
+  lang = 'us',
+}: GameTextEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   /** Wrapper do editor: container de montagem do popup de sugestões. */
   const popupContainerRef = useRef<HTMLDivElement | null>(null);
@@ -144,6 +147,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
   // parse, colagem e tags digitadas precisam do MESMO validador).
   const api = useApi();
   const [catalog, setCatalog] = useState<TagCatalog | null | undefined>(undefined);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
 
   useEffect(() => {
     onValueChangeRef.current = onValueChange;
@@ -155,13 +159,28 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
 
   useEffect(() => {
     let alive = true;
-    loadTagCatalog(version, api).then((loaded) => {
-      if (alive) setCatalog(loaded);
-    });
+    loadTagCatalog(version, api, lang)
+      .then((loaded) => {
+        if (!alive) return;
+        setCatalog(loaded);
+        setCatalogError(null);
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setCatalog(null);
+        setCatalogError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       alive = false;
     };
-  }, [version, api]);
+  }, [version, api, lang]);
+
+  // Paleta do idioma: no FF13 vem do catálogo (bytes do arquivo); null
+  // significa indisponível, nunca uma paleta de outro idioma.
+  const palette = useMemo(
+    () => paletteFromCatalog(catalog ?? null, version),
+    [catalog, version],
+  );
 
   // O editor nasce com o catálogo da versão e NUNCA é recriado depois:
   // `value` fica FORA das deps de propósito. Recriar o editor a cada tecla
@@ -188,7 +207,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
           bold: false,
           strike: false,
         }),
-        TextStyle,
+        GameTextStyle,
         Color,
         GameTagExtension,
         LockedTagsExtension,
@@ -205,7 +224,9 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
         try {
           // Padding do valor ATUAL (o editor vive além da linha aberta).
           const { padding } = splitLeadingPadding(valueRef.current);
-          const next = padding + gameTextParser.serializeJSONToGameText(updated.getJSON(), version);
+          const next =
+            padding +
+            gameTextParser.serializeJSONToGameText(updated.getJSON(), version, palette ?? []);
           lastEmittedValue.current = next;
           onValueChangeRef.current(next);
         } finally {
@@ -220,7 +241,7 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
       ed.destroy();
       setEditor(null);
     };
-  }, [catalog]);
+  }, [catalog, palette, version]);
 
   useEffect(() => {
     if (!editor || suppressUpdate.current || catalog === undefined) return;
@@ -255,8 +276,23 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
       .run();
   };
 
-  const colors = colorsForVersion(version);
+  const activeTag =
+    (editor?.getAttributes('textStyle').gameColor as string | undefined) ?? null;
   const { padding } = splitLeadingPadding(value);
+
+  const selectColor = (color: ColorDefinition) => {
+    if (!editor) return;
+    const chain = editor.chain().focus();
+    if (color.tag) {
+      chain.setMark('textStyle', { color: color.hex, gameColor: color.tag }).run();
+    } else {
+      chain.setColor(color.hex).run();
+    }
+  };
+
+  const resetColor = () => {
+    editor?.chain().focus().unsetMark('textStyle').run();
+  };
 
   /**
    * Remove o padding de tela do rascunho. O prefixo fica FORA do documento
@@ -273,7 +309,11 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
     const { body } = splitLeadingPadding(valueRef.current);
     if (body === valueRef.current) return;
     if (editor && catalog !== undefined) {
-      const current = gameTextParser.serializeJSONToGameText(editor.getJSON(), version);
+      const current = gameTextParser.serializeJSONToGameText(
+        editor.getJSON(),
+        version,
+        palette ?? [],
+      );
       if (current !== body) {
         editor.commands.setContent(
           gameTextParser.parseGameTextToHTML(body, getChipValidator(catalog ?? null)),
@@ -349,46 +389,14 @@ export function GameTextEditor({ value, onValueChange, version }: GameTextEditor
 
         <Separator orientation="vertical" className="my-1 w-px" />
 
-        <fieldset
-          className="m-0 inline-flex items-center gap-0.5 border-0 p-0"
-          aria-label="Cores ({CLR:…})"
-        >
-          <Palette size={20} aria-label="Cores ({CLR:…}, {CLR:WHITE} reseta)" />
-          {colors.map((c) => {
-            const isActive = editor?.isActive('textStyle', { color: c.hex }) ?? false;
-            return (
-              <Tooltip key={c.name}>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="h-5.5 w-5.5 cursor-pointer rounded border-2 p-0"
-                    style={{
-                      backgroundColor: c.hex,
-                      borderColor: isActive ? 'currentColor' : 'transparent',
-                      boxShadow: isActive ? '0 0 0 1px currentColor' : 'none',
-                    }}
-                    aria-label={`Cor ${c.label}`}
-                    onClick={() => editor?.chain().focus().setColor(c.hex).run()}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>{`{CLR:${c.name}}`}</TooltipContent>
-              </Tooltip>
-            );
-          })}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Resetar cor"
-                onClick={() => editor?.chain().focus().unsetColor().run()}
-              >
-                <RotateCcw size={20} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Resetar cor ({'{CLR:WHITE}'})</TooltipContent>
-          </Tooltip>
-        </fieldset>
+        <ColorPopover
+          colors={palette}
+          activeTag={activeTag}
+          error={catalogError}
+          lang={lang}
+          onSelect={selectColor}
+          onReset={resetColor}
+        />
 
         <Separator orientation="vertical" className="my-1 w-px" />
 

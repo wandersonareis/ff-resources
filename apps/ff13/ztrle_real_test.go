@@ -88,9 +88,9 @@ func TestRealTranslationZtrFormats(t *testing.T) {
 			if !strings.HasPrefix(f.IDs[0], "$") {
 				t.Errorf("%s: ID inesperado: %q", c.path, f.IDs[0])
 			}
-			ks, err := keySet(c.part)
+			ks, err := textCodec(c.part)
 			if err != nil {
-				t.Fatalf("keySet(%s): %v", c.part, err)
+				t.Fatalf("textCodec(%s): %v", c.part, err)
 			}
 			texts, err := ks.DecodeLines(f.Lines)
 			if err != nil {

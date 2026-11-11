@@ -17,6 +17,9 @@ export function gameTextToPlainText(text?: string): string {
   const { body } = splitLeadingPadding(text ?? '');
   return body
     .replace(/\{TEXT_NEWLINE\}/gi, '\n')
+    .replace(/\{NL:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}\}/gi, '\n')
+    // Espaço sem quebra do FF13: preserva o espaço ao copiar referências.
+    .replace(/\{SPACE:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}\}/gi, '\u00A0')
     .replace(/\r\n?/g, '\n')
     .replace(/\{[^{}]+\}/g, '');
 }

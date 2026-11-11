@@ -88,7 +88,7 @@ export function createTagAutocompleteExtension(
           decorationClass: 'tag-suggestion-active',
           decorationEmptyClass: 'is-empty',
           // Texto corrido após `{` não abre popup nem decoração.
-          shouldShow: ({ query }) => looksLikeTagAttempt(query),
+          shouldShow: ({ query }) => looksLikeTagAttempt(query, catalog),
           // Dismiss (Escape/clique fora) some no próximo caractere digitado.
           shouldResetDismissed: ({ transaction }) => transaction.docChanged,
           items: ({ query }) => computeSuggestions(query, catalog),
@@ -99,8 +99,9 @@ export function createTagAutocompleteExtension(
           container: resolvePopupContainer(popupContainer),
           command: ({ editor, range, props: item }) => {
             shared.completed = true;
-            const content: JSONContent | string =
-              item.kind === 'value' && item.chip
+            const content: JSONContent | string = item.hardBreak
+              ? { type: 'hardBreak' }
+              : item.kind === 'value' && item.chip
                 ? { type: 'gameTag', attrs: { ...item.chip } }
                 : item.insert;
             editor
@@ -123,7 +124,7 @@ export function createTagAutocompleteExtension(
             onKeyDown: ({ view, event, range }) => {
               if (event.key === 'Escape' || event.key === 'Esc') {
                 event.preventDefault();
-                removePartial(view, range, shared.query);
+                removePartial(view, range, shared.query, catalog);
                 return true;
               }
               if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -168,8 +169,13 @@ function resolvePopupContainer(
  * trecho continuar idêntico ao que o suggestion exibia (chips viram folha
  * e nunca casam), assim não se apaga texto digitado depois do exit.
  */
-function removePartial(view: EditorView, range: Range, query: string): void {
-  if (!isPartialTagQuery(query)) return;
+function removePartial(
+  view: EditorView,
+  range: Range,
+  query: string,
+  catalog: TagCatalog | null,
+): void {
+  if (!isPartialTagQuery(query, catalog)) return;
   const { from, to } = range;
   if (from < 0 || to <= from || to > view.state.doc.content.size) return;
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// txtSeparator divide ID e texto em cada linha do .txt (igual ao ZTRtool).
+// txtSeparator divide ID e texto em cada linha do .txt (formato de referência).
 const txtSeparator = " |:| "
 
 // WriteTxt monta o arquivo de texto "id |:| texto\r\n" a partir dos IDs e

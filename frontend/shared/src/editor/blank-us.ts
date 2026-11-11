@@ -54,6 +54,7 @@ function isTextTag(cmd: string): boolean {
     cmd === 'TEXT_NORMAL' ||
     cmd === '\\n' ||
     cmd === 'TEXT_NEWLINE' ||
+    cmd.startsWith('NL:') ||
     cmd.startsWith('CLR:') ||
     cmd.startsWith('COLOR:')
   );

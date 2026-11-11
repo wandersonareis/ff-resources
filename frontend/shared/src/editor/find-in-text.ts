@@ -8,6 +8,8 @@
 // game-text-parser), então o resultado serve direto para o destaque
 // (<mark> via marks) e para o splice do substituir.
 
+import { newlineTokenAt } from './line-breaks';
+
 /** Opções da busca local (espelha os botões Aa / palavra inteira). */
 export interface FindOptions {
   /** Diferenciar maiúsculas/minúsculas (padrão: insensível). */
@@ -30,8 +32,8 @@ interface VisibleSegment {
 
 /**
  * Segmentos de texto visível do texto canônico — o espelho da tokenização
- * do game-text-parser: quebras de linha ({TEXT_NEWLINE}/\r\n/\n/\r) e
- * tokens {…} com conteúdo interno interrompem o trecho visível; `{}`/`{ }`
+ * do game-text-parser: quebras de linha ({TEXT_NEWLINE}, {NL:B1:B2}, CRLF/LF/CR)
+ * e tokens {…} com conteúdo interno interrompem o trecho visível; `{}`/`{ }`
  * (sem conteúdo) o parser mantém como texto, então aqui também são visíveis.
  */
 export function visibleSegments(rawText: string): VisibleSegment[] {
@@ -39,11 +41,11 @@ export function visibleSegments(rawText: string): VisibleSegment[] {
   let start = -1; // -1 = fora de trecho visível
   let i = 0;
   while (i < rawText.length) {
-    const newline = newlineLengthAt(rawText, i);
-    if (newline > 0) {
+    const newline = newlineTokenAt(rawText, i);
+    if (newline) {
       if (start >= 0) segments.push({ start, end: i });
       start = -1;
-      i += newline;
+      i += newline.length;
       continue;
     }
     if (rawText[i] === '{') {
@@ -67,18 +69,7 @@ export function visibleSegments(rawText: string): VisibleSegment[] {
   return segments;
 }
 
-/** Comprimento do token de quebra de linha na posição (0 = não é quebra). */
-function newlineLengthAt(text: string, index: number): number {
-  if (
-    text[index] === '{' &&
-    text.slice(index, index + '{TEXT_NEWLINE}'.length).toUpperCase() === '{TEXT_NEWLINE}'
-  ) {
-    return '{TEXT_NEWLINE}'.length;
-  }
-  if (text[index] === '\r') return text[index + 1] === '\n' ? 2 : 1;
-  if (text[index] === '\n') return 1;
-  return 0;
-}
+
 
 /**
  * Todas as ocorrências de `query` no texto VISÍVEL (não sobrepostas, na

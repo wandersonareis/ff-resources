@@ -19,6 +19,10 @@ describe('gameTextToPlainText', () => {
     expect(gameTextToPlainText('A{text_newline}B')).toBe('A\nB');
   });
 
+  it('reconhece a quebra FF13 {NL:40:72}', () => {
+    expect(gameTextToPlainText('A{NL:40:72}B')).toBe('A\nB');
+  });
+
   it('descarta o padding de tela do início (sem linhas em branco)', () => {
     expect(gameTextToPlainText('  \n{TEXT_NEWLINE}Oi')).toBe('Oi');
   });
@@ -29,6 +33,10 @@ describe('gameTextToPlainText', () => {
 
   it('mantém o espaçamento interno e o texto entre tags', () => {
     expect(gameTextToPlainText('{CLR:BLUE}  recuado  {TEXT_NORMAL}')).toBe('  recuado  ');
+  });
+
+  it('SPACE vira espaço sem quebra na cópia, não some', () => {
+    expect(gameTextToPlainText('A{SPACE:85:60}B')).toBe('A\u00A0B');
   });
 
   it('texto vazio ou ausente devolve vazio', () => {

@@ -58,11 +58,15 @@ export async function ListLanguages(..._args: any[]): Promise<any> {
 }
 
 /**
- * Catálogo de tags da part (COLOR/ICON/BTN/VAR/CTR/KEY/PAGE/NL/TAB) para o
+ * Catálogo de tags da part (CLR/ICON/BTN/VAR/CTR/KEY/PAGE/NL/SPACE) para o
  * autocomplete do editor — binding real do FF13Service.
  */
-export async function GetTagCatalog(version: unknown, ..._args: any[]): Promise<any> {
-  return ff13.GetTagCatalog(partOf(version));
+export async function GetTagCatalog(
+  version: unknown,
+  lang?: string,
+  ..._args: any[]
+): Promise<any> {
+  return ff13.GetTagCatalog(partOf(version), String(lang ?? 'us'));
 }
 
 export async function SearchTextEntries(

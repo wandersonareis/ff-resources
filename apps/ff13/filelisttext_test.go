@@ -318,9 +318,9 @@ func decodeTestZtr(t *testing.T, raw []byte) []string {
 	if err != nil {
 		t.Fatalf("ztr.Read: %v", err)
 	}
-	ks, err := keySet("part1")
+	ks, err := textCodec("part1")
 	if err != nil {
-		t.Fatalf("keySet: %v", err)
+		t.Fatalf("textCodec: %v", err)
 	}
 	texts, err := ks.DecodeLines(zf.Lines)
 	if err != nil {

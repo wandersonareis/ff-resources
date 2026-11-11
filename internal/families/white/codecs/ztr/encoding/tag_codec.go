@@ -12,20 +12,23 @@ import (
 //
 // Gramática (a identidade é o PAR DE BYTES; o nome é display):
 //
-//	{COLOR:White}         nome -> par (paleta compartilhada)
-//	{ICON:F0:40:Clock}    par do hex; nome ignorado
+//	{CLR:F9:40:White}      cor: os bytes do idioma mandam
+//	{ICON:F0:40:Clock}
 //	{BTN:F1:40:A}
+//	{SPACE:85:60}          espaço sem quebra (U+00A0; U+202F no francês)
 //	{VAR:F4:40} {CTR:F7:40} {KEY:F6:40}
-//	{PAGE:40:70} {NL:40:72} {TAB:85:60}
+//	{PAGE:40:70} {NL:40:72}
 //	{RAW:81:40}
-//	{B:FF}                0xFF isolado
-//	{END} {ESC} {TEXT_ITALIC} {TEXT_NORMAL} {LINE} {ART} {ART2}
+//	{B:FF}                 0xFF isolado
+//	{END} {ESC} {TEXT_ITALIC} {LINE} {ART} {ART2}
 //
-// Tag desconhecida devolve false e o chamador faz o rewind do '{'.
+// Tag desconhecida devolve false e o chamador faz o rewind do '{'. Em
+// particular, {COLOR:Nome} e {TAB:...} NÃO são aceitos: o formato é sempre
+// {CLASSE:B1:B2[:NOME]} com os dois bytes.
 
 // encodeTag devolve os bytes de uma tag (inner = conteúdo entre '{' e '}',
 // sem as chaves).
-func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
+func (tc *TextCodec) encodeTag(inner string) ([]byte, bool) {
 	head, rest, hasColon := strings.Cut(inner, ":")
 	upper := strings.ToUpper(strings.TrimSpace(head))
 
@@ -35,31 +38,13 @@ func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
 		return []byte{v}, ok
 	}
 
-	// Classe de par: o hex (quando existe) é AUTORITATIVO.
-	if class, ok := tagClassOf(upper); ok {
-		if class == ClassColor {
-			// Única classe resolvida por nome.
-			name := strings.TrimSpace(rest)
-			tag, found := ks.tagByName(ClassColor, name)
-			if !found {
-				// Aceita qualquer caixa ("gold" -> "Gold").
-				for _, t := range ks.Color {
-					if strings.EqualFold(t.Name, name) {
-						tag, found = t, true
-						break
-					}
-				}
-			}
-			if !found {
-				return nil, false
-			}
-			return []byte{tag.B1, tag.B2}, true
-		}
+	// Classe de par: o hex é AUTORITATIVO; o nome (se houver) é ignorado.
+	if _, ok := tagClassOf(upper); ok {
 		b1, b2, ok := hexPair(rest)
 		if !ok {
 			return nil, false
 		}
-		if _, known := ks.tagByPair(b1, b2); !known {
+		if _, known := tc.tagByPair(b1, b2); !known {
 			// Par fora das tabelas: aceita (hex é autoritativo) mas avisa —
 			// o decode seguinte emite {RAW:..} e a degradação fica visível.
 			loggingService.Warn("tag %s: par %02X %02X não está nas tabelas do jogo",
@@ -70,7 +55,7 @@ func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
 
 	// Sem classe: single nomeado ({END}, {TEXT_ITALIC}...).
 	if !hasColon {
-		if b, ok := ks.EncodeByte("{" + upper + "}"); ok {
+		if b, ok := tc.EncodeControl("{" + upper + "}"); ok {
 			return []byte{b}, true
 		}
 	}
@@ -79,16 +64,15 @@ func (ks *KeySet) encodeTag(inner string) ([]byte, bool) {
 
 // EncodeTag é a face pública de encodeTag: os bytes de uma tag (sem as
 // chaves). Serve para validar uma tag digitada/sugerida sem passar pela
-// máquina de estados inteira — é o que o catálogo e o e2e usam para garantir
-// que nada é sugerido sem codificar.
-func (ks *KeySet) EncodeTag(inner string) ([]byte, bool) { return ks.encodeTag(inner) }
+// máquina de estados inteira.
+func (tc *TextCodec) EncodeTag(inner string) ([]byte, bool) { return tc.encodeTag(inner) }
 
 // closeBrace encontra o '}' de uma tag aberta em `open`, limitando o
-// conteúdo interno a 32 runas (o mesmo limite do DeriveSymbolString do C#).
-// Devolve o índice do '}' ou false quando não há fechamento no limite — o
-// '{' vira literal e o conteúdo é reprocessado como texto.
+// conteúdo interno a 48 runas. Devolve o índice do '}' ou false quando não
+// há fechamento no limite — o '{' vira literal e o conteúdo é reprocessado
+// como texto.
 func closeBrace(rs []rune, open int) (int, bool) {
-	limit := open + 32
+	limit := open + 48
 	if limit >= len(rs) {
 		limit = len(rs) - 1
 	}
@@ -101,7 +85,7 @@ func closeBrace(rs []rune, open int) (int, bool) {
 }
 
 // hexPair converte os dois primeiros segmentos hex de um payload
-// ("F0:40:Clock" -> 0xF0, 0x40). O resto (o nome) é ignorado.
+// ("F9:40:White" -> 0xF9, 0x40). O resto (o nome) é ignorado.
 func hexPair(s string) (b1, b2 byte, ok bool) {
 	parts := strings.SplitN(strings.TrimSpace(s), ":", 3)
 	if len(parts) < 2 {

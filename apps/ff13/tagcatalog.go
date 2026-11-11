@@ -1,34 +1,40 @@
 package main
 
-// CATÁLOGO de tags do FF13 para o autocomplete do editor.
+// CATÁLOGO de tags do FF13 para o autocomplete/editor.
 //
 // Espelha o formato que o frontend compartilhado consome (`TagCatalog`:
 // tag/prefix/hint/values com tag/label/key), com os valores das tabelas do
-// keyset da part — as MESMAS tags que o codec emite e o editor mostra como
-// chip.
+// codec do IDIOMA pedido — as MESMAS tags que o codec emite e o editor mostra
+// como chip.
 //
-// Só as classes que o tradutor pode inserir entram: COLOR (a cor é escolhida
-// por nome), ICON/BTN (hex + nome) e as classe de valor do jogo
-// (VAR/CTR/KEY) e estruturais (PAGE/NL/TAB). `RAW:` e `B:` não entram: são
-// bytes crus de slots desconhecidos — ninguém deve inseri-los à mão.
+// Só as classes que o tradutor pode inserir entram: CLR (a cor é escolhida
+// por nome/swatch, mas a tag leva os bytes do idioma), ICON/BTN (hex + nome)
+// e as classes de valor do jogo (VAR/CTR/KEY) e estruturais (PAGE/NL/SPACE).
+// `RAW:` e `B:` não entram: são bytes crus de slots desconhecidos.
 
 import (
 	"fmt"
 	"strings"
 
-	"ffresources/apps/ff13/parts"
 	ztenc "ffresources/internal/families/white/codecs/ztr/encoding"
 )
 
 // tagSuggestion é um valor completo, pronto para virar chip atômico.
 type tagSuggestion struct {
-	// Tag é a tag completa e canônica, ex.: {ICON:F0:40:Clock}.
+	// Tag é a tag completa e canônica, ex.: {CLR:F9:40:White}.
 	Tag string `json:"tag"`
-	// Label é o texto exibido no popup, ex.: Clock.
+	// Label é o texto exibido no popup, ex.: White / NBSP.
 	Label string `json:"label"`
-	// Key é a identidade estável sem o texto humano: "F0:40" (pares) ou o
-	// nome da cor.
+	// Key é a identidade estável sem o texto humano: "F9:40" (pares).
 	Key string `json:"key"`
+	// Hex é o swatch representativo (só CLR). Nunca vira byte.
+	Hex string `json:"hex,omitempty"`
+	// Group separa a paleta principal ("") do grupo "ex".
+	Group string `json:"group,omitempty"`
+	// SemiTransparent marca as cores Ex (semitransparentes no jogo).
+	SemiTransparent bool `json:"semiTransparent,omitempty"`
+	// Reset marca White (volta à cor natural; não é cor de paleta).
+	Reset bool `json:"reset,omitempty"`
 }
 
 // tagCatalogEntry é uma classe de tag: o prefixo do estágio 1 e os valores
@@ -43,45 +49,63 @@ type tagCatalogEntry struct {
 // tagCatalog é o catálogo servido ao frontend via binding GetTagCatalog.
 type tagCatalog struct {
 	Version string            `json:"version"`
+	Lang    string            `json:"lang"`
 	Tags    []tagCatalogEntry `json:"tags"`
 }
 
-// GetTagCatalog monta o catálogo de tags da part. Usa o keyset LatinJapanese
-// (o dos arquivos "_us", que são os editáveis) — as demais codepages têm os
-// mesmos nomes em bytes diferentes.
-func (FF13Service) GetTagCatalog(part string) (tagCatalog, error) {
+// GetTagCatalog monta o catálogo de tags da part NO IDIOMA pedido. O idioma
+// vazio é o default ("us"); idioma fora do catálogo falha com
+// ErrPaletteUnavailable — nunca devolve cores com bytes de outro idioma.
+func (FF13Service) GetTagCatalog(part, lang string) (tagCatalog, error) {
 	part = normalizePart(part)
-	ks, err := keySet(part)
+	lang = ztenc.NormalizeLanguage(lang)
+	if _, ok := ztenc.CodepageForLanguage(lang); !ok {
+		return tagCatalog{}, fmt.Errorf("%w para o idioma %s", ztenc.ErrPaletteUnavailable, lang)
+	}
+	tc, err := textCodecForLang(part, lang)
 	if err != nil {
 		return tagCatalog{}, err
 	}
-	p := parts.Get(part)
 
 	entries := []tagCatalogEntry{
-		{Tag: "COLOR", Prefix: "{COLOR:", Hint: "Cor do texto", Values: colorValues(ks)},
-		{Tag: "ICON", Prefix: "{ICON:", Hint: "Ícone", Values: pairValues(ks.Icon, p)},
-		{Tag: "BTN", Prefix: "{BTN:", Hint: "Botão do controle", Values: pairValues(ks.Btn, p)},
-		{Tag: "VAR", Prefix: "{VAR:", Hint: "Variável do jogo (item, nome, número)", Values: specialValues(ks, ztenc.ClassVar)},
-		{Tag: "CTR", Prefix: "{CTR:", Hint: "Contador", Values: specialValues(ks, ztenc.ClassCtr)},
-		{Tag: "KEY", Prefix: "{KEY:", Hint: "Item-chave", Values: specialValues(ks, ztenc.ClassKey)},
-		{Tag: "PAGE", Prefix: "{PAGE:", Hint: "Quebra de página", Values: specialValues(ks, ztenc.ClassPage)},
-		{Tag: "NL", Prefix: "{NL:", Hint: "Quebra de linha", Values: specialValues(ks, ztenc.ClassNL)},
-		{Tag: "TAB", Prefix: "{TAB:", Hint: "Tabulação", Values: specialValues(ks, ztenc.ClassTab)},
+		{Tag: "CLR", Prefix: "{CLR:", Hint: "Cor do texto", Values: colorValues(tc)},
+		{Tag: "ICON", Prefix: "{ICON:", Hint: "Ícone", Values: pairValues(tc.Icons)},
+		{Tag: "BTN", Prefix: "{BTN:", Hint: "Botão do controle", Values: pairValues(tc.Buttons)},
+		{Tag: "VAR", Prefix: "{VAR:", Hint: "Variável do jogo (item, nome, número)", Values: specialValues(tc, ztenc.ClassVar, lang)},
+		{Tag: "CTR", Prefix: "{CTR:", Hint: "Contador", Values: specialValues(tc, ztenc.ClassCtr, lang)},
+		{Tag: "KEY", Prefix: "{KEY:", Hint: "Item-chave", Values: specialValues(tc, ztenc.ClassKey, lang)},
+		{Tag: "PAGE", Prefix: "{PAGE:", Hint: "Quebra de página", Values: specialValues(tc, ztenc.ClassPage, lang)},
+		{Tag: "NL", Prefix: "{NL:", Hint: "Quebra de linha", Values: specialValues(tc, ztenc.ClassNL, lang)},
+		{Tag: "SPACE", Prefix: "{SPACE:", Hint: spaceHint(lang), Values: specialValues(tc, ztenc.ClassSpace, lang)},
 	}
-	return tagCatalog{Version: part, Tags: entries}, nil
+	return tagCatalog{Version: part, Lang: lang, Tags: entries}, nil
 }
 
-// colorValues: a cor é escolhida por NOME (o byte sai da codepage).
-func colorValues(ks *ztenc.KeySet) []tagSuggestion {
-	out := make([]tagSuggestion, 0, len(ks.Color))
-	for _, t := range ks.Color {
-		out = append(out, tagSuggestion{Tag: t.Text(), Label: t.Name, Key: t.Name})
+// colorValues: o par de bytes vem do idioma; nome e swatch são display.
+func colorValues(tc *ztenc.TextCodec) []tagSuggestion {
+	out := make([]tagSuggestion, 0, len(tc.Colors))
+	for _, t := range tc.Colors {
+		s := tagSuggestion{
+			Tag:   t.Text(),
+			Label: t.Name,
+			Key:   fmt.Sprintf("%02X:%02X", t.B1, t.B2),
+			Hex:   t.Swatch,
+		}
+		// Ex* são semitransparentes e ficam num grupo secundário no popover.
+		if strings.HasPrefix(t.Name, "Ex") {
+			s.Group = "ex"
+			s.SemiTransparent = true
+		}
+		if strings.EqualFold(t.Name, "White") {
+			s.Reset = true
+		}
+		out = append(out, s)
 	}
 	return out
 }
 
 // pairValues: ICON/BTN — hex autoritativo, nome é display.
-func pairValues(list []ztenc.Tag, p parts.Part) []tagSuggestion {
+func pairValues(list []ztenc.Tag) []tagSuggestion {
 	out := make([]tagSuggestion, 0, len(list))
 	for _, t := range list {
 		key := fmt.Sprintf("%02X:%02X", t.B1, t.B2)
@@ -94,23 +118,35 @@ func pairValues(list []ztenc.Tag, p parts.Part) []tagSuggestion {
 	return out
 }
 
-// specialValues: as classes de par da tabela special (VAR/CTR/KEY/PAGE/NL/TAB).
-func specialValues(ks *ztenc.KeySet, class ztenc.TagClass) []tagSuggestion {
+// specialValues: as classes de par da tabela special (VAR/CTR/KEY/PAGE/NL/SPACE).
+func specialValues(tc *ztenc.TextCodec, class ztenc.TagClass, lang string) []tagSuggestion {
 	out := make([]tagSuggestion, 0, 4)
-	for _, t := range ks.Special {
+	for _, t := range tc.Specials {
 		if t.Class != class {
 			continue
 		}
 		key := fmt.Sprintf("%02X:%02X", t.B1, t.B2)
-		out = append(out, tagSuggestion{Tag: t.Text(), Label: key, Key: key})
+		label := key
+		if class == ztenc.ClassSpace {
+			label = spaceLabel(lang)
+		}
+		out = append(out, tagSuggestion{Tag: t.Text(), Label: label, Key: key})
 	}
 	return out
 }
 
-// tagCatalogHint é o texto do estágio 1 quando o catálogo não carregou.
-func tagCatalogHint(tag string) string {
-	if i := strings.IndexByte(tag, ':'); i >= 0 {
-		return tag[:i]
+// spaceHint é o texto do autocomplete para o espaço sem quebra. O glifo do
+// jogo é U+00A0; no francês ele cumpre o papel do narrow no-break (U+202F).
+func spaceHint(lang string) string {
+	if ztenc.IsFrench(lang) {
+		return "Espaço estreito sem quebra (U+202F)"
 	}
-	return tag
+	return "Espaço sem quebra (U+00A0)"
+}
+
+func spaceLabel(lang string) string {
+	if ztenc.IsFrench(lang) {
+		return "NNBSP"
+	}
+	return "NBSP"
 }

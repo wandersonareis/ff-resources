@@ -99,6 +99,12 @@ describe('getResolvedColorFromTag', () => {
     });
   });
 
+  it('Ex00..Ex28 usam os hexes representativos do grupo Ex', () => {
+    expect(getResolvedColorFromTag('Ex00')).toEqual({ hex: '#111111', isReset: false });
+    expect(getResolvedColorFromTag('EX01')).toEqual({ hex: '#6f8585', isReset: false });
+    expect(getResolvedColorFromTag('Ex28')).toEqual({ hex: '#4f4f5a', isReset: false });
+  });
+
   it('byte desconhecido continua sem resolucao (vira chip, preserva o byte)', () => {
     expect(getResolvedColorFromTag('58')).toBeNull();
     expect(getResolvedColorFromTag('00')).toBeNull();

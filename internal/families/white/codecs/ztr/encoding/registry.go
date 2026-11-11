@@ -5,68 +5,62 @@ import (
 	"sync"
 )
 
-// Registro de KeySets por (game, codepage), no espírito do ffxencoding:
-// publicação por substituição de referência, acesso concorrente seguro e
-// fail-fast em Prepare/Ensure (configuração ausente aborta antes de
-// produzir milhares de placeholders).
+// Registro de TextCodecs por (game, codepage): publicação por substituição de
+// referência, acesso concorrente seguro e fail-fast em Prepare/Ensure
+// (configuração ausente aborta antes de produzir milhares de placeholders).
 var (
-	keySetsMu sync.RWMutex
-	keySets   = map[GameCode]map[Codepage]*KeySet{}
+	textCodecsMu sync.RWMutex
+	textCodecs   = map[GameCode]map[Codepage]*TextCodec{}
 )
 
 func pairKey(b1, b2 byte) uint16 { return uint16(b1)<<8 | uint16(b2) }
 
-// PrepareKeySet monta os índices do par (game, codepage) a partir das tabelas
-// geradas e publica o conjunto. Idempotente: rechamar sobrescreve.
-//
-// Forward é muitos-para-um invertido (byte→tag). Reverse (tag→byte) guarda a
-// PRIMEIRA ocorrência na ordem de inserção — espelha o GetDictByteKey do C#,
-// que percorre o Dictionary na ordem de inserção e para no primeiro valor
-// igual; a ordem dos slices gerados é a ordem de inserção do fonte C#.
-func PrepareKeySet(game GameCode, cp Codepage) error {
-	set, err := buildKeySet(game, cp)
+// PrepareTextCodec monta os índices do par (game, codepage) a partir das
+// tabelas do pacote tags e publica o conjunto. Idempotente.
+func PrepareTextCodec(game GameCode, cp Codepage) error {
+	tc, err := buildTextCodec(game, cp)
 	if err != nil {
 		return err
 	}
-	keySetsMu.Lock()
-	defer keySetsMu.Unlock()
-	if keySets[game] == nil {
-		keySets[game] = map[Codepage]*KeySet{}
+	textCodecsMu.Lock()
+	defer textCodecsMu.Unlock()
+	if textCodecs[game] == nil {
+		textCodecs[game] = map[Codepage]*TextCodec{}
 	}
-	keySets[game][cp] = set
+	textCodecs[game][cp] = tc
 	return nil
 }
 
-// EnsureKeySet é o fail-fast: só leitura, não monta nada.
-func EnsureKeySet(game GameCode, cp Codepage) error {
-	keySetsMu.RLock()
-	defer keySetsMu.RUnlock()
-	if _, ok := keySets[game]; !ok {
+// EnsureTextCodec é o fail-fast: só leitura, não monta nada.
+func EnsureTextCodec(game GameCode, cp Codepage) error {
+	textCodecsMu.RLock()
+	defer textCodecsMu.RUnlock()
+	if _, ok := textCodecs[game]; !ok {
 		return fmt.Errorf("%w: %s", ErrGameCodeNotFound, game)
 	}
-	if _, ok := keySets[game][cp]; !ok {
+	if _, ok := textCodecs[game][cp]; !ok {
 		return fmt.Errorf("%w: %d (game=%s)", ErrCodepageNotFound, cp, game)
 	}
 	return nil
 }
 
-// KeySetFor devolve o conjunto publicado (ou erro de configuração).
-func KeySetFor(game GameCode, cp Codepage) (*KeySet, error) {
-	keySetsMu.RLock()
-	defer keySetsMu.RUnlock()
-	if _, ok := keySets[game]; !ok {
+// TextCodecFor devolve o conjunto publicado (ou erro de configuração).
+func TextCodecFor(game GameCode, cp Codepage) (*TextCodec, error) {
+	textCodecsMu.RLock()
+	defer textCodecsMu.RUnlock()
+	if _, ok := textCodecs[game]; !ok {
 		return nil, fmt.Errorf("%w: %s", ErrGameCodeNotFound, game)
 	}
-	set, ok := keySets[game][cp]
+	tc, ok := textCodecs[game][cp]
 	if !ok {
 		return nil, fmt.Errorf("%w: %d (game=%s)", ErrCodepageNotFound, cp, game)
 	}
-	return set, nil
+	return tc, nil
 }
 
-// ClearKeySets limpa o registro (testes).
-func ClearKeySets() {
-	keySetsMu.Lock()
-	defer keySetsMu.Unlock()
-	keySets = map[GameCode]map[Codepage]*KeySet{}
+// ClearTextCodecs limpa o registro (testes).
+func ClearTextCodecs() {
+	textCodecsMu.Lock()
+	defer textCodecsMu.Unlock()
+	textCodecs = map[GameCode]map[Codepage]*TextCodec{}
 }

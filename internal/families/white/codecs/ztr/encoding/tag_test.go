@@ -2,38 +2,37 @@ package encoding
 
 import "testing"
 
-// prepareAll monta os 9 conjuntos (3 games x 3 codepages) — as tabelas são
-// publicadas em PrepareKeySet; sem isso KeySetFor falha.
+// prepareAll monta os 9 conjuntos (3 games x 3 codepages).
 func prepareAll(t *testing.T) {
 	t.Helper()
-	ClearKeySets()
+	ClearTextCodecs()
 	for _, g := range []GameCode{FF131, FF132, FF133} {
 		for _, cp := range []Codepage{LatinJapanese, Chinese, Korean} {
-			if err := PrepareKeySet(g, cp); err != nil {
-				t.Fatalf("PrepareKeySet(%s, %d): %v", g, cp, err)
+			if err := PrepareTextCodec(g, cp); err != nil {
+				t.Fatalf("PrepareTextCodec(%s, %d): %v", g, cp, err)
 			}
 		}
 	}
 }
 
-// TestTagText cobre a FORMATAÇÃO de cada classe: COLOR só o nome, ICON/BTN
-// hex + nome, as demais hex puro (sem nome).
+// TestTagText cobre a FORMATAÇÃO: o formato é o mesmo para todas as classes
+// de par; o nome só aparece quando existe.
 func TestTagText(t *testing.T) {
 	cases := []struct {
 		tag  Tag
 		want string
 	}{
-		{Tag{ClassColor, 0xF9, 0x40, "White"}, "{COLOR:White}"},
-		{Tag{ClassColor, 0xAC, 0xA1, "White"}, "{COLOR:White}"},
-		{Tag{ClassIcon, 0xF0, 0x40, "Clock"}, "{ICON:F0:40:Clock}"},
-		{Tag{ClassBtn, 0xF1, 0x40, "A"}, "{BTN:F1:40:A}"},
-		{Tag{ClassVar, 0xF4, 0x40, ""}, "{VAR:F4:40}"},
-		{Tag{ClassCtr, 0xF7, 0x40, ""}, "{CTR:F7:40}"},
-		{Tag{ClassKey, 0xF6, 0x40, ""}, "{KEY:F6:40}"},
-		{Tag{ClassPage, 0x40, 0x70, ""}, "{PAGE:40:70}"},
-		{Tag{ClassNL, 0x40, 0x72, ""}, "{NL:40:72}"},
-		{Tag{ClassTab, 0x85, 0x60, ""}, "{TAB:85:60}"},
-		{Tag{ClassRaw, 0x81, 0x40, ""}, "{RAW:81:40}"},
+		{Tag{Class: ClassColor, B1: 0xF9, B2: 0x40, Name: "White"}, "{CLR:F9:40:White}"},
+		{Tag{Class: ClassColor, B1: 0xAC, B2: 0xA1, Name: "White"}, "{CLR:AC:A1:White}"},
+		{Tag{Class: ClassIcon, B1: 0xF0, B2: 0x40, Name: "Clock"}, "{ICON:F0:40:Clock}"},
+		{Tag{Class: ClassBtn, B1: 0xF1, B2: 0x40, Name: "A"}, "{BTN:F1:40:A}"},
+		{Tag{Class: ClassSpace, B1: 0x85, B2: 0x60}, "{SPACE:85:60}"},
+		{Tag{Class: ClassVar, B1: 0xF4, B2: 0x40}, "{VAR:F4:40}"},
+		{Tag{Class: ClassCtr, B1: 0xF7, B2: 0x40}, "{CTR:F7:40}"},
+		{Tag{Class: ClassKey, B1: 0xF6, B2: 0x40}, "{KEY:F6:40}"},
+		{Tag{Class: ClassPage, B1: 0x40, B2: 0x70}, "{PAGE:40:70}"},
+		{Tag{Class: ClassNL, B1: 0x40, B2: 0x72}, "{NL:40:72}"},
+		{Tag{Class: ClassRaw, B1: 0x81, B2: 0x40}, "{RAW:81:40}"},
 	}
 	for _, c := range cases {
 		if got := c.tag.Text(); got != c.want {
@@ -45,11 +44,11 @@ func TestTagText(t *testing.T) {
 	}
 }
 
-// TestEncodeTagByClass fecha a gramática do encode: o hex (quando existe) é
-// AUTORITATIVO — o nome nem é lido.
+// TestEncodeTagByClass fecha a gramática do encode: o hex é AUTORITATIVO e
+// o nome é ignorado. Cor sem os DOIS bytes não codifica.
 func TestEncodeTagByClass(t *testing.T) {
 	prepareAll(t)
-	ks, err := KeySetFor(FF132, LatinJapanese)
+	tc, err := TextCodecFor(FF132, LatinJapanese)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,24 +57,25 @@ func TestEncodeTagByClass(t *testing.T) {
 		inner string
 		want  []byte
 	}{
-		// COLOR: nome resolve o byte.
-		{"COLOR:White", []byte{0xF9, 0x40}},
-		{"COLOR:Gold", []byte{0xF9, 0x42}},
-		{"color:gold", []byte{0xF9, 0x42}}, // case-insensitive
+		// CLR: os bytes do idioma mandam; o nome é display.
+		{"CLR:F9:40:White", []byte{0xF9, 0x40}},
+		{"CLR:F9:42:Gold", []byte{0xF9, 0x42}},
+		{"clr:f9:42:gold", []byte{0xF9, 0x42}}, // case-insensitive
+		{"CLR:F9:42", []byte{0xF9, 0x42}},      // sem nome, aceita
 		// ICON/BTN: hex autoritativo; o nome é ignorado (inclusive errado).
 		{"ICON:F2:40:Sword", []byte{0xF2, 0x40}},
 		{"ICON:F2:40:NomeQueNaoExiste", []byte{0xF2, 0x40}},
-		{"ICON:F2:40", []byte{0xF2, 0x40}}, // sem nome, aceita
+		{"ICON:F2:40", []byte{0xF2, 0x40}},
 		{"BTN:F1:40:A", []byte{0xF1, 0x40}},
-		// VAR/CTR/KEY: hex puro, sem nome — ex-{Entity 1}.
+		// VAR/CTR/KEY: hex puro, sem nome.
 		{"VAR:F4:40", []byte{0xF4, 0x40}},
 		{"VAR:F4:43", []byte{0xF4, 0x43}},
 		{"CTR:F7:41", []byte{0xF7, 0x41}},
 		{"KEY:F6:40", []byte{0xF6, 0x40}},
-		// Estruturais.
+		// Estruturais. SPACE é espaço sem quebra, não tabulação.
 		{"PAGE:40:70", []byte{0x40, 0x70}},
 		{"NL:40:72", []byte{0x40, 0x72}},
-		{"TAB:85:60", []byte{0x85, 0x60}},
+		{"SPACE:85:60", []byte{0x85, 0x60}},
 		// Bytes crus.
 		{"RAW:81:40", []byte{0x81, 0x40}},
 		{"RAW:FF:82", []byte{0xFF, 0x82}},
@@ -89,7 +89,7 @@ func TestEncodeTagByClass(t *testing.T) {
 		{"ART2", []byte{0x05}},
 	}
 	for _, c := range ok {
-		got, found := ks.encodeTag(c.inner)
+		got, found := tc.encodeTag(c.inner)
 		if !found {
 			t.Errorf("encodeTag(%q) não casou", c.inner)
 			continue
@@ -99,47 +99,59 @@ func TestEncodeTagByClass(t *testing.T) {
 		}
 	}
 
-	// Desconhecidas: não casam (o chamador faz o rewind do '{').
+	// Desconhecidas/legado: não casam (o chamador faz o rewind do '{').
 	for _, inner := range []string{
-		"COLOR:NoSuchColor", "ICON:ZZ:40:X", "ICON:F2", "VAR:F4",
-		"ENTITY:1", "Color White", "PC:01", "FANTASMA",
+		"CLR:White", "CLR:NoSuchColor", "COLOR:White", "TAB:85:60",
+		"ICON:ZZ:40:X", "ICON:F2", "VAR:F4", "ENTITY:1", "Color White",
+		"PC:01", "FANTASMA",
 	} {
-		if got, found := ks.encodeTag(inner); found {
+		if got, found := tc.encodeTag(inner); found {
 			t.Errorf("encodeTag(%q) casou = % X; queria false", inner, got)
 		}
 	}
 }
 
-// TestEncodeTagColorSharedProvaQueNome não é identidade para as classes de
-// hex: nos ícones o MESMO nome existe em bytes diferentes por jogo, e o hex
-// manda.
-func TestIconNameDiffersAcrossGames(t *testing.T) {
+// TestColorBytesAreIdentity prova que o nome não é identidade da cor: o hex
+// decide, e o mesmo nome tem bytes diferentes por codepage.
+func TestColorBytesAreIdentity(t *testing.T) {
 	prepareAll(t)
-	ks2, err := KeySetFor(FF132, LatinJapanese)
+	tc, err := TextCodecFor(FF132, LatinJapanese)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ks3, err := KeySetFor(FF133, LatinJapanese)
+	got, _ := tc.encodeTag("CLR:F9:7F:QualquerNome")
+	if string(got) != string([]byte{0xF9, 0x7F}) {
+		t.Errorf("hex autoritativo falhou: % X", got)
+	}
+}
+
+// TestIconNameDiffersAcrossGames prova que o hex do texto decide o byte,
+// mesmo quando o nome do mesmo par é outro no jogo.
+func TestIconNameDiffersAcrossGames(t *testing.T) {
+	prepareAll(t)
+	tc2, err := TextCodecFor(FF132, LatinJapanese)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tc3, err := TextCodecFor(FF133, LatinJapanese)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// "Shield" é F2:63 no ff132 e F2:5C no ff133: o hex do texto decide.
-	got2, _ := ks2.encodeTag("ICON:F2:63:Shield")
-	got3, _ := ks3.encodeTag("ICON:F2:63:Shield")
+	got2, _ := tc2.encodeTag("ICON:F2:63:Shield")
+	got3, _ := tc3.encodeTag("ICON:F2:63:Shield")
 	if string(got2) != string(got3) || string(got2) != string([]byte{0xF2, 0x63}) {
 		t.Errorf("hex autoritativo falhou: ff132=% X ff133=% X", got2, got3)
 	}
 
-	// O decode do par do ff133 devolve o nome dele (não o do ff132).
-	tag, _, _, ok := ks3.resolveDecodePair(0xF2, 0x5C)
+	tag, _, _, ok := tc3.resolveDecodePair(0xF2, 0x5C)
 	if !ok || tag.Text() != "{ICON:F2:5C:Shield}" {
 		t.Errorf("ff133 resolveDecodePair(F2,5C) = %+v, %v", tag, ok)
 	}
 }
 
-// TestColorSharedAcrossCodepages prova o compartilhamento: um nome, três
-// pares — a cópia de uma tradução entre linguagens continua correta.
+// TestColorSharedAcrossCodepages prova que cada idioma tem o SEU par para o
+// mesmo nome.
 func TestColorSharedAcrossCodepages(t *testing.T) {
 	prepareAll(t)
 	want := map[Codepage][2]byte{
@@ -148,13 +160,13 @@ func TestColorSharedAcrossCodepages(t *testing.T) {
 		Korean:        {0xAC, 0xA1},
 	}
 	for cp, pair := range want {
-		ks, err := KeySetFor(FF132, cp)
+		tc, err := TextCodecFor(FF132, cp)
 		if err != nil {
 			t.Fatal(err)
 		}
-		got, found := ks.encodeTag("COLOR:White")
+		got, found := tc.encodeTag("CLR:" + hexByte(pair[0]) + ":" + hexByte(pair[1]) + ":White")
 		if !found || got[0] != pair[0] || got[1] != pair[1] {
-			t.Errorf("COLOR:White em %s = % X, %v; queria % X", cpName(cp), got, found, pair)
+			t.Errorf("CLR White em %s = % X, %v; queria % X", cpName(cp), got, found, pair)
 		}
 	}
 }
@@ -169,4 +181,9 @@ func cpName(cp Codepage) string {
 		return "Korean"
 	}
 	return "?"
+}
+
+func hexByte(b byte) string {
+	const digits = "0123456789ABCDEF"
+	return string([]byte{digits[b>>4], digits[b&0x0F]})
 }

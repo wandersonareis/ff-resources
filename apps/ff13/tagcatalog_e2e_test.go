@@ -52,6 +52,7 @@ type tagCatalogEntryJSON struct {
 
 type tagCatalogJSON struct {
 	Version string                `json:"version"`
+	Lang    string                `json:"lang"`
 	Tags    []tagCatalogEntryJSON `json:"tags"`
 }
 
@@ -154,29 +155,29 @@ func TestTagCatalogE2E(t *testing.T) {
 	base, stop := startServer(t)
 	defer stop()
 
-	// Contagens por part (composition do keyset — scripts/keytables_check).
+	// Contagens por part (composição do codec — scripts/tagtables_check).
 	wantCounts := map[string]map[string]int{
-		"part1": {"COLOR": 43, "ICON": 54, "BTN": 33, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "TAB": 1},
-		"part2": {"COLOR": 31, "ICON": 88, "BTN": 33, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "TAB": 1},
-		"part3": {"COLOR": 31, "ICON": 90, "BTN": 35, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "TAB": 1},
+		"part1": {"CLR": 43, "ICON": 54, "BTN": 33, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "SPACE": 1},
+		"part2": {"CLR": 31, "ICON": 88, "BTN": 33, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "SPACE": 1},
+		"part3": {"CLR": 31, "ICON": 90, "BTN": 35, "VAR": 4, "CTR": 3, "KEY": 1, "PAGE": 1, "NL": 1, "SPACE": 1},
 	}
 
 	for _, part := range []string{"part1", "part2", "part3"} {
 		t.Run(part, func(t *testing.T) {
-			raw := callBinding(t, base, bindingMethod, part)
+			raw := callBinding(t, base, bindingMethod, part, "us")
 			var cat tagCatalogJSON
 			if err := json.Unmarshal(raw, &cat); err != nil {
 				t.Fatalf("payload do catálogo: %v (%s)", err, truncate(raw, 300))
 			}
-			if cat.Version != part {
-				t.Errorf("version = %q, queria %q", cat.Version, part)
+			if cat.Version != part || cat.Lang != "us" {
+				t.Errorf("version/lang = %q/%q, queria %q/us", cat.Version, cat.Lang, part)
 			}
 
 			got := map[string][]tagSuggestionJSON{}
 			for _, e := range cat.Tags {
 				got[e.Tag] = e.Values
 			}
-			for _, cls := range []string{"COLOR", "ICON", "BTN", "VAR", "CTR", "KEY", "PAGE", "NL", "TAB"} {
+			for _, cls := range []string{"CLR", "ICON", "BTN", "VAR", "CTR", "KEY", "PAGE", "NL", "SPACE"} {
 				values, ok := got[cls]
 				if !ok {
 					t.Fatalf("classe %s ausente do catálogo", cls)
@@ -200,9 +201,10 @@ func TestTagCatalogE2E(t *testing.T) {
 			}
 
 			// Amostras fixas (marcam o formato que o tradutor vê).
-			assertHas(t, got["COLOR"], "{COLOR:White}", "White")
+			assertHas(t, got["CLR"], "{CLR:F9:40:White}", "White")
 			assertHas(t, got["VAR"], "{VAR:F4:40}", "F4:40")
 			assertHas(t, got["NL"], "{NL:40:72}", "40:72")
+			assertHas(t, got["SPACE"], "{SPACE:85:60}", "NBSP")
 			if part == "part1" {
 				assertHas(t, got["ICON"], "{ICON:F0:40:Clock}", "Clock")
 			}

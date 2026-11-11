@@ -3,13 +3,11 @@ package encoding
 // Área "user-defined" do Shift-JIS/Windows-31J: 0xF040–0xF9FC mapeada
 // linearmente para U+E000–U+E757 (Private Use Area). O jogo usa esses pares
 // para glifos da fonte própria (ícones custom); o .NET Framework decodifica
-// assim e o ZTRtool, consequentemente, também — os txt oráculos carregam
-// essas runas. golang.org/x/text NÃO conhece a área, então o mapeamento é
-// feito aqui, na máquina de estados.
+// assim. golang.org/x/text NÃO conhece a área, então o mapeamento é feito
+// aqui, na máquina de estados.
 //
-// Os dicionários de tags têm prioridade: (0xF0,0x61) é {Icon Objective} no
-// ff132 (dict do jogo) e "apenas" PUA no ff131 — a consulta aos dicts vem
-// antes, como no C#.
+// Os dicionários de tags têm prioridade: (0xF0,0x61) é {ICON:F0:61:...} no
+// ff132 e "apenas" PUA no ff131 — a consulta aos dicts vem antes.
 //
 // Big5/EUC-KR também têm áreas user-defined no .NET, mas sem arquivos de
 // referência para validar deixamos sem mapeamento (o par segue cru).
@@ -25,8 +23,8 @@ const (
 
 // userDefinedPair devolve a runa PUA do par (b1,b2) na área user-defined
 // do Shift-JIS, se houver.
-func (ks *KeySet) userDefinedPair(b1, b2 byte) (rune, bool) {
-	if ks.Codepage != LatinJapanese {
+func (tc *TextCodec) userDefinedPair(b1, b2 byte) (rune, bool) {
+	if tc.Codepage != LatinJapanese {
 		return 0, false
 	}
 	if b1 < sjisUserLeadLo || b1 > sjisUserLeadHi || b2 == 0x7F {
@@ -43,8 +41,8 @@ func (ks *KeySet) userDefinedPair(b1, b2 byte) (rune, bool) {
 }
 
 // userDefinedRune devolve o par user-defined de uma runa PUA.
-func (ks *KeySet) userDefinedRune(r rune) (byte, byte, bool) {
-	if ks.Codepage != LatinJapanese {
+func (tc *TextCodec) userDefinedRune(r rune) (byte, byte, bool) {
+	if tc.Codepage != LatinJapanese {
 		return 0, 0, false
 	}
 	if r < sjisUserRuneLo || r > sjisUserRuneHi {

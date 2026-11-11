@@ -33,7 +33,7 @@ import (
 // internal/families/white/titles/ff13/part1.go). O sufixo "_XX" do nome do
 // arquivo so conta quando e um destes codigos: "txtres_ck.ztr" (codigo fora
 // do catalogo) e um arquivo SEM idioma, com base "txtres_ck".
-var unitLangs = []string{"us", "jp", "fr", "de", "it", "sp", "ch", "kr"}
+var unitLangs = []string{"us", "jp", "fr", "gr", "it", "sp", "ch", "kr"}
 
 // isUnitLang diz se o codigo e um idioma do catalogo.
 func isUnitLang(code string) bool {

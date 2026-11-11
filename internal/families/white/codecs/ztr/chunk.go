@@ -85,7 +85,8 @@ func splitGroups(size int) []int {
 	return groups
 }
 
-// pageIndexSkip é o byte 8: o ZTRtool nunca o usa como índice de página.
+// pageIndexSkip é o byte 8: a implementação de referência nunca o usa como
+// índice de página.
 const pageIndexSkip = 8
 
 // freePageNumbers devolve os índices 0..255 ausentes dos dados, exceto o 8 —
@@ -107,12 +108,12 @@ func freePageNumbers(data []byte) []byte {
 // TieRule escolhe o desempate entre pares com a mesma contagem no
 // CompressChunk. Empiricamente os arquivos txtres originais do jogo seguem
 // TieMinLast (gerador original), mas há arquivos — ex.: auto_yus_us —
-// comprimidos com a regra TieFirst do ZTRtool.
+// comprimidos com a regra TieFirst de referência.
 type TieRule int
 
 const (
 	// TieFirst: a PRIMEIRA ocorrência (na ordem dos dados) com a contagem
-	// máxima vence — comportamento do ZTRtool -c2.
+	// máxima vence — comportamento do modo -c2 de referência.
 	TieFirst TieRule = iota
 	// TieMinLast: maior contagem; empate resolvido pelo MENOR offset da
 	// última ocorrência do par — o do gerador original (validado byte a

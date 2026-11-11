@@ -5,9 +5,11 @@
 //
 // A organização espelha o Pulse.FS/ZTR (header/unpacker/packer separados,
 // entradas key->value), mas o algoritmo de compressão é o REAL, portado do
-// CompressionHelpers.cs do ZTRtool (validado byte a byte contra os arquivos
+// CompressionHelpers.cs da implementação de referência (validado byte a byte
+// contra os arquivos
 // originais do jogo, incluindo o desempate tie_min_last que reproduz o
-// gerador original). Os dois modos de saída do ZTRtool estão disponíveis:
+// gerador original). Os dois modos de saída da implementação de referência
+// estão disponíveis:
 // sem compressão (-c) e comprimido (-c2).
 package ztr
 

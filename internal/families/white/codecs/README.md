@@ -45,7 +45,8 @@ Cobrem:
 
 - filelist: golden JSON do WhiteBinTools, round-trip binário e criptografia;
 - whitebin: extração de um arquivo real (quando o jogo está instalado);
-- ZTR: oráculos byte a byte do ZTRtool + round-trip comprimido/não comprimido;
+- ZTR: oráculos byte a byte da implementação de referência + round-trip
+  comprimido/não comprimido;
 - encoding: os 9 pares jogo × codepage e amostras dos dicionários;
 - IMGB: amostras PS3/GTEX.
 

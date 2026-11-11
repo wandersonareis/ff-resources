@@ -10,7 +10,13 @@
 //      normaliza o índice/nome) e o texto do tradutor muda sozinho.
 
 import type { GameApi, TagCatalog } from '../api/GameApi';
-import { extractChipLabel, isLockedTagInner } from './game-text-tags';
+import {
+  colorsForVersion,
+  type ColorDefinition,
+  extractChipLabel,
+  isFf13Version,
+  isLockedTagInner,
+} from './game-text-tags';
 
 export type { TagCatalog };
 
@@ -24,7 +30,7 @@ export type TagName = (typeof TAG_NAMES)[number];
  * o FFX nunca as emite, então a lista efetiva vem do catálogo.
  */
 export const FF13_TAG_NAMES = [
-  'COLOR',
+  'CLR',
   'ICON',
   'BTN',
   'VAR',
@@ -32,7 +38,7 @@ export const FF13_TAG_NAMES = [
   'KEY',
   'PAGE',
   'NL',
-  'TAB',
+  'SPACE',
 ] as const;
 
 /** Máximo de itens do estágio 2 por query (filtre para ver mais). */
@@ -49,6 +55,8 @@ export interface TagSuggestionItem {
   detail: string;
   /** Atributos do chip atômico a inserir (só no estágio 2). */
   chip?: { value: string; label: string; locked: boolean; invalid: boolean };
+  /** A seleção insere uma quebra de linha (hardBreak), não um chip. */
+  hardBreak?: boolean;
 }
 
 /** true quando a tag interna sobrevive ao round-trip texto→bytes→texto. */
@@ -61,19 +69,57 @@ export type ChipValidator = (inner: string) => boolean;
 const catalogCache = new Map<string, Promise<TagCatalog | null>>();
 
 /**
- * Carrega o catálogo da versão uma única vez (promessa cacheada). Falha de
- * binding → null: o editor segue com validação estrutural (gramática) apenas.
+ * Carrega o catálogo da versão/idioma uma única vez (promessa cacheada). O
+ * erro de paleta NÃO é engolido: o editor mostra a mensagem e desabilita as
+ * cores. A promessa rejeitada sai do cache para permitir retry.
  */
-export function loadTagCatalog(version: string, api: GameApi): Promise<TagCatalog | null> {
-  let pending = catalogCache.get(version);
+export function loadTagCatalog(
+  version: string,
+  api: GameApi,
+  lang = 'us',
+): Promise<TagCatalog | null> {
+  const key = `${version}\u0000${lang}`;
+  let pending = catalogCache.get(key);
   if (!pending) {
-    pending = api
-      .getTagCatalog(version)
-      .then((catalog) => catalog ?? null)
-      .catch(() => null);
-    catalogCache.set(version, pending);
+    pending = api.getTagCatalog(version, lang).then((catalog) => catalog ?? null);
+    pending.catch(() => catalogCache.delete(key));
+    catalogCache.set(key, pending);
   }
   return pending;
+}
+
+/**
+ * Paleta de cores do editor. No FF13 vem do catálogo (com os bytes do idioma);
+ * null = paleta indisponível, nunca cai numa paleta de outro idioma.
+ */
+export function paletteFromCatalog(
+  catalog: TagCatalog | null,
+  version: string,
+): ColorDefinition[] | null {
+  const entry = catalog?.tags?.find((t) => t.tag.toUpperCase() === 'CLR');
+  if (entry?.values?.length) {
+    // A paleta é a lista do catálogo; dedupe por tag para que um payload com
+    // entradas repetidas não infle o popover.
+    const seen = new Set<string>();
+    const palette: ColorDefinition[] = [];
+    for (const value of entry.values) {
+      if (seen.has(value.tag)) continue;
+      seen.add(value.tag);
+      const color: ColorDefinition = {
+        label: value.label,
+        name: value.label,
+        hex: value.hex ?? '#9ca3af',
+        tag: value.tag,
+      };
+      if (value.group) color.group = value.group;
+      if (value.semiTransparent) color.semiTransparent = true;
+      if (value.reset) color.reset = true;
+      palette.push(color);
+    }
+    return palette;
+  }
+  if (!isFf13Version(version)) return colorsForVersion(version);
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,13 +145,14 @@ const EXACT_TAGS = new Set([
 // aceito/ignorado apenas quando o decode re-emite idêntico.
 const GRAMMAR_RULES: RegExp[] = [
   /^(?:SPACE|TIME):[0-9A-Fa-f]{1,2}$/,
-  /^CLR:/, // qualquer nome de cor: ColorToByte nunca falha
-  /^COLOR:.+$/, // FF13: qualquer nome da paleta
+  /^CLR:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}(?::.*)?$/, // FF13 (par + nome)
+  /^CLR:.+$/, // FFX (nome; o validador do FF13 exige os bytes)
+  /^COLOR:.+$/, // legado de display; o codec FF13 não aceita
   /^(?:ICON|BUTTON):[0-9A-Fa-f]{1,2}:.*$/, // FFX (1 byte + nome)
   /^(?:ICON|BTN):[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}(?::.*)?$/, // FF13 (par + nome)
   /^CHOICE:[0-9A-Fa-f]{1,2}$/,
   /^VAR:[0-9A-Fa-f]{1,2}$/, // FFX
-  /^(?:VAR|CTR|KEY|PAGE|NL|TAB):[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$/, // FF13
+  /^(?:VAR|CTR|KEY|PAGE|NL|SPACE):[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$/, // FF13
   /^PC:[0-9A-Fa-f]{1,2}:.*$/,
   /^MCR:s[0-9A-Fa-f]{1,2}:l[0-9A-Fa-f]{1,2}:.*$/,
   /^KEY:[0-9A-Fa-f]{2}$/,
@@ -140,7 +187,7 @@ function matchesGrammar(inner: string): boolean {
 function semanticKey(inner: string): [tag: string, key: string] | null {
   // FF13 primeiro: o par de bytes (`ICON:F0:40:Clock`) também casa o padrão
   // do FFX (`ICON:01:Nome`) — e o par é a identidade que manda lá.
-  const pair = /^(ICON|BTN|VAR|CTR|KEY|PAGE|NL|TAB):([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})(?::|$)/.exec(inner);
+  const pair = /^(CLR|ICON|BTN|VAR|CTR|KEY|PAGE|NL|SPACE):([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})(?::|$)/.exec(inner);
   if (pair) return [pair[1], pair[2].toUpperCase()];
   const color = /^COLOR:(.+)$/.exec(inner);
   if (color) return ['COLOR', color[1].trim().toUpperCase()];
@@ -168,9 +215,15 @@ function buildKeySets(catalog: TagCatalog): Map<string, Set<string>> {
  */
 export function createChipValidator(catalog: TagCatalog | null): ChipValidator {
   const sets = catalog ? buildKeySets(catalog) : null;
+  // O FF13 serve CLR com bytes: a forma só-nome é do FFX e não codifica lá.
+  const hasColorPair = !!catalog?.tags?.some((t) => t.tag.toUpperCase() === 'CLR');
+  const colorPairRe = /^CLR:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}(?::|$)/i;
   return (inner: string) => {
     const trimmed = inner.trim();
     if (!matchesGrammar(trimmed)) return false;
+    if (hasColorPair && /^CLR:/i.test(trimmed) && !colorPairRe.test(trimmed)) {
+      return false;
+    }
     if (!sets) return true;
     const semantic = semanticKey(trimmed);
     if (!semantic) return true;
@@ -204,14 +257,15 @@ export function getChipValidator(catalog: TagCatalog | null): ChipValidator {
  * A query parece uma tentativa de tag nomeada? Controla o `shouldShow` do
  * suggestion: texto corrido após `{` não abre o popup nem marca a decoração.
  */
-export function looksLikeTagAttempt(query: string): boolean {
+export function looksLikeTagAttempt(query: string, catalog: TagCatalog | null = null): boolean {
   if (query === '') return true;
+  const names = stage1Names(catalog);
   const colon = query.indexOf(':');
   if (colon >= 0) {
-    return (TAG_NAMES as readonly string[]).includes(query.slice(0, colon).toUpperCase());
+    return names.includes(query.slice(0, colon).toUpperCase());
   }
   const upper = query.toUpperCase();
-  return TAG_NAMES.some((name) => name.startsWith(upper));
+  return names.some((name) => name.startsWith(upper));
 }
 
 /**
@@ -220,15 +274,15 @@ export function looksLikeTagAttempt(query: string): boolean {
  * tag nomeada ("P", "MCR") ou `TAG:` + filtro. Query já fechada com `}` NÃO
  * é parcial: ou o usuário digitou a tag inteira ou ela já virou chip.
  */
-export function isPartialTagQuery(query: string): boolean {
+export function isPartialTagQuery(query: string, catalog: TagCatalog | null = null): boolean {
   if (query.endsWith('}')) return false;
-  return looksLikeTagAttempt(query);
+  return looksLikeTagAttempt(query, catalog);
 }
 
 /**
  * Nomes do estágio 1: os do catálogo da versão quando ele carregou (o FFX
- * serve PC/MCR/BUTTON/ICON; o FF13 serve COLOR/ICON/BTN/VAR/CTR/KEY/PAGE/NL/
- * TAB), com fallback para a lista estática do FFX.
+ * serve PC/MCR/BUTTON/ICON; o FF13 serve CLR/ICON/BTN/VAR/CTR/KEY/PAGE/NL/
+ * SPACE), com fallback para a lista estática do FFX.
  */
 function stage1Names(catalog: TagCatalog | null): string[] {
   const fromCatalog = (catalog?.tags ?? [])
@@ -269,7 +323,14 @@ export function computeSuggestions(query: string, catalog: TagCatalog | null): T
     .trim()
     .toLowerCase();
   const validator = getChipValidator(catalog);
+  const newline = name === 'NL';
   return (entry.values ?? [])
+    // White é reset (botão do toolbar), não uma cor de paleta; Ex fica no
+    // grupo secundário do popover.
+    .filter(
+      (value) =>
+        name !== 'CLR' || (value.group !== 'ex' && value.reset !== true),
+    )
     .filter(
       (value) =>
         !filter ||
@@ -282,15 +343,18 @@ export function computeSuggestions(query: string, catalog: TagCatalog | null): T
       return {
         kind: 'value' as const,
         insert: value.tag,
-        label: value.label,
+        label: newline ? 'Nova linha' : value.label,
         // MCR: a tag completa repete o texto; mostra só sXX:lYY como detalhe.
         detail: name === 'MCR' ? value.key : value.tag,
-        chip: {
-          value: value.tag,
-          label: extractChipLabel(inner),
-          locked: isLockedTagInner(inner),
-          invalid: !validator(inner),
-        },
+        hardBreak: newline,
+        chip: newline
+          ? undefined
+          : {
+              value: value.tag,
+              label: extractChipLabel(inner),
+              locked: isLockedTagInner(inner),
+              invalid: !validator(inner),
+            },
       };
     });
 }

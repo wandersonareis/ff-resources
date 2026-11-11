@@ -325,6 +325,7 @@ export function TranslationCellDialog({
                 setGate(null);
               }}
               version={version}
+              lang={SOURCE_LANG}
             />
           </div>
 

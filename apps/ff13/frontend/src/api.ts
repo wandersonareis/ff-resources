@@ -18,7 +18,10 @@ const emptyBatchResult = { ok: 0, failed: 0 };
 
 export const ff13Api: GameApi = {
   /* ---- texto ---- */
-  getTagCatalog: (version) => text.GetTagCatalog(partOf(version)) as Promise<any>,
+  // O adaptador de bindings já converte a version para a part (partOf):
+  // passar o valor cru — repetir a conversão aqui chamaria um helper que
+  // não existe neste módulo (ReferenceError na montagem do editor).
+  getTagCatalog: (version, lang) => text.GetTagCatalog(version, lang) as Promise<any>,
   listEntries: async (kind, version) => {
     // A COLEÇÃO de data/partN: o inventário inteiro do que foi extraído. Só
     // as unidades de TEXTO viram folha — os arquivos fora do escopo ficam no

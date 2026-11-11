@@ -24,6 +24,13 @@ describe('splitLeadingPadding', () => {
     expect(splitLeadingPadding('{text_newline}Hi').body).toBe('Hi');
   });
 
+  it('{NL:B1:B2} também é padding', () => {
+    expect(splitLeadingPadding('{NL:40:72}  Hi')).toEqual({
+      padding: '{NL:40:72}  ',
+      body: 'Hi',
+    });
+  });
+
   it('{TIME:00} NÃO é padding', () => {
     const r = splitLeadingPadding('{TIME:00}{TEXT_NEWLINE}Hi');
     expect(r.padding).toBe('');
@@ -39,6 +46,10 @@ describe('summarizePadding', () => {
   it('resume quebras e espaços', () => {
     expect(summarizePadding('{TEXT_NEWLINE}  \n')).toBe('{TEXT_NEWLINE} ×2 · ␣ ×2');
   });
+  it('resume a quebra FF13 pelo nome NL', () => {
+    expect(summarizePadding('{NL:40:72}{NL:40:72}  ')).toBe('{NL} ×2 · ␣ ×2');
+  });
+
   it('vazio', () => {
     expect(summarizePadding('')).toBe('');
   });

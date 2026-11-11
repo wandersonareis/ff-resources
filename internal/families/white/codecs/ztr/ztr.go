@@ -15,7 +15,8 @@ type File struct {
 }
 
 // Mode seleciona a forma de empacotamento, espelhando os switches do
-// ZTRtool: -c (sem compressão: chunks com dict vazio) e -c2 (comprimido).
+// implementação de referência: -c (sem compressão: chunks com dict vazio) e
+// -c2 (comprimido).
 type Mode int
 
 const (

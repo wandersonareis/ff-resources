@@ -1,12 +1,12 @@
 package encoding
 
 // IsMultibyteSecondByte responde se (b1,b2) é um par que forma um caractere
-// multibyte do codepage — equivalente às funções *CharaCheck do C# (faixas
-// geradas em characheck_tables.go). O decoder usa isso para passar o 2º byte
-// adiante sem tentar interpretá-lo como chave de controle.
-func (ks *KeySet) IsMultibyteSecondByte(b1, b2 byte) bool {
+// multibyte do codepage — equivalente às funções *CharaCheck legadas (faixas
+// em characheck_tables.go). O decoder usa isso para passar o 2º byte adiante
+// sem tentar interpretá-lo como chave de controle.
+func (tc *TextCodec) IsMultibyteSecondByte(b1, b2 byte) bool {
 	var ranges [][4]byte
-	switch ks.Codepage {
+	switch tc.Codepage {
 	case Chinese:
 		ranges = Big5Ranges
 	case Korean:

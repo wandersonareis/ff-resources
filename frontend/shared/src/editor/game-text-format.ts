@@ -137,13 +137,13 @@ function markNewlines(
   return { chars: out, start: markStart + delta, end: markEnd + delta };
 }
 
-/** Token de quebra na posição (tag do jogo case-insensitive, CRLF, LF, CR). */
+/** Token de quebra na posição (tags case-insensitive, CRLF, LF, CR). */
 function newlineTokenAt(chars: readonly string[], index: number): string | null {
-  const tag = chars
-    .slice(index, index + '{TEXT_NEWLINE}'.length)
-    .join('')
-    .toUpperCase();
-  if (tag === '{TEXT_NEWLINE}') return tag;
+  const slice = chars.slice(index, index + 40).join('');
+  const textNewline = /^\{TEXT_NEWLINE\}/i.exec(slice);
+  if (textNewline) return textNewline[0];
+  const nl = /^\{NL:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}\}/i.exec(slice);
+  if (nl) return nl[0];
   if (chars[index] === '\r' && chars[index + 1] === '\n') return '\r\n';
   if (chars[index] === '\n' || chars[index] === '\r') return chars[index];
   return null;

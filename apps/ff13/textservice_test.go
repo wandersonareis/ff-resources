@@ -124,9 +124,9 @@ func TestGetTextEntryWithLittleEndianTranslation(t *testing.T) {
 	writeFile(t, filepath.Join(root, "data", "part1", "txtres", "resident", "book", "txtres_us.ztr"),
 		testZtrBlob(t, ids, []string{"Hello", "World"}))
 
-	ks, err := keySet("part1")
+	ks, err := textCodec("part1")
 	if err != nil {
-		t.Fatalf("keySet: %v", err)
+		t.Fatalf("textCodec: %v", err)
 	}
 	lines, err := ks.EncodeLines([]string{"Ola", "Mundo"})
 	if err != nil {
@@ -230,9 +230,9 @@ func TestApplyTextCollectionZtr(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ztr.Read: %v", err)
 	}
-	ks, err := keySet("part1")
+	ks, err := textCodec("part1")
 	if err != nil {
-		t.Fatalf("keySet: %v", err)
+		t.Fatalf("textCodec: %v", err)
 	}
 	texts, err := ks.DecodeLines(zf.Lines)
 	if err != nil {
@@ -317,9 +317,9 @@ func TestApplyTextCollectionWpd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ztr.Read: %v", err)
 	}
-	ks, err := keySet("part1")
+	ks, err := textCodec("part1")
 	if err != nil {
-		t.Fatalf("keySet: %v", err)
+		t.Fatalf("textCodec: %v", err)
 	}
 	texts, err := ks.DecodeLines(zf.Lines)
 	if err != nil {

@@ -2,6 +2,7 @@ import type { JSONContent } from '@tiptap/core';
 import {
   buttonSpriteClasses,
   COLOR_RESET_TAG,
+  type ColorDefinition,
   extractChipLabel,
   getColorTagName,
   getResolvedColorFromTag,
@@ -9,6 +10,7 @@ import {
   isLockedTagInner,
 } from './game-text-tags';
 import type { ChipValidator } from './tag-catalog';
+import { NEWLINE_SPLIT_RE, newlineTag } from './line-breaks';
 
 /** Um destaque (intervalo) do texto em <mark> — busca. */
 export interface GameTextMark {
@@ -43,12 +45,24 @@ export interface GameTextRenderOptions extends GameTextMarkOptions {
 const NEWLINE_CHIP_HTML = '<span class="newline-chip">LF</span>';
 
 /**
- * Tag de cor no formato da versão: FFX usa `{CLR:NOME}`, a trilogia FF13
- * `{COLOR:Nome}` (o codec do FF13 resolve o nome para o par da codepage).
+ * Tag de cor legada do FFX: `{CLR:NOME}`. O FF13 só trabalha com a forma
+ * `{CLR:B1:B2:NOME}` vinda da paleta do idioma; por isso não há fallback
+ * silencioso para nome no FF13.
  */
-function colorTag(name: string, version: string): string {
-  return isFf13Version(version) ? `{COLOR:${name}}` : `{CLR:${name}}`;
+function legacyColorTag(name: string): string {
+  return `{CLR:${name}}`;
 }
+
+/** Cor resolvida para render: hex CSS + tag canônica (com bytes no FF13). */
+interface ColorSpan {
+  hex: string;
+  tag: string;
+}
+
+/** Resultado do classifyColorTag, já discriminado entre cor e reset. */
+type ClassifiedColor =
+  | { hex: string; isReset: false; tag: string }
+  | { hex: null; isReset: true; tag: string };
 
 /** Intervalo já resolvido em UTF-16 (a varredura trabalha em offsets absolutos). */
 interface ResolvedMark {
@@ -73,7 +87,7 @@ function toUtf16Index(text: string, codePoints: number): number {
  * Conversão entre o texto canônico do backend (tags {…}) e o HTML do Tiptap.
  *
  * Vira formatação rica: {CLR:X}/{COLOR:X} -> cor, {TEXT_ITALIC}/{TEXT_NORMAL}
- * -> itálico, \n / {TEXT_NEWLINE} -> quebra de parágrafo.
+ * -> itálico, \n / {TEXT_NEWLINE} / {NL:B1:B2} -> quebra de parágrafo.
  * Todo o resto vira chip atômico <span data-game-tag="…"> com value = tag
  * original (serialização verbatim, byte-idêntica).
  */
@@ -107,10 +121,11 @@ export const gameTextParser = {
     // uma tag no meio.
     const marks = this.resolveMarks(rawText, options);
 
-    // Quebras: \n real ou {TEXT_NEWLINE} viram parágrafos. O split leva
-    // grupo de captura (separadores intercalados no resultado), então o
-    // cursor absoluto avança exatamente pelo que foi consumido.
-    const segments = rawText.split(/(\r?\n|\{TEXT_NEWLINE\})/gi);
+    // Quebras: \n real, {TEXT_NEWLINE} (FFX/editor) ou {NL:B1:B2} (FF13)
+    // viram parágrafos. O split leva grupo de captura (separadores
+    // intercalados no resultado), então o cursor absoluto avança exatamente
+    // pelo que foi consumido.
+    const segments = rawText.split(NEWLINE_SPLIT_RE);
     const htmlParagraphs: string[] = [];
     let cursor = 0;
 
@@ -132,7 +147,7 @@ export const gameTextParser = {
         continue;
       }
 
-      let currentColor: string | null = null;
+      let currentColor: ColorSpan | null = null;
       let italicActive = false;
       let resultHTML = '';
       let lastIndex = 0;
@@ -143,10 +158,13 @@ export const gameTextParser = {
         const matchIndex = match.index;
         const inner = match[1].trim();
 
-        const colorTag = this.classifyColorTag(inner);
+        const rawColor = this.classifyColorTag(inner);
+        // Cor de OUTRO idioma (ou fora da paleta do catálogo) não pode virar
+        // marca de cor: vira chip inválido e preserva os bytes.
+        const colorInfo = rawColor && (!validate || validate(inner)) ? rawColor : null;
         const fontTag = this.classifyFontTag(inner);
 
-        if (!colorTag && !fontTag && !this.isChipTag(inner)) {
+        if (!colorInfo && !fontTag && !this.isChipTag(inner)) {
           continue;
         }
 
@@ -163,8 +181,10 @@ export const gameTextParser = {
           }
         }
 
-        if (colorTag) {
-          currentColor = colorTag.isReset ? null : colorTag.hex;
+        if (colorInfo) {
+          currentColor = colorInfo.isReset
+            ? null
+            : { hex: colorInfo.hex, tag: colorInfo.tag };
         } else if (fontTag) {
           italicActive = fontTag === 'italic';
         } else {
@@ -240,9 +260,14 @@ export const gameTextParser = {
   /**
    * Documento JSON do Tiptap -> texto canônico com tags.
    * Cores/itálico sincronizados por parágrafo; chips emitidos verbatim.
-   * Parágrafos unidos com {TEXT_NEWLINE} (espelha WriteLinebreaksAsCommands).
+   * Parágrafos unidos com a tag de quebra da versão: {TEXT_NEWLINE} no FFX e
+   * {NL:40:72} no FF13.
    */
-  serializeJSONToGameText(json: JSONContent, version = ''): string {
+  serializeJSONToGameText(
+    json: JSONContent,
+    version = '',
+    palette: readonly ColorDefinition[] = [],
+  ): string {
     if (!json?.content) return '';
 
     const paragraphTexts: string[] = [];
@@ -261,10 +286,15 @@ export const gameTextParser = {
             const text = inlineNode.text || '';
 
             const colorMark = inlineNode.marks?.find(
-              (m) => m.type === 'textStyle' && m.attrs?.color,
+              (m) => m.type === 'textStyle' && (m.attrs?.gameColor || m.attrs?.color),
             );
+            const exactTag = colorMark?.attrs?.gameColor as string | undefined;
             const colorVal = colorMark?.attrs?.color as string | undefined;
-            const nodeColorTag = colorVal ? getColorTagName(colorVal) : null;
+            const nodeColorTag = exactTag
+              ? this.normalizeColorTag(exactTag, palette)
+              : colorVal
+                ? this.colorTagForValue(colorVal, version, palette)
+                : null;
 
             const hasItalic = !!inlineNode.marks?.some((m) => m.type === 'italic');
 
@@ -275,21 +305,23 @@ export const gameTextParser = {
 
             if (nodeColorTag !== currentColorTag) {
               if (nodeColorTag) {
-                blockText += colorTag(nodeColorTag, version);
+                blockText += nodeColorTag;
               } else if (currentColorTag) {
-                blockText += colorTag(COLOR_RESET_TAG, version);
+                const reset = this.resetColorTag(version, palette);
+                if (reset && reset !== currentColorTag) blockText += reset;
               }
               currentColorTag = nodeColorTag;
             }
 
             blockText += text;
           } else if (inlineNode.type === 'hardBreak') {
-            blockText += '{TEXT_NEWLINE}';
+            blockText += newlineTag(version);
           }
         }
 
         if (currentColorTag) {
-          blockText += colorTag(COLOR_RESET_TAG, version);
+          const reset = this.resetColorTag(version, palette);
+          if (reset && reset !== currentColorTag) blockText += reset;
           currentColorTag = null;
         }
         if (italicActive) {
@@ -301,16 +333,79 @@ export const gameTextParser = {
       paragraphTexts.push(blockText);
     }
 
-    return paragraphTexts.join('{TEXT_NEWLINE}');
+    return paragraphTexts.join(newlineTag(version));
   },
 
-  classifyColorTag(inner: string): { hex: string | null; isReset: boolean } | null {
-    const upper = inner.trim().toUpperCase();
+  /**
+   * Normaliza a tag do mark de cor. A forma com bytes é verbatim; a forma
+   * só-nome (FFX ou legado) é resolvida pela paleta do idioma.
+   */
+  normalizeColorTag(tag: string, palette: readonly ColorDefinition[]): string | null {
+    const trimmed = tag.trim();
+    const upper = trimmed.toUpperCase();
+    if (!upper.startsWith('{CLR:') && !upper.startsWith('{COLOR:')) return null;
+    if (/^\{CLR:[0-9A-Fa-f]{1,2}:[0-9A-Fa-f]{1,2}(?::[^{}]*)?\}$/.test(trimmed)) {
+      return trimmed;
+    }
+    const inner = trimmed.slice(1, -1);
+    const name = inner.slice(inner.indexOf(':') + 1).trim();
+    const entry = palette.find((c) => c.name.toUpperCase() === name.toUpperCase());
+    if (entry?.tag) return entry.tag;
+    return trimmed;
+  },
+
+  /** Hex/rgb colado (sem gameColor) -> tag da paleta do idioma. */
+  colorTagForValue(
+    colorValue: string,
+    version: string,
+    palette: readonly ColorDefinition[],
+  ): string | null {
+    const name = getColorTagName(colorValue);
+    if (!name) return null;
+    const entry = palette.find((c) => c.name.toUpperCase() === name.toUpperCase());
+    if (entry?.tag) return entry.tag;
+    return isFf13Version(version) ? null : legacyColorTag(name);
+  },
+
+  /** Tag de reset: White da paleta (FF13) ou {CLR:WHITE} (FFX). */
+  resetColorTag(version: string, palette: readonly ColorDefinition[]): string | null {
+    const white = palette.find((c) => c.name.toUpperCase() === 'WHITE');
+    if (white?.tag) return white.tag;
+    return isFf13Version(version) ? null : legacyColorTag(COLOR_RESET_TAG);
+  },
+
+  classifyColorTag(inner: string): ClassifiedColor | null {
+    const trimmed = inner.trim();
+    const upper = trimmed.toUpperCase();
     if (upper.startsWith('CLR:')) {
-      return getResolvedColorFromTag(upper.slice(4));
+      const payload = trimmed.slice(4).trim();
+      // Forma com bytes: {CLR:B1:B2:Nome}; o NOME é display.
+      const pair = /^([0-9A-Fa-f]{1,2}):([0-9A-Fa-f]{1,2})(?::(.+))?$/.exec(payload);
+      if (pair) {
+        const name = (pair[3] ?? '').trim();
+        if (!name) return null;
+        const resolved = getResolvedColorFromTag(name);
+        if (!resolved) return null;
+        const tag = `{${trimmed}}`;
+        return resolved.isReset
+          ? { hex: null, isReset: true, tag }
+          : { hex: resolved.hex ?? '#ffffff', isReset: false, tag };
+      }
+      // Forma do FFX: {CLR:NOME}.
+      const resolved = getResolvedColorFromTag(payload);
+      if (!resolved) return null;
+      const tag = `{${trimmed}}`;
+      return resolved.isReset
+        ? { hex: null, isReset: true, tag }
+        : { hex: resolved.hex ?? '#ffffff', isReset: false, tag };
     }
     if (upper.startsWith('COLOR:')) {
-      return getResolvedColorFromTag(upper.slice(6));
+      const resolved = getResolvedColorFromTag(trimmed.slice(6));
+      if (!resolved) return null;
+      const tag = `{${trimmed}}`;
+      return resolved.isReset
+        ? { hex: null, isReset: true, tag }
+        : { hex: resolved.hex ?? '#ffffff', isReset: false, tag };
     }
     return null;
   },
@@ -332,7 +427,7 @@ export const gameTextParser = {
   wrapSegment(
     text: string,
     absoluteStart: number,
-    color: string | null,
+    color: ColorSpan | null,
     italic: boolean,
     marks: readonly ResolvedMark[],
   ): string {
@@ -361,14 +456,18 @@ export const gameTextParser = {
     return this.wrapStyledTextHtml(html, color, italic);
   },
 
-  wrapStyledText(text: string, color: string | null, italic: boolean): string {
+  wrapStyledText(text: string, color: ColorSpan | null, italic: boolean): string {
     return this.wrapStyledTextHtml(this.escapeHtml(text), color, italic);
   },
 
   /** Itálico/cor sobre HTML JÁ escapado (pode conter <mark> interno). */
-  wrapStyledTextHtml(html: string, color: string | null, italic: boolean): string {
+  wrapStyledTextHtml(html: string, color: ColorSpan | null, italic: boolean): string {
     if (italic) html = `<em>${html}</em>`;
-    if (color) html = `<span style="color: ${color}">${html}</span>`;
+    if (color) {
+      html =
+        `<span style="color: ${color.hex}" data-game-color="${this.escapeAttr(color.tag)}">` +
+        `${html}</span>`;
+    }
     return html;
   },
 

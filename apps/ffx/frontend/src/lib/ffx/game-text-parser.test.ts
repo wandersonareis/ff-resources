@@ -264,13 +264,17 @@ describe('serializeJSONToGameText', () => {
 describe('parseGameTextToHTML: cor corrompida de rascunho antigo', () => {
   it('{CLR:RGB(...)} volta a ser marca de cor (nao vira chip)', () => {
     const html = gameTextParser.parseGameTextToHTML('{CLR:RGB(37, 99, 235)}Oi');
-    expect(html).toBe('<p><span style="color: #2563eb">Oi</span></p>');
+    expect(html).toBe(
+      '<p><span style="color: #2563eb" data-game-color="{CLR:RGB(37, 99, 235)}">Oi</span></p>',
+    );
     expect(html).not.toContain('data-game-tag');
   });
 
   it('byte canonico do decoder ({CLR:88}) tambem vira cor', () => {
     const html = gameTextParser.parseGameTextToHTML('{CLR:88}Oi');
-    expect(html).toBe('<p><span style="color: #2563eb">Oi</span></p>');
+    expect(html).toBe(
+      '<p><span style="color: #2563eb" data-game-color="{CLR:88}">Oi</span></p>',
+    );
   });
 
   it('byte desconhecido continua chip (byte preservado no round-trip)', () => {

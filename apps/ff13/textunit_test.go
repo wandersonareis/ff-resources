@@ -21,6 +21,7 @@ func TestParseUnitFileName(t *testing.T) {
 		{"txtres_us.ztr", "txtres", "us"},
 		{"auto_yus_us.bin", "auto_yus", "us"},
 		{"txtres_fr.ztr", "txtres", "fr"},
+		{"txtres_gr.ztr", "txtres", "gr"},
 		{"txtres_jp.ztr", "txtres", "jp"},
 		{"data_backup.bin", "data_backup", ""},
 		{"txtres_ck.ztr", "txtres_ck", ""},
@@ -39,9 +40,9 @@ func TestParseUnitFileName(t *testing.T) {
 // testZtrBlob monta um .ztr com os IDs/linhas pedidos (charset do part1).
 func testZtrBlob(t *testing.T, ids []string, texts []string) []byte {
 	t.Helper()
-	ks, err := keySet("part1")
+	ks, err := textCodec("part1")
 	if err != nil {
-		t.Fatalf("keySet: %v", err)
+		t.Fatalf("textCodec: %v", err)
 	}
 	lines, err := ks.EncodeLines(texts)
 	if err != nil {

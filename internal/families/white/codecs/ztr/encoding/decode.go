@@ -7,15 +7,14 @@ import (
 
 // DECODE: bytes da linha -> texto UTF-8 com as tags.
 //
-// Máquina de estados fiel aos KeysDecoderLJ/Ch/Kr do C#, um byte por passo,
-// na MESMA ordem de hoje:
+// Máquina de estados, um byte por passo:
 //
 //  1. trail de multibyte do charset (isTrail)      -> acumula no segmento
-//  2. controle único 0x00..0x05 (singleFwd)        -> tag de byte único
+//  2. controle único 0x00..0x05 (controlFwd)       -> tag de byte único
 //     (00 00 = terminador da linha)
-//  3. par por categoria (resolveDecodePair, com o
-//     chara no meio) ou PUA do Shift-JIS           -> tag / runa
-//  4. 0xFF isolado                                  -> {FF}
+//  3. par por categoria (resolveDecodePair, com os
+//     glifos no meio) ou PUA do Shift-JIS           -> tag / rune
+//  4. 0xFF isolado                                  -> {B:FF}
 //  5. demais bytes                                  -> acumula p/ charset
 //
 // O texto puro é decodificado em SEGMENTOS (flush) para que as tags nunca
@@ -23,12 +22,7 @@ import (
 
 // DecodeLine converte uma linha crua (bytes da codepage, terminador 00 00
 // incluído, sem CRLF) em texto UTF-8.
-//
-// Diferenças conscientes em relação ao C#: o texto comum é convertido por
-// segmentos contíguos (mesmo resultado da conversão global, já que segmentos
-// só quebram em fronteiras de caracteres) e os pares chara já saem como runas
-// (o C# emitia "{0x85_40}" e reescrevia depois).
-func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
+func (tc *TextCodec) DecodeLine(raw []byte) (string, error) {
 	out := make([]byte, 0, len(raw)*2+16)
 	pass := make([]byte, 0, 64) // segmento corrente do charset
 
@@ -38,7 +32,7 @@ func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
 		if len(pass) == 0 {
 			return nil
 		}
-		s, err := ks.Charset.Decode(pass)
+		s, err := tc.Charset.Decode(pass)
 		if err != nil {
 			return fmt.Errorf("%w: charset: %v", ErrInvalidInput, err)
 		}
@@ -55,15 +49,15 @@ func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
 
 		// (1) 2º byte de multibyte: vai cru para o buffer do charset e
 		// currentByte zera (evita ler trails como controles).
-		if ks.IsMultibyteSecondByte(prev, cur) {
+		if tc.IsMultibyteSecondByte(prev, cur) {
 			pass = append(pass, cur)
 			written = true
 			cur = 0
 		}
 
-		// (2) SingleKeys.
+		// (2) controles de byte único.
 		if !written {
-			if tag, ok := ks.singleFwd[cur]; ok {
+			if tag, ok := tc.controlFwd[cur]; ok {
 				if cur == 0 && i+1 < n && raw[i+1] == 0 {
 					i++      // terminador 00 00: consome ambos em silêncio,
 					prev = 0 // nada é escrito
@@ -79,9 +73,9 @@ func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
 		}
 
 		// (3) pares (cur,next) consultados por categoria na ordem do
-		// decoder; pares chara produzem a RUNA direto (sem chaves).
+		// decoder; pares de glifo produzem a RUNA direto (sem chaves).
 		if !written && i+1 < n {
-			if tag, r, isRune, ok := ks.resolveDecodePair(cur, raw[i+1]); ok {
+			if tag, r, isRune, ok := tc.resolveDecodePair(cur, raw[i+1]); ok {
 				if err := flush(); err != nil {
 					return "", err
 				}
@@ -96,7 +90,7 @@ func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
 			}
 			// Área user-defined (PUA) do Shift-JIS — depois dos dicts, que
 			// têm prioridade (alguns pares F0/F2 são tags de icon no jogo).
-			if r, ok := ks.userDefinedPair(cur, raw[i+1]); ok {
+			if r, ok := tc.userDefinedPair(cur, raw[i+1]); ok {
 				if err := flush(); err != nil {
 					return "", err
 				}
@@ -128,10 +122,10 @@ func (ks *KeySet) DecodeLine(raw []byte) (string, error) {
 }
 
 // DecodeLines decodifica um bloco de linhas cruas (blob).
-func (ks *KeySet) DecodeLines(raw [][]byte) ([]string, error) {
+func (tc *TextCodec) DecodeLines(raw [][]byte) ([]string, error) {
 	out := make([]string, len(raw))
 	for i, line := range raw {
-		s, err := ks.DecodeLine(line)
+		s, err := tc.DecodeLine(line)
 		if err != nil {
 			return nil, fmt.Errorf("linha %d: %w", i, err)
 		}

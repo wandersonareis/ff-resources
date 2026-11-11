@@ -805,8 +805,8 @@ $de_110_00 |:| Counter
 $de_110_00h |:| Occasionally counterattack enemies after evading their attacks.
 $def100_00 |:| Hand Grenade
 $def100_00h |:| Deal physical damage to targets in range.
-$dif_conf_e |:| {ICON:F0:41:Warning} You have selected {COLOR:LightRed}EASY MODE{COLOR:White} for battles.{NL:40:72}To change the difficulty level at any time, press {BTN:F1:43:Y}{NL:40:72}to open the main menu and then select {COLOR:Gold}Settings{COLOR:White}.{NL:40:72}Begin playing in {COLOR:LightRed}EASY MODE{COLOR:White}?|Yes|No
-$dif_conf_n |:| {ICON:F0:41:Warning} You have selected {COLOR:LightRed}NORMAL MODE{COLOR:White} for battles.{NL:40:72}To change the difficulty level at any time, press {BTN:F1:43:Y}{NL:40:72}to open the main menu and then select {COLOR:Gold}Settings{COLOR:White}.{NL:40:72}Begin playing in {COLOR:LightRed}NORMAL MODE{COLOR:White}?|Yes|No
+$dif_conf_e |:| {ICON:F0:41:Warning} You have selected {CLR:F9:43:LightRed}EASY MODE{CLR:F9:40:White} for battles.{NL:40:72}To change the difficulty level at any time, press {BTN:F1:43:Y}{NL:40:72}to open the main menu and then select {CLR:F9:42:Gold}Settings{CLR:F9:40:White}.{NL:40:72}Begin playing in {CLR:F9:43:LightRed}EASY MODE{CLR:F9:40:White}?|Yes|No
+$dif_conf_n |:| {ICON:F0:41:Warning} You have selected {CLR:F9:43:LightRed}NORMAL MODE{CLR:F9:40:White} for battles.{NL:40:72}To change the difficulty level at any time, press {BTN:F1:43:Y}{NL:40:72}to open the main menu and then select {CLR:F9:42:Gold}Settings{CLR:F9:40:White}.{NL:40:72}Begin playing in {CLR:F9:43:LightRed}NORMAL MODE{CLR:F9:40:White}?|Yes|No
 $dif_easy |:| EASY MODE
 $dif_normal |:| NORMAL MODE
 $f_abi_00 |:| All Abilities
@@ -888,7 +888,7 @@ $f_con_22 |:| Off
 $f_con_22h |:| Do not display help messages during battle.
 $f_con_23 |:| Brightness
 $f_con_23h |:| Adjust the brightness of the display.
-$f_con_24 |:| Brightness:{TAB:85:60}
+$f_con_24 |:| Brightness:{SPACE:85:60}
 $f_con_25 |:| Non-Event Subtitles
 $f_con_25h |:| Toggle the display of subtitles for speech outside of cutscenes.
 $f_con_26 |:| On
@@ -934,7 +934,7 @@ $f_con_66 |:| Navi-map/ Restart (pause menu): {BTN:F1:45:Back}
 $f_con_66get |:| Press the key you wish to assign to the "Navi-map/ Restart (pause menu)" function.{NL:40:72}Current configuration: {BTN:F1:45:Back}
 $f_con_back |:| {BTN:F1:40:A} {BTN:F1:41:B} Go Back
 $f_con_but_00 |:| {BTN:F1:42:X} Restore defaults
-$f_con_credit |:| |	FINAL FANTASY XIII{NL:40:72}|{NL:40:72}|PRODUCER{NL:40:72}	Yoshinori Kitase{NL:40:72}|{NL:40:72}|DIRECTOR{NL:40:72}	Naoki Hamaguchi{NL:40:72}|{NL:40:72}|PROJECT MANAGER{NL:40:72}	Rie Saito{NL:40:72}|{NL:40:72}|PROJECT COORDINATOR{NL:40:72}	Kenji Nishikawa{NL:40:72}|{NL:40:72}|MENU ARTIST{NL:40:72}	Yoichi Seki{NL:40:72}|{NL:40:72}|PROGRAMMERS{NL:40:72}	Shuichi Ikeda{NL:40:72}	Takeshi Mori{NL:40:72}	Dining Yang{NL:40:72}|{NL:40:72}|CUTSCENE ARTIST{NL:40:72}	Hidekazu Miyake{NL:40:72}|{NL:40:72}|	fuzz, Inc.{NL:40:72}|SUPERVISOR{NL:40:72}	Yoshiki Kashitani{NL:40:72}|{NL:40:72}|PROGRAMMERS{NL:40:72}	Kenji Fujimori{NL:40:72}	Takashi Mori{NL:40:72}	Hideki Shibuya{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ MARKETING DIVISION ＞{COLOR:White}{NL:40:72}|CORPORATE EXECUTIVE{NL:40:72}	Tomoyoshi Oosaki{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ SALES PLANNING ＞{COLOR:White}{NL:40:72}|MANAGER{NL:40:72}	Yoshiyuki Takahashi{NL:40:72}|{NL:40:72}|STAFF{NL:40:72}	Yoshiki Yamada{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ BUSINESS DEVELOPMENT TEAM ＞{COLOR:White}{NL:40:72}|CHIEF BUSINESS DEVELOPMENT COORDINATOR{NL:40:72}	Wataru Ninomiya{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ ONLINE SALES TEAM ＞{COLOR:White}{NL:40:72}|SENIOR MANAGER{NL:40:72}	Makoto Tsuda{NL:40:72}|{NL:40:72}|CHIEF{NL:40:72}	Tomoko Kasahara{NL:40:72}|{NL:40:72}|STAFF{NL:40:72}	Takuma Shiraishi	Mai Yamamoto{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ MARKETING & PR ＞{COLOR:White}{NL:40:72}|MANAGERS{NL:40:72}	Akio Ofuji		Ryutaro Sasaki{NL:40:72}|{NL:40:72}|LEAD PLANNER{NL:40:72}	Yohei Murakami{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ LOCALIZATION DIVISION ＞{NL:40:72}|LOCALIZATION SUPERVISOR{NL:40:72}	Ikuko Tsuruta{NL:40:72}|{NL:40:72}|LOCALIZATION COORDINATOR{NL:40:72}	Yoshie Fukada{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ SQUARE ENIX, INC. ＞{COLOR:White}{NL:40:72}|MARKETING DIRECTOR{NL:40:72}	Sakura Minamida{NL:40:72}|{NL:40:72}|ASSISTANT PRODUCT MARKETING MANAGER{NL:40:72}	Scott Strichart{NL:40:72}|{NL:40:72}|PRODUCT MARKETING MANAGER{NL:40:72}	Kaori Takasue{NL:40:72}|{NL:40:72}|MARKETING COORDINATOR{NL:40:72}	Sam Hsieh{NL:40:72}|{NL:40:72}|ASSISTANT PUBLIC RELATIONS MANAGER{NL:40:72}	Emily Shoji{NL:40:72}|{NL:40:72}|PUBLIC RELATIONS DIRECTOR{NL:40:72}	David Yang{NL:40:72}|{NL:40:72}|TQA MANAGER{NL:40:72}	Mark Okamoto{NL:40:72}|{NL:40:72}|SENIOR TQA ANALYST{NL:40:72}	Juvé Quiroz{NL:40:72}|{NL:40:72}|ASSISTANT DIRECTOR OF QUALITY ASSURANCE{NL:40:72}	David "Ribs" Carrillo{NL:40:72}|{NL:40:72}|QA MANAGER{NL:40:72}	Aaron J. Adams{NL:40:72}|{NL:40:72}|QA ADMINISTRATOR{NL:40:72}	Keith P. Martz{NL:40:72}|{NL:40:72}|ASSISTANT QA ADMINISTRATOR{NL:40:72}	Louis Sedeno III{NL:40:72}|{NL:40:72}|LOCALIZATION & QA DIRECTOR{NL:40:72}	Yutaka Sano{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ SQUARE ENIX LTD. ＞{COLOR:White}{NL:40:72}|OPERATIONS DIRECTOR{NL:40:72}	Seb Ohsan Berthelsen{NL:40:72}|{NL:40:72}|SENIOR MANAGER ‐ LOCALISATION AND PROJECT MANAGEMENT{NL:40:72}	Yuko Tomizawa{NL:40:72}|{NL:40:72}|SENIOR LOCALISATION PRODUCER{NL:40:72}	Alex Moresby{NL:40:72}|{NL:40:72}|LOCALISATION PRODUCER{NL:40:72}	Elisa Giribaldi{NL:40:72}|{NL:40:72}|ADDITIONAL ENGLISH TRANSLATION{NL:40:72}	Gavin Poffley{NL:40:72}|{NL:40:72}|ADDITIONAL FRENCH TRANSLATION{NL:40:72}	Louise Macqueron{NL:40:72}|{NL:40:72}|ADDITIONAL ITALIAN TRANSLATION{NL:40:72}	Giulia Isnenghi{NL:40:72}|{NL:40:72}|ADDITIONAL GERMAN TRANSLATION{NL:40:72}	Katharina Klamt{NL:40:72}|{NL:40:72}|ADDITIONAL SPANISH TRANSLATION{NL:40:72}	Raquel Uzal-Gómez{NL:40:72}|{NL:40:72}|MASTERING MANAGER{NL:40:72}	Jason Walker{NL:40:72}|{NL:40:72}|BRAND MANAGER{NL:40:72}	Ned Browning{NL:40:72}|{NL:40:72}|SENIOR PR MANAGER{NL:40:72}	Alex Huhtala{NL:40:72}|{NL:40:72}|EXECUTIVE DIRECTOR - SEJ BUSINESS DIVISION{NL:40:72}	Larry Sparks{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ TRANSLATION ＞{COLOR:White}{NL:40:72}|	Synthesis Asia Co., Ltd.{NL:40:72}|LEAD PROJECT MANAGER{NL:40:72}	Harry Inaba{NL:40:72}|{NL:40:72}|PROJECT MANAGER{NL:40:72}	Tae Ho Kim{NL:40:72}|{NL:40:72}|COORDINATOR{NL:40:72}	Jaek Hwang{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ QUALITY ASSURANCE ＞{COLOR:White}{NL:40:72}|COORDINATORS{NL:40:72}	Yasutaka Nakashima		Akasaka Taketoshi{NL:40:72}|	Yamada Takashi{NL:40:72}|{NL:40:72}|	Komatsu Junichiro		Kitazawa Junichi{NL:40:72}|{NL:40:72}|TECHNICAL ENGINEERS{NL:40:72}	Ryuji Kiyoshima		Toyokazu Takehara{NL:40:72}|	Hisato Iwatsuki		Hiroyuki Ogura{NL:40:72}|	Kouno Keigo{NL:40:72}|{NL:40:72}|TESTERS{NL:40:72}	Tamura Tomonobu	Terasaki Kimitoshi{NL:40:72}|{NL:40:72}|	...and THE ENTIRE QA STAFF{NL:40:72}|{NL:40:72}|CHIEF COORDINATOR{NL:40:72}	Takahashi Hiromichi{NL:40:72}|{NL:40:72}|RATINGS ADVISORS{NL:40:72}	Miri Ito		Asumi Sakamoto{NL:40:72}|	Reiko Kondo{NL:40:72}|{NL:40:72}|MANAGER{NL:40:72}	Hideyuki Kato{NL:40:72}|{NL:40:72}|SENIOR MANAGER{NL:40:72}	Yukihiro Shibuya{NL:40:72}|{NL:40:72}|GENERAL MANAGER{NL:40:72}	Koji Yamashita{NL:40:72}|{NL:40:72}|DIGITAL Hearts Co., Ltd.{NL:40:72}|	Takayuki Miura		Kana Shinohara{NL:40:72}|	Takashi Miyazaki	Keisuke Kai{NL:40:72}|	Masahito Yasumatsu{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ DEVELOPMENT SUPPORT DIVISION ＞{COLOR:White}{NL:40:72}|TECHNICAL PRODUCTION ASSOCIATE{NL:40:72}	Taisuke Sazaki{NL:40:72}|{NL:40:72}|ADMINISTRATORS{NL:40:72}	Kazuya Okamoto	Mieko Isozaki{NL:40:72}|{NL:40:72}|{COLOR:IceBlue}＜ SPECIAL THANKS ＞{COLOR:White}{NL:40:72}|	Akira Aono	Takuya Nagashima{NL:40:72}|{NL:40:72}|	ALL SQUARE ENIX STAFF{NL:40:72}|	...and ALL FANS OF FINAL FANTASY
+$f_con_credit |:| |	FINAL FANTASY XIII{NL:40:72}|{NL:40:72}|PRODUCER{NL:40:72}	Yoshinori Kitase{NL:40:72}|{NL:40:72}|DIRECTOR{NL:40:72}	Naoki Hamaguchi{NL:40:72}|{NL:40:72}|PROJECT MANAGER{NL:40:72}	Rie Saito{NL:40:72}|{NL:40:72}|PROJECT COORDINATOR{NL:40:72}	Kenji Nishikawa{NL:40:72}|{NL:40:72}|MENU ARTIST{NL:40:72}	Yoichi Seki{NL:40:72}|{NL:40:72}|PROGRAMMERS{NL:40:72}	Shuichi Ikeda{NL:40:72}	Takeshi Mori{NL:40:72}	Dining Yang{NL:40:72}|{NL:40:72}|CUTSCENE ARTIST{NL:40:72}	Hidekazu Miyake{NL:40:72}|{NL:40:72}|	fuzz, Inc.{NL:40:72}|SUPERVISOR{NL:40:72}	Yoshiki Kashitani{NL:40:72}|{NL:40:72}|PROGRAMMERS{NL:40:72}	Kenji Fujimori{NL:40:72}	Takashi Mori{NL:40:72}	Hideki Shibuya{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ MARKETING DIVISION ＞{CLR:F9:40:White}{NL:40:72}|CORPORATE EXECUTIVE{NL:40:72}	Tomoyoshi Oosaki{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ SALES PLANNING ＞{CLR:F9:40:White}{NL:40:72}|MANAGER{NL:40:72}	Yoshiyuki Takahashi{NL:40:72}|{NL:40:72}|STAFF{NL:40:72}	Yoshiki Yamada{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ BUSINESS DEVELOPMENT TEAM ＞{CLR:F9:40:White}{NL:40:72}|CHIEF BUSINESS DEVELOPMENT COORDINATOR{NL:40:72}	Wataru Ninomiya{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ ONLINE SALES TEAM ＞{CLR:F9:40:White}{NL:40:72}|SENIOR MANAGER{NL:40:72}	Makoto Tsuda{NL:40:72}|{NL:40:72}|CHIEF{NL:40:72}	Tomoko Kasahara{NL:40:72}|{NL:40:72}|STAFF{NL:40:72}	Takuma Shiraishi	Mai Yamamoto{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ MARKETING & PR ＞{CLR:F9:40:White}{NL:40:72}|MANAGERS{NL:40:72}	Akio Ofuji		Ryutaro Sasaki{NL:40:72}|{NL:40:72}|LEAD PLANNER{NL:40:72}	Yohei Murakami{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ LOCALIZATION DIVISION ＞{NL:40:72}|LOCALIZATION SUPERVISOR{NL:40:72}	Ikuko Tsuruta{NL:40:72}|{NL:40:72}|LOCALIZATION COORDINATOR{NL:40:72}	Yoshie Fukada{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ SQUARE ENIX, INC. ＞{CLR:F9:40:White}{NL:40:72}|MARKETING DIRECTOR{NL:40:72}	Sakura Minamida{NL:40:72}|{NL:40:72}|ASSISTANT PRODUCT MARKETING MANAGER{NL:40:72}	Scott Strichart{NL:40:72}|{NL:40:72}|PRODUCT MARKETING MANAGER{NL:40:72}	Kaori Takasue{NL:40:72}|{NL:40:72}|MARKETING COORDINATOR{NL:40:72}	Sam Hsieh{NL:40:72}|{NL:40:72}|ASSISTANT PUBLIC RELATIONS MANAGER{NL:40:72}	Emily Shoji{NL:40:72}|{NL:40:72}|PUBLIC RELATIONS DIRECTOR{NL:40:72}	David Yang{NL:40:72}|{NL:40:72}|TQA MANAGER{NL:40:72}	Mark Okamoto{NL:40:72}|{NL:40:72}|SENIOR TQA ANALYST{NL:40:72}	Juvé Quiroz{NL:40:72}|{NL:40:72}|ASSISTANT DIRECTOR OF QUALITY ASSURANCE{NL:40:72}	David "Ribs" Carrillo{NL:40:72}|{NL:40:72}|QA MANAGER{NL:40:72}	Aaron J. Adams{NL:40:72}|{NL:40:72}|QA ADMINISTRATOR{NL:40:72}	Keith P. Martz{NL:40:72}|{NL:40:72}|ASSISTANT QA ADMINISTRATOR{NL:40:72}	Louis Sedeno III{NL:40:72}|{NL:40:72}|LOCALIZATION & QA DIRECTOR{NL:40:72}	Yutaka Sano{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ SQUARE ENIX LTD. ＞{CLR:F9:40:White}{NL:40:72}|OPERATIONS DIRECTOR{NL:40:72}	Seb Ohsan Berthelsen{NL:40:72}|{NL:40:72}|SENIOR MANAGER ‐ LOCALISATION AND PROJECT MANAGEMENT{NL:40:72}	Yuko Tomizawa{NL:40:72}|{NL:40:72}|SENIOR LOCALISATION PRODUCER{NL:40:72}	Alex Moresby{NL:40:72}|{NL:40:72}|LOCALISATION PRODUCER{NL:40:72}	Elisa Giribaldi{NL:40:72}|{NL:40:72}|ADDITIONAL ENGLISH TRANSLATION{NL:40:72}	Gavin Poffley{NL:40:72}|{NL:40:72}|ADDITIONAL FRENCH TRANSLATION{NL:40:72}	Louise Macqueron{NL:40:72}|{NL:40:72}|ADDITIONAL ITALIAN TRANSLATION{NL:40:72}	Giulia Isnenghi{NL:40:72}|{NL:40:72}|ADDITIONAL GERMAN TRANSLATION{NL:40:72}	Katharina Klamt{NL:40:72}|{NL:40:72}|ADDITIONAL SPANISH TRANSLATION{NL:40:72}	Raquel Uzal-Gómez{NL:40:72}|{NL:40:72}|MASTERING MANAGER{NL:40:72}	Jason Walker{NL:40:72}|{NL:40:72}|BRAND MANAGER{NL:40:72}	Ned Browning{NL:40:72}|{NL:40:72}|SENIOR PR MANAGER{NL:40:72}	Alex Huhtala{NL:40:72}|{NL:40:72}|EXECUTIVE DIRECTOR - SEJ BUSINESS DIVISION{NL:40:72}	Larry Sparks{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ TRANSLATION ＞{CLR:F9:40:White}{NL:40:72}|	Synthesis Asia Co., Ltd.{NL:40:72}|LEAD PROJECT MANAGER{NL:40:72}	Harry Inaba{NL:40:72}|{NL:40:72}|PROJECT MANAGER{NL:40:72}	Tae Ho Kim{NL:40:72}|{NL:40:72}|COORDINATOR{NL:40:72}	Jaek Hwang{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ QUALITY ASSURANCE ＞{CLR:F9:40:White}{NL:40:72}|COORDINATORS{NL:40:72}	Yasutaka Nakashima		Akasaka Taketoshi{NL:40:72}|	Yamada Takashi{NL:40:72}|{NL:40:72}|	Komatsu Junichiro		Kitazawa Junichi{NL:40:72}|{NL:40:72}|TECHNICAL ENGINEERS{NL:40:72}	Ryuji Kiyoshima		Toyokazu Takehara{NL:40:72}|	Hisato Iwatsuki		Hiroyuki Ogura{NL:40:72}|	Kouno Keigo{NL:40:72}|{NL:40:72}|TESTERS{NL:40:72}	Tamura Tomonobu	Terasaki Kimitoshi{NL:40:72}|{NL:40:72}|	...and THE ENTIRE QA STAFF{NL:40:72}|{NL:40:72}|CHIEF COORDINATOR{NL:40:72}	Takahashi Hiromichi{NL:40:72}|{NL:40:72}|RATINGS ADVISORS{NL:40:72}	Miri Ito		Asumi Sakamoto{NL:40:72}|	Reiko Kondo{NL:40:72}|{NL:40:72}|MANAGER{NL:40:72}	Hideyuki Kato{NL:40:72}|{NL:40:72}|SENIOR MANAGER{NL:40:72}	Yukihiro Shibuya{NL:40:72}|{NL:40:72}|GENERAL MANAGER{NL:40:72}	Koji Yamashita{NL:40:72}|{NL:40:72}|DIGITAL Hearts Co., Ltd.{NL:40:72}|	Takayuki Miura		Kana Shinohara{NL:40:72}|	Takashi Miyazaki	Keisuke Kai{NL:40:72}|	Masahito Yasumatsu{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ DEVELOPMENT SUPPORT DIVISION ＞{CLR:F9:40:White}{NL:40:72}|TECHNICAL PRODUCTION ASSOCIATE{NL:40:72}	Taisuke Sazaki{NL:40:72}|{NL:40:72}|ADMINISTRATORS{NL:40:72}	Kazuya Okamoto	Mieko Isozaki{NL:40:72}|{NL:40:72}|{CLR:F9:41:IceBlue}＜ SPECIAL THANKS ＞{CLR:F9:40:White}{NL:40:72}|	Akira Aono	Takuya Nagashima{NL:40:72}|{NL:40:72}|	ALL SQUARE ENIX STAFF{NL:40:72}|	...and ALL FANS OF FINAL FANTASY
 $f_con_def_00 |:| {ICON:F0:41:Warning} Restore all default settings?
 $f_con_def_01 |:| Yes|No
 $f_con_mid_ware |:| 
@@ -976,7 +976,7 @@ $f_cry_inf_01 |:| CRYSTARIUM
 $f_cry_inf_02 |:| CRYSTAL
 $f_cry_inf_03 |:| CP COST
 $f_cry_inf_04 |:| TOTAL COST
-$f_cry_inf_05 |:| Stage{TAB:85:60}
+$f_cry_inf_05 |:| Stage{SPACE:85:60}
 $f_cry_inf_06 |:| Ability: {VAR:F4:40}
 $f_cry_inf_07 |:| Auto-ability: {VAR:F4:40}
 $f_cry_inf_08 |:| Technique: {VAR:F4:40}
@@ -988,7 +988,7 @@ $f_cry_kan_02 |:| Magic: +{CTR:F7:40}
 $f_cry_kan_03 |:| Role Level
 $f_cry_kan_04 |:| Accessory
 $f_cry_kan_05 |:| ATB Level
-$f_cry_lv_01 |:| Lv.{TAB:85:60}
+$f_cry_lv_01 |:| Lv.{SPACE:85:60}
 $f_cry_mes_00 |:| {ICON:F0:41:Warning} You have no CP.
 $f_cry_mes_01 |:| 
 $f_cry_mes_02 |:| Yes|No
@@ -1001,9 +1001,9 @@ $f_cry_mes_08 |:| Maximum HP increased by {CTR:F7:40}!
 $f_cry_mes_09 |:| Gained an additional accessory slot!
 $f_cry_mes_10 |:| Gained an ATB gauge segment!
 $f_cry_mes_11 |:| Gained a level as a {VAR:F4:40}!
-$f_cry_mes_12 |:| {COLOR:LightRed}There are no other characters available.{COLOR:White}
-$f_cry_mes_13 |:| {COLOR:Yellow}Your characters can now develop further!{COLOR:White}
-$f_cry_mes_14 |:| {COLOR:Yellow}Now able to harness the full powers of a l'Cie, your characters can master any role!{COLOR:White}{NL:40:72}{COLOR:LightRed}You will be able to use a new role once you have learned one of its abilities.{COLOR:White}{NL:40:72}Master a variety of roles, and you will gain access to more versatile paradigms.
+$f_cry_mes_12 |:| {CLR:F9:43:LightRed}There are no other characters available.{CLR:F9:40:White}
+$f_cry_mes_13 |:| {CLR:F9:44:Yellow}Your characters can now develop further!{CLR:F9:40:White}
+$f_cry_mes_14 |:| {CLR:F9:44:Yellow}Now able to harness the full powers of a l'Cie, your characters can master any role!{CLR:F9:40:White}{NL:40:72}{CLR:F9:43:LightRed}You will be able to use a new role once you have learned one of its abilities.{CLR:F9:40:White}{NL:40:72}Master a variety of roles, and you will gain access to more versatile paradigms.
 $f_cry_top_01 |:| CRYSTARIUM
 $f_cry_txt00h |:| Select the role in which you would like to progress.
 $f_cry_txt01h |:| Advance along the current path of crystogenesis by holding {BTN:F1:40:A}.
@@ -1030,7 +1030,7 @@ $f_cus_def_00 |:| Dismantle this item?
 $f_cus_def_01 |:| Yes|No
 $f_cus_def_02 |:| LEVEL IMPROVED
 $f_cus_def_03 |:| TYPE MODIFIED
-$f_cus_def_04 |:| Lv.{TAB:85:60}
+$f_cus_def_04 |:| Lv.{SPACE:85:60}
 $f_cus_def_05 |:| ★
 $f_cus_def_06 |:| {ICON:F0:41:Warning} You cannot dismantle an equipped weapon.
 $f_cus_def_07 |:| {ICON:F0:41:Warning} You cannot dismantle an equipped accessory.
@@ -1058,7 +1058,7 @@ $f_cus_mtxt_13 |:| EXP BONUS:
 $f_cus_mtxt_14 |:| NEXT BONUS!
 $f_cus_mtxt_15 |:| 
 $f_driv_cost |:| All
-$f_eqp_06 |:| :{TAB:85:60}
+$f_eqp_06 |:| :{SPACE:85:60}
 $f_eqp_but_00 |:| {BTN:F1:46:LB}/{BTN:F1:47:RB} Previous/Next character
 $f_eqp_but_01 |:| {BTN:F1:42:X} Passive ability summary
 $f_equ_00 |:| Equip
@@ -1179,7 +1179,7 @@ $f_mtxt_02 |:| PARADIGM
 $f_mtxt_03 |:| CRYSTARIUM
 $f_mtxt_04 |:| TECHNICAL POINTS
 $f_mtxt_05 |:| GIL
-$f_mtxt_06 |:| Stage{TAB:85:60}
+$f_mtxt_06 |:| Stage{SPACE:85:60}
 $f_opt_00 |:| Battle Team
 $f_opt_00h |:| Select battle team leader and members.
 $f_opt_01 |:| Customize
@@ -1232,7 +1232,7 @@ $f_sho_mtxt_01 |:| PRICE
 $f_sho_mtxt_02 |:| OWNED
 $f_sho_mtxt_03 |:| TOTAL
 $f_sta_00 |:| HP
-$f_sta_01 |:| ATB LEVEL{TAB:85:60}
+$f_sta_01 |:| ATB LEVEL{SPACE:85:60}
 $f_sta_02 |:| Strength
 $f_sta_03 |:| Magic
 $f_sta_04 |:| Fire
@@ -1257,7 +1257,7 @@ $f_sta_22 |:| Dispel
 $f_sta_23 |:| Physical
 $f_sta_24 |:| Magic
 $f_sta_25 |:| CP
-$f_sta_26 |:| Stage{TAB:85:60}
+$f_sta_26 |:| Stage{SPACE:85:60}
 $f_sta_27 |:| Elemental
 $f_sta_28 |:| Status Ailment
 $f_sta_but_00 |:| {BTN:F1:42:X} Eidolon
@@ -1654,10 +1654,10 @@ $libra_10 |:| Immune
 $libra_11 |:| Absorbed
 $libra_12 |:| Resistant
 $libra_13 |:| Normal
-$libra_14 |:| Notes:{TAB:85:60}{TAB:85:60}
-$libra_15 |:| {TAB:85:60}
-$libra_16 |:| {TAB:85:60}
-$libra_17 |:| {TAB:85:60}
+$libra_14 |:| Notes:{SPACE:85:60}{SPACE:85:60}
+$libra_15 |:| {SPACE:85:60}
+$libra_16 |:| {SPACE:85:60}
+$libra_17 |:| {SPACE:85:60}
 $libra_18 |:| - ???
 $libra_but_00 |:| {BTN:F1:46:LB}/{BTN:F1:47:RB} Previous/Next enemy   {BTN:F1:41:B} Close
 $libra_but_01 |:| {BTN:F1:46:LB}/{BTN:F1:47:RB} Previous/Next enemy
@@ -4008,15 +4008,15 @@ $m_res_sel_save |:| Save{END}{ESC}
 $m_res_sel_shop |:| Shop{END}{ESC}
 $m_res_vb_mes0 |:| POWER{END}{ESC}
 $m_res_vb_mes1 |:| {BTN:F1:40:A} Attack{END}{ESC}
-$m_tips00_p1 |:| You possess an advanced digital journal known as a {COLOR:Gold}datalog{COLOR:White} that autonomously streams information deemed pertinent.{NL:40:72}{NL:40:72}Whenever the datalog records a new entry, a notice will appear in the upper left corner of{NL:40:72}the screen. To peruse entries, press {BTN:F1:43:Y} to open the main menu, and then select {COLOR:Gold}Datalog{COLOR:White}.{END}{ESC}
+$m_tips00_p1 |:| You possess an advanced digital journal known as a {CLR:F9:42:Gold}datalog{CLR:F9:40:White} that autonomously streams information deemed pertinent.{NL:40:72}{NL:40:72}Whenever the datalog records a new entry, a notice will appear in the upper left corner of{NL:40:72}the screen. To peruse entries, press {BTN:F1:43:Y} to open the main menu, and then select {CLR:F9:42:Gold}Datalog{CLR:F9:40:White}.{END}{ESC}
 $m_tips00_t |:| The Datalog{END}{ESC}
 $m_tips01_p1 |:| All enemies guard areas limited by their fields of vision or other means of detection. Upon entering a guarded area, there is a chance that the enemy or enemies patrolling it will take notice.{NL:40:72}{NL:40:72}If your trespass is observed, a warning icon ({ICON:F0:41:Warning}) will appear over the heads of any enemies alerted to your presence. These foes will then become hostile, taking up defensive positions or rushing forward to attack.{END}{ESC}
 $m_tips01_p2 |:| If your party leader comes into contact with an enemy, a battle will begin.{NL:40:72}{NL:40:72}Battles begin normally if the enemy was aware of the party's presence. If the enemy was caught off guard, however, the party will be able to make a preemptive strike.{END}{ESC}
-$m_tips01_p3 |:| Certain enemies, like {COLOR:LightRed}Zwerg scandroids{COLOR:White}, have extremely narrow fields of vision and can easily be approached unnoticed. It is always advantageous to do so if possible, as initiating a preemptive strike forces enemies to enter battle with their chain gauges near the staggering threshold.{END}{ESC}
+$m_tips01_p3 |:| Certain enemies, like {CLR:F9:43:LightRed}Zwerg scandroids{CLR:F9:40:White}, have extremely narrow fields of vision and can easily be approached unnoticed. It is always advantageous to do so if possible, as initiating a preemptive strike forces enemies to enter battle with their chain gauges near the staggering threshold.{END}{ESC}
 $m_tips01_t |:| Aggression and Preemptive Strikes{END}{ESC}
 $m_tips02_p1 |:| These Herculean combat machines are capable of clearing away enemy hordes with mighty blows, or simply trampling over foes who stand in their path.{NL:40:72}{NL:40:72}Attacking with {BTN:F1:40:A} consumes power, but breaking through fences will recharge the machine's power reserves.{NL:40:72}{NL:40:72}While piloting an armament, enemies cannot harm the party.{END}{ESC}
 $m_tips02_t |:| Pulse Armaments{END}{ESC}
-$m_tips03_p1 |:| {COLOR:Gold}Cie'th Stones{COLOR:White} lie scattered about the world of Gran Pulse—the final remains of failed former l'Cie.{NL:40:72}{NL:40:72}Upon touching a Cie'th Stone, you will be given the opportunity to undertake its unfinished Focus as a mission, hunting down whatever terror it had been tasked with slaying.{END}{ESC}
+$m_tips03_p1 |:| {CLR:F9:42:Gold}Cie'th Stones{CLR:F9:40:White} lie scattered about the world of Gran Pulse—the final remains of failed former l'Cie.{NL:40:72}{NL:40:72}Upon touching a Cie'th Stone, you will be given the opportunity to undertake its unfinished Focus as a mission, hunting down whatever terror it had been tasked with slaying.{END}{ESC}
 $m_tips03_p2 |:| Finding and defeating the mark will complete the mission, earning you special rewards.{NL:40:72}{NL:40:72}Complete enough missions, and previously dormant Cie'th Stones will begin to awaken, presenting you with new and more rewarding challenges.{END}{ESC}
 $m_tips03_p3 |:| It is only possible to accept one mission at a time. Take on a new mission without completing your previous one, and the earlier mission will be abandoned.{NL:40:72}{NL:40:72}You can check the details of your current mission, including the whereabouts of your mark, on the map screen at any time.{END}{ESC}
 $m_tips03_t |:| Cie'th Stones and Missions{END}{ESC}
@@ -4024,43 +4024,43 @@ $m_tips04_p1 |:| These majestic yellow birds allow you to cover greater distance
 $m_tips04_p2 |:| Chocobos are courageous creatures, but even they have their limits. Come into contact with an enemy while riding, and the chocobo will lose one unit of morale.{NL:40:72}{NL:40:72}Should a chocobo lose all of its morale, it will throw its rider and flee. Otherwise, lost morale will gradually return, so long as no more close encounters occur.{END}{ESC}
 $m_tips04_p3 |:| Chocobos also possess an uncanny knack for detecting buried treasure. When you pass{NL:40:72}near hidden treasure while riding a chocobo, an icon will appear above the bird's head.{NL:40:72}The closer you come to the treasure, the faster this icon will bounce.{NL:40:72}{NL:40:72}Once you have discerned the treasure's location, press {BTN:F1:40:A} to dig it up.{END}{ESC}
 $m_tips04_t |:| Chocobos{END}{ESC}
-$m_tips05_p1 |:| You can change the composition of your battle team by pressing {BTN:F1:43:Y} to open the main menu, and then selecting {COLOR:Gold}Paradigms{COLOR:White}.{NL:40:72}{NL:40:72}Within the {COLOR:Gold}Paradigms{COLOR:White} menu, select {COLOR:Gold}Battle Team{COLOR:White} and you will be able to choose the battle team's leader and members.{NL:40:72}{NL:40:72}Changing the members of your battle team will reset the party's paradigm deck. Select {COLOR:Gold}Customize{COLOR:White} to check your current paradigm and alter it if desired.{END}{ESC}
+$m_tips05_p1 |:| You can change the composition of your battle team by pressing {BTN:F1:43:Y} to open the main menu, and then selecting {CLR:F9:42:Gold}Paradigms{CLR:F9:40:White}.{NL:40:72}{NL:40:72}Within the {CLR:F9:42:Gold}Paradigms{CLR:F9:40:White} menu, select {CLR:F9:42:Gold}Battle Team{CLR:F9:40:White} and you will be able to choose the battle team's leader and members.{NL:40:72}{NL:40:72}Changing the members of your battle team will reset the party's paradigm deck. Select {CLR:F9:42:Gold}Customize{CLR:F9:40:White} to check your current paradigm and alter it if desired.{END}{ESC}
 $m_tips05_t |:| Battle Team Formation{END}{ESC}
-$m_tips06_p1 |:| You can upgrade weapons and accessories at {COLOR:Gold}Save Stations{COLOR:White} using your {COLOR:Gold}Omni-kit{COLOR:White} and the various components you collect on your journey.{NL:40:72}{NL:40:72}First, approach a Save Station and press {BTN:F1:40:A} to access it. Then select {COLOR:Gold}Upgrade{COLOR:White} from the Save Station menu to access the workbench.{END}{ESC}
-$m_tips06_p2 |:| After choosing {COLOR:Gold}Upgrade{COLOR:White}, select the weapon or accessory that you wish to improve.{NL:40:72}{NL:40:72}Next, you will need to select the type of component you wish to use for the upgrade, as well as the quantity. The combined {COLOR:Gold}EXP{COLOR:White} value of the chosen components will then be applied to the target piece of equipment.{NL:40:72}{NL:40:72}After enough EXP has been spent on a weapon or accessory, its level will increase, improving its abilities and attributes.{END}{ESC}
+$m_tips06_p1 |:| You can upgrade weapons and accessories at {CLR:F9:42:Gold}Save Stations{CLR:F9:40:White} using your {CLR:F9:42:Gold}Omni-kit{CLR:F9:40:White} and the various components you collect on your journey.{NL:40:72}{NL:40:72}First, approach a Save Station and press {BTN:F1:40:A} to access it. Then select {CLR:F9:42:Gold}Upgrade{CLR:F9:40:White} from the Save Station menu to access the workbench.{END}{ESC}
+$m_tips06_p2 |:| After choosing {CLR:F9:42:Gold}Upgrade{CLR:F9:40:White}, select the weapon or accessory that you wish to improve.{NL:40:72}{NL:40:72}Next, you will need to select the type of component you wish to use for the upgrade, as well as the quantity. The combined {CLR:F9:42:Gold}EXP{CLR:F9:40:White} value of the chosen components will then be applied to the target piece of equipment.{NL:40:72}{NL:40:72}After enough EXP has been spent on a weapon or accessory, its level will increase, improving its abilities and attributes.{END}{ESC}
 $m_tips06_p3 |:| Certain components bestow a bonus to any EXP spent on a piece of equipment. By utilizing these components, you will be able to make more efficient upgrades.{NL:40:72}{NL:40:72}Likewise, some components reduce an item's EXP bonus. Careful consideration is required when deciding which components to employ.{END}{ESC}
 $m_tips06_p4 |:| Once a particular piece of equipment has reached its maximum potential, its level will be replaced by a star (★). At this point no further level advancement is possible, but the item can be transformed into an entirely different one by means of specialized components. When this happens, both its name and properties will change.{NL:40:72}{NL:40:72}A newly transformed item may initially seem weaker than it did in its previous form, but unlike its fully upgraded predecessor, it will be eligible for level advancement. Through further upgrades, it can be made even more powerful than its earlier incarnation.{END}{ESC}
-$m_tips06_p5 |:| Unwanted equipment can be scrapped for parts by selecting {COLOR:Gold}Dismantle{COLOR:White}. The equipment itself will be destroyed, but you will be able to salvage components, some of which can be obtained in no other way.{NL:40:72}{NL:40:72}There exist well over 100 different components. Obtain as many as possible, and experiment with their effects in order to determine the most efficient and effective ways to customize your arsenal.{END}{ESC}
+$m_tips06_p5 |:| Unwanted equipment can be scrapped for parts by selecting {CLR:F9:42:Gold}Dismantle{CLR:F9:40:White}. The equipment itself will be destroyed, but you will be able to salvage components, some of which can be obtained in no other way.{NL:40:72}{NL:40:72}There exist well over 100 different components. Obtain as many as possible, and experiment with their effects in order to determine the most efficient and effective ways to customize your arsenal.{END}{ESC}
 $m_tips06_t |:| Upgrading Equipment{END}{ESC}
 $m_tips07_p1 |:| These open-air pens—designed to restrain experimental bioweapons—are equipped with electromagnetic containment fences linked to a site-wide biorhythmic monitoring system.{NL:40:72}{NL:40:72}Fences deactivate automatically when biorhythms for known high-risk species are no longer detected in their proximity.{END}{ESC}
 $m_tips07_t |:| Wildlife Auto-containment Paddocks{END}{ESC}
 $m_tips08_p1 |:| These spheres modulate precipitation levels in the surrounding area.{NL:40:72}{NL:40:72}Certain indigenous fauna exhibit rain-shy behavior, taking cover during storms. However, inducing showers can result in encounters with otherwise elusive hydrophilic wildlife.{END}{ESC}
 $m_tips08_t |:| Climate Control Orbs{END}{ESC}
-$m_tips09_p1 |:| Certain Cie'th Stones function as teleporters, or {COLOR:Gold}Waystones{COLOR:White}, once you have completed their missions.{NL:40:72}{NL:40:72}Using these stones, you can travel instantly to other Waystones that you have activated previously.{END}{ESC}
+$m_tips09_p1 |:| Certain Cie'th Stones function as teleporters, or {CLR:F9:42:Gold}Waystones{CLR:F9:40:White}, once you have completed their missions.{NL:40:72}{NL:40:72}Using these stones, you can travel instantly to other Waystones that you have activated previously.{END}{ESC}
 $m_tips09_t |:| Cie'th Waystones{END}{ESC}
 $m_tips10_p1 |:| These Cie'th Stone emanations block roads and pathways all across Gran Pulse. Complete the mission of the Cie'th Stone near them, and they will dissipate.{NL:40:72}{NL:40:72}Be warned that the marks for these missions are formidable foes, and you need not slay them all. Should you decide to undertake one of these missions, be prepared for a grievous challenge.{END}{ESC}
 $m_tips10_t |:| Cie'th Palings{END}{ESC}
 $m_tips11_p1 |:| The chocobo chick has taken wing! Find where the fugitive fledgling is hiding. It could not have gone far...yet.{END}{ESC}
 $m_tips11_t |:| Flight of the Chocobo{END}{ESC}
-$m_tips12_p1 |:| To continue ascending Taejin's Tower, you must accept and complete missions from the three colossal {COLOR:Gold}Menhirrim{COLOR:White} on the tower's second tier.{NL:40:72}{NL:40:72}The route to the tower's apex will remain closed until all of the Menhirrim's tasks are done.{END}{ESC}
+$m_tips12_p1 |:| To continue ascending Taejin's Tower, you must accept and complete missions from the three colossal {CLR:F9:42:Gold}Menhirrim{CLR:F9:40:White} on the tower's second tier.{NL:40:72}{NL:40:72}The route to the tower's apex will remain closed until all of the Menhirrim's tasks are done.{END}{ESC}
 $m_tips12_t |:| The Menhirrim{END}{ESC}
-$m_tips13_p1 |:| Vanille's robotic pal, {COLOR:Gold}Bhakti{COLOR:White}, is in dire need of repair. You should be able to find all 5 of the necessary replacement parts within the village of Oerba.{END}{ESC}
+$m_tips13_p1 |:| Vanille's robotic pal, {CLR:F9:42:Gold}Bhakti{CLR:F9:40:White}, is in dire need of repair. You should be able to find all 5 of the necessary replacement parts within the village of Oerba.{END}{ESC}
 $m_tips13_t |:| Repairing Bhakti{END}{ESC}
 $m_tips15_p1 |:| Many and various enemies stalk the roads that you must travel. Upon entering an enemy's detection radius, the mini-map in the upper right corner of the screen will flash in warning.{NL:40:72}{NL:40:72}Coming into contact with any enemy will initiate a battle.{END}{ESC}
 $m_tips15_t |:| Enemy Encounters{END}{ESC}
-$m_tips16_p1 |:| Shrouds are special single-use aerosols that can only be used outside of battle, and grant the party tactical advantages.{NL:40:72}{NL:40:72}{COLOR:Gold}Fortisol{COLOR:White} and {COLOR:Gold}Aegisol{COLOR:White} bestow their bonuses at the start of battle.{NL:40:72}{NL:40:72}{COLOR:Gold}Deceptisol{COLOR:White}, on the other hand, shields the party from enemy detection, eliminating any concerns of being spotted and attacked. It is useful for avoiding combat, and also for launching preemptive strikes.{END}{ESC}
-$m_tips16_p2 |:| Enemies like {COLOR:LightRed}pantherons{COLOR:White}, whose fields of vision allow them to monitor wide areas, normally turn hostile and display warning icons ({ICON:F0:41:Warning}) as soon as they are approached. Apply a spray{NL:40:72}of {COLOR:Gold}Deceptisol{COLOR:White}, however, and you will have no trouble gaining a preemptive strike.{NL:40:72}{NL:40:72}{NL:40:72}To open the shroud menu, press {BTN:F1:46:LB} while exploring. Select a shroud with {BTN:F1:5F:DPadLeftRight} and then{NL:40:72}press {BTN:F1:40:A} to use it. To close the menu without using a shroud, press {BTN:F1:46:LB} or {BTN:F1:41:B}.{NL:40:72}{NL:40:72}Shroud effects wear off after a brief duration, so be sure to time their application{NL:40:72}carefully.{END}{ESC}
+$m_tips16_p1 |:| Shrouds are special single-use aerosols that can only be used outside of battle, and grant the party tactical advantages.{NL:40:72}{NL:40:72}{CLR:F9:42:Gold}Fortisol{CLR:F9:40:White} and {CLR:F9:42:Gold}Aegisol{CLR:F9:40:White} bestow their bonuses at the start of battle.{NL:40:72}{NL:40:72}{CLR:F9:42:Gold}Deceptisol{CLR:F9:40:White}, on the other hand, shields the party from enemy detection, eliminating any concerns of being spotted and attacked. It is useful for avoiding combat, and also for launching preemptive strikes.{END}{ESC}
+$m_tips16_p2 |:| Enemies like {CLR:F9:43:LightRed}pantherons{CLR:F9:40:White}, whose fields of vision allow them to monitor wide areas, normally turn hostile and display warning icons ({ICON:F0:41:Warning}) as soon as they are approached. Apply a spray{NL:40:72}of {CLR:F9:42:Gold}Deceptisol{CLR:F9:40:White}, however, and you will have no trouble gaining a preemptive strike.{NL:40:72}{NL:40:72}{NL:40:72}To open the shroud menu, press {BTN:F1:46:LB} while exploring. Select a shroud with {BTN:F1:5F:DPadLeftRight} and then{NL:40:72}press {BTN:F1:40:A} to use it. To close the menu without using a shroud, press {BTN:F1:46:LB} or {BTN:F1:41:B}.{NL:40:72}{NL:40:72}Shroud effects wear off after a brief duration, so be sure to time their application{NL:40:72}carefully.{END}{ESC}
 $m_tips16_t |:| Shrouds{END}{ESC}
-$m_tips17_p1 |:| Hope has access to the {COLOR:Voilet}Synergist{COLOR:White} role.{NL:40:72}{NL:40:72}Synergists play a supporting role in combat, using their abilities to enhance and strengthen themselves and their allies.{NL:40:72}{NL:40:72}As a Synergist, Hope can learn abilities to improve the party's defensive capabilities.{END}{ESC}
-$m_tips17_p2 |:| Currently, Hope can use the {COLOR:Gold}Protect{COLOR:White} spell, which raises the target's resistance to physical damage. As he develops in the role of Synergist, Hope will also be able to learn {COLOR:Gold}Shell{COLOR:White}, which boosts magic resistance.{NL:40:72}{NL:40:72}With both of these spells at his disposal, Hope will be able to help the party endure a wide variety of attacks. When he has gained adequate {COLOR:Gold}CP{COLOR:White}, open the main menu with {BTN:F1:43:Y} and select {COLOR:Gold}Crystarium{COLOR:White} to teach him {COLOR:Gold}Shell{COLOR:White} via crystogenesis.{END}{ESC}
+$m_tips17_p1 |:| Hope has access to the {CLR:F9:4C:Voilet}Synergist{CLR:F9:40:White} role.{NL:40:72}{NL:40:72}Synergists play a supporting role in combat, using their abilities to enhance and strengthen themselves and their allies.{NL:40:72}{NL:40:72}As a Synergist, Hope can learn abilities to improve the party's defensive capabilities.{END}{ESC}
+$m_tips17_p2 |:| Currently, Hope can use the {CLR:F9:42:Gold}Protect{CLR:F9:40:White} spell, which raises the target's resistance to physical damage. As he develops in the role of Synergist, Hope will also be able to learn {CLR:F9:42:Gold}Shell{CLR:F9:40:White}, which boosts magic resistance.{NL:40:72}{NL:40:72}With both of these spells at his disposal, Hope will be able to help the party endure a wide variety of attacks. When he has gained adequate {CLR:F9:42:Gold}CP{CLR:F9:40:White}, open the main menu with {BTN:F1:43:Y} and select {CLR:F9:42:Gold}Crystarium{CLR:F9:40:White} to teach him {CLR:F9:42:Gold}Shell{CLR:F9:40:White} via crystogenesis.{END}{ESC}
 $m_tips17_t |:| Role: Synergist{END}{ESC}
-$m_tips18_p1 |:| Sazh has gained access to the {COLOR:Voilet}Synergist{COLOR:White} role.{NL:40:72}{NL:40:72}Synergists play a supporting role in combat, using their abilities to enhance and strengthen themselves and their allies.{NL:40:72}{NL:40:72}As a Synergist, Sazh can learn abilities to improve the party's offensive capabilities.{END}{ESC}
-$m_tips18_p2 |:| Currently, Sazh can use the {COLOR:Gold}Faith{COLOR:White} spell, which raises the target's {COLOR:Gold}Magic{COLOR:White} attribute, increasing the damage dealt by that target's spells. As he develops in the role of Synergist, Sazh will also be able to learn {COLOR:Gold}Bravery{COLOR:White}, which boosts the target's {COLOR:Gold}Strength{COLOR:White}.{NL:40:72}{NL:40:72}With both of these spells at his disposal, Sazh will be able to vastly improve the party's effectiveness against a variety of opponents. When he has gained adequate {COLOR:Gold}CP{COLOR:White}, open the main menu with {BTN:F1:43:Y} and select {COLOR:Gold}Crystarium{COLOR:White} to teach him {COLOR:Gold}Bravery{COLOR:White} via crystogenesis.{END}{ESC}
+$m_tips18_p1 |:| Sazh has gained access to the {CLR:F9:4C:Voilet}Synergist{CLR:F9:40:White} role.{NL:40:72}{NL:40:72}Synergists play a supporting role in combat, using their abilities to enhance and strengthen themselves and their allies.{NL:40:72}{NL:40:72}As a Synergist, Sazh can learn abilities to improve the party's offensive capabilities.{END}{ESC}
+$m_tips18_p2 |:| Currently, Sazh can use the {CLR:F9:42:Gold}Faith{CLR:F9:40:White} spell, which raises the target's {CLR:F9:42:Gold}Magic{CLR:F9:40:White} attribute, increasing the damage dealt by that target's spells. As he develops in the role of Synergist, Sazh will also be able to learn {CLR:F9:42:Gold}Bravery{CLR:F9:40:White}, which boosts the target's {CLR:F9:42:Gold}Strength{CLR:F9:40:White}.{NL:40:72}{NL:40:72}With both of these spells at his disposal, Sazh will be able to vastly improve the party's effectiveness against a variety of opponents. When he has gained adequate {CLR:F9:42:Gold}CP{CLR:F9:40:White}, open the main menu with {BTN:F1:43:Y} and select {CLR:F9:42:Gold}Crystarium{CLR:F9:40:White} to teach him {CLR:F9:42:Gold}Bravery{CLR:F9:40:White} via crystogenesis.{END}{ESC}
 $m_tips18_t |:| Role: Synergist{END}{ESC}
-$m_tips19_p1 |:| Snow has access to the {COLOR:DarkYellow}Sentinel{COLOR:White} role.{NL:40:72}{NL:40:72}Sentinels are defense specialists. By drawing enemy attacks and mitigating the damage via defensive abilities, they are able to protect the other members of their battle team.{NL:40:72}{NL:40:72}A Sentinel's abilities are essential when it comes to protecting battle team members with low HP like Hope. Draw enemy aggression away from allies with the {COLOR:Gold}Provoke{COLOR:White} ability while defending with {COLOR:Gold}Steelguard{COLOR:White} to  minimize damage to weaker party members.{END}{ESC}
-$m_tips19_p2 |:| Sentinels cannot use the {COLOR:Gold}Attack{COLOR:White} command, but they can still damage enemies. Select the {COLOR:Gold}Vendetta{COLOR:White} ability, and the Sentinel will counterattack enemies when attacked.{NL:40:72}{NL:40:72}Sentinels are at their best against numerous opponents, when they can use their defensive abilities to shield allies while dealing damage via counterattacks. They become less effective when only a few enemies remain. At that point, it is best to turn Sentinels into {COLOR:Rose}Commandos{COLOR:White} in order to finish off remaining enemies more quickly.{END}{ESC}
+$m_tips19_p1 |:| Snow has access to the {CLR:F9:4A:DarkYellow}Sentinel{CLR:F9:40:White} role.{NL:40:72}{NL:40:72}Sentinels are defense specialists. By drawing enemy attacks and mitigating the damage via defensive abilities, they are able to protect the other members of their battle team.{NL:40:72}{NL:40:72}A Sentinel's abilities are essential when it comes to protecting battle team members with low HP like Hope. Draw enemy aggression away from allies with the {CLR:F9:42:Gold}Provoke{CLR:F9:40:White} ability while defending with {CLR:F9:42:Gold}Steelguard{CLR:F9:40:White} to  minimize damage to weaker party members.{END}{ESC}
+$m_tips19_p2 |:| Sentinels cannot use the {CLR:F9:42:Gold}Attack{CLR:F9:40:White} command, but they can still damage enemies. Select the {CLR:F9:42:Gold}Vendetta{CLR:F9:40:White} ability, and the Sentinel will counterattack enemies when attacked.{NL:40:72}{NL:40:72}Sentinels are at their best against numerous opponents, when they can use their defensive abilities to shield allies while dealing damage via counterattacks. They become less effective when only a few enemies remain. At that point, it is best to turn Sentinels into {CLR:F9:48:Rose}Commandos{CLR:F9:40:White} in order to finish off remaining enemies more quickly.{END}{ESC}
 $m_tips19_t |:| Role: Sentinel{END}{ESC}
-$m_tips20_p1 |:| A powerful {COLOR:LightRed}scalebeast{COLOR:White} awaits you ahead. It could be a difficult fight for only two people.{NL:40:72}{NL:40:72}However, this enemy is slow on its feet, meaning you can easily {COLOR:Gold}avoid{COLOR:White} the encounter if you so desire.{NL:40:72}{NL:40:72}You will face many harrowing challenges as you press on. When you feel your enemies may be too strong, {COLOR:Gold}avoid{COLOR:White} them.{END}{ESC}
+$m_tips20_p1 |:| A powerful {CLR:F9:43:LightRed}scalebeast{CLR:F9:40:White} awaits you ahead. It could be a difficult fight for only two people.{NL:40:72}{NL:40:72}However, this enemy is slow on its feet, meaning you can easily {CLR:F9:42:Gold}avoid{CLR:F9:40:White} the encounter if you so desire.{NL:40:72}{NL:40:72}You will face many harrowing challenges as you press on. When you feel your enemies may be too strong, {CLR:F9:42:Gold}avoid{CLR:F9:40:White} them.{END}{ESC}
 $m_tips20_t |:| Avoiding Encounters{END}{ESC}
 $m_tips21_p1 |:| At times, you will encounter enemy groups engaged in battle with one another. With their attentions occupied, it becomes easier for you to initiate combat with a preemptive strike.{NL:40:72}{NL:40:72}Coming into contact with a member of either side will initiate a battle against both. However, the enemies may not even notice your presence at first, continuing to fight one another instead. When this occurs, it is most effective to concentrate all of your attacks against the side you expect to have the most trouble defeating.{NL:40:72}{NL:40:72}Once you have defeated the first group of enemies with help from their foes, you can turn and fight the already-weakened second faction. Pick your targets poorly, and you may be left waging a long and bitter battle against overwhelming odds.{END}{ESC}
 $m_tips21_t |:| Three-way Battles{END}{ESC}
@@ -5196,7 +5196,7 @@ $resms_txt04 |:|
 $resms_txt05 |:| 
 $resms_txt06 |:| 
 $resms_txt07 |:| 
-$resms_txt08 |:| Your party has earned the rank of {COLOR:Gold}{VAR:F4:40}{COLOR:White}!
+$resms_txt08 |:| Your party has earned the rank of {CLR:F9:42:Gold}{VAR:F4:40}{CLR:F9:40:White}!
 $restart_00 |:| Retry|Quit|Cancel
 $restart_01 |:| Retry|Quit
 $restart_02 |:| {ICON:F0:41:Warning} Are you sure you wish to retry?
@@ -5481,12 +5481,12 @@ $startup_err_06 |:| DirectX PixelShader 2.0 is not supported.
 $startup_err_c0 |:| A fatal system error has occurred.
 $startup_err_c1 |:| A fatal error concerning DirectX has occurred.
 $startup_err_tt |:| FFXIII Error
-$summon_txt01 |:| {COLOR:Yellow}Snow gained an ATB gauge segment!{COLOR:White}
-$summon_txt02 |:| {COLOR:Yellow}Lightning gained an ATB gauge segment!{COLOR:White}
-$summon_txt03 |:| {COLOR:Yellow}Sazh gained an ATB gauge segment!{COLOR:White}
-$summon_txt04 |:| {COLOR:Yellow}Fang gained an ATB gauge segment!{COLOR:White}
-$summon_txt05 |:| {COLOR:Yellow}Hope gained an ATB gauge segment!{COLOR:White}
-$summon_txt06 |:| {COLOR:Yellow}Vanille gained an ATB gauge segment!{COLOR:White}
+$summon_txt01 |:| {CLR:F9:44:Yellow}Snow gained an ATB gauge segment!{CLR:F9:40:White}
+$summon_txt02 |:| {CLR:F9:44:Yellow}Lightning gained an ATB gauge segment!{CLR:F9:40:White}
+$summon_txt03 |:| {CLR:F9:44:Yellow}Sazh gained an ATB gauge segment!{CLR:F9:40:White}
+$summon_txt04 |:| {CLR:F9:44:Yellow}Fang gained an ATB gauge segment!{CLR:F9:40:White}
+$summon_txt05 |:| {CLR:F9:44:Yellow}Hope gained an ATB gauge segment!{CLR:F9:40:White}
+$summon_txt06 |:| {CLR:F9:44:Yellow}Vanille gained an ATB gauge segment!{CLR:F9:40:White}
 $summonsskip |:| {BTN:F1:45:Back}Skip
 $sys_default |:| System Default
 $t_dpad_ps |:| directional buttons

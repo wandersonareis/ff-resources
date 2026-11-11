@@ -1,0 +1,155 @@
+// Origem: ztrgo/backend/core/encoding/key_tables.go, reorganizado por grupo
+// de tag. Os bytes são a identidade; nomes e swatches
+// são apenas display.
+
+package tags
+
+// buttons: nomes comuns aos três jogos; os spans variam por codepage.
+var buttonsFF13 = SpanSet{
+	Names: []string{
+		"A",
+		"B",
+		"X",
+		"Y",
+		"Start",
+		"Back",
+		"LB",
+		"RB",
+		"LT",
+		"RT",
+		"DPadLeft",
+		"DPadDown",
+		"DPadRight",
+		"DPadUp",
+		"LSLeft",
+		"LSDown",
+		"LSRight",
+		"LSUp",
+		"LSLeftRight",
+		"LSUpDown",
+		"LSPress",
+		"RSPress",
+		"RSLeft",
+		"RSDown",
+		"RSRight",
+		"RSUp",
+		"RSLeftRight",
+		"RSUpDown",
+		"LStick",
+		"RStick",
+		"DPadUpDown",
+		"DPadLeftRight",
+		"DPad",
+	},
+	Spans: map[Codepage][]Span{
+		LatinJapanese: {
+			{Lead: 0xF1, Trail: 0x40, Count: 33, At: 0},
+		},
+		Chinese: {
+			{Lead: 0xFA, Trail: 0x49, Count: 33, At: 0},
+		},
+		Korean: {
+			{Lead: 0xC9, Trail: 0xAA, Count: 33, At: 0},
+		},
+	},
+}
+
+var buttonsFF13_2 = SpanSet{
+	Names: []string{
+		"A",
+		"B",
+		"X",
+		"Y",
+		"Start",
+		"Back",
+		"LB",
+		"RB",
+		"LT",
+		"RT",
+		"DPadLeft",
+		"DPadDown",
+		"DPadRight",
+		"DPadUp",
+		"LSLeft",
+		"LSDown",
+		"LSRight",
+		"LSUp",
+		"LSLeftRight",
+		"LSUpDown",
+		"LSPress",
+		"RSPress",
+		"RSLeft",
+		"RSDown",
+		"RSRight",
+		"RSUp",
+		"RSLeftRight",
+		"RSUpDown",
+		"LStick",
+		"RStick",
+		"DPadUpDown",
+		"DPadLeftRight",
+		"DPad",
+	},
+	Spans: map[Codepage][]Span{
+		LatinJapanese: {
+			{Lead: 0xF1, Trail: 0x40, Count: 33, At: 0},
+		},
+		Chinese: {
+			{Lead: 0xFA, Trail: 0xA1, Count: 33, At: 0},
+		},
+		Korean: {
+			{Lead: 0xC9, Trail: 0xD0, Count: 33, At: 0},
+		},
+	},
+}
+
+var buttonsFF13_3 = SpanSet{
+	Names: []string{
+		"A",
+		"B",
+		"X",
+		"Y",
+		"Start",
+		"Back",
+		"LB",
+		"RB",
+		"LT",
+		"RT",
+		"DPadLeft",
+		"DPadDown",
+		"DPadRight",
+		"DPadUp",
+		"LSLeft",
+		"LSDown",
+		"LSRight",
+		"LSUp",
+		"LSLeftRight",
+		"LSUpDown",
+		"L3Press",
+		"R3Press",
+		"RSLeft",
+		"RSDown",
+		"RSRight",
+		"RSUp",
+		"RSLeftRight",
+		"RSUpDown",
+		"LStick",
+		"RStick",
+		"DPadLeftRight",
+		"DPadUpDown",
+		"DPad",
+		"B_2",
+		"A_2",
+	},
+	Spans: map[Codepage][]Span{
+		LatinJapanese: {
+			{Lead: 0xF1, Trail: 0x40, Count: 35, At: 0},
+		},
+		Chinese: {
+			{Lead: 0xFA, Trail: 0xA1, Count: 35, At: 0},
+		},
+		Korean: {
+			{Lead: 0xC9, Trail: 0xD0, Count: 35, At: 0},
+		},
+	},
+}

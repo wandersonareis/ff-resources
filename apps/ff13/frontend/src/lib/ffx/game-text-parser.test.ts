@@ -264,17 +264,152 @@ describe('serializeJSONToGameText', () => {
 describe('parseGameTextToHTML: cor corrompida de rascunho antigo', () => {
   it('{CLR:RGB(...)} volta a ser marca de cor (nao vira chip)', () => {
     const html = gameTextParser.parseGameTextToHTML('{CLR:RGB(37, 99, 235)}Oi');
-    expect(html).toBe('<p><span style="color: #2563eb">Oi</span></p>');
+    expect(html).toBe(
+      '<p><span style="color: #2563eb" data-game-color="{CLR:RGB(37, 99, 235)}">Oi</span></p>',
+    );
     expect(html).not.toContain('data-game-tag');
   });
 
   it('byte canonico do decoder ({CLR:88}) tambem vira cor', () => {
     const html = gameTextParser.parseGameTextToHTML('{CLR:88}Oi');
-    expect(html).toBe('<p><span style="color: #2563eb">Oi</span></p>');
+    expect(html).toBe(
+      '<p><span style="color: #2563eb" data-game-color="{CLR:88}">Oi</span></p>',
+    );
   });
 
   it('byte desconhecido continua chip (byte preservado no round-trip)', () => {
     const html = gameTextParser.parseGameTextToHTML('{CLR:58}Oi');
     expect(html).toContain('data-game-tag="{CLR:58}"');
+  });
+});
+
+describe('parseGameTextToHTML: cor FF13 com bytes', () => {
+  it('parseia {CLR:B1:B2:Nome} como cor + tag exata', () => {
+    const html = gameTextParser.parseGameTextToHTML('{CLR:F9:42:Gold}Oi');
+    expect(html).toBe(
+      '<p><span style="color: #e8c15a" data-game-color="{CLR:F9:42:Gold}">Oi</span></p>',
+    );
+  });
+
+  it('serializa o gameColor com os bytes, sem reset redundante no White', () => {
+    const json = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Hi',
+              marks: [
+                { type: 'textStyle', attrs: { color: '#ffffff', gameColor: '{CLR:F9:40:White}' } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const palette = [
+      { label: 'White', name: 'White', hex: '#ffffff', tag: '{CLR:F9:40:White}' },
+    ];
+    expect(gameTextParser.serializeJSONToGameText(json, 'part1', palette)).toBe(
+      '{CLR:F9:40:White}Hi',
+    );
+  });
+
+  it('troca de cor e emite a tag exata + reset do idioma', () => {
+    const json = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Hi',
+              marks: [
+                { type: 'textStyle', attrs: { color: '#e8c15a', gameColor: '{CLR:F9:42:Gold}' } },
+              ],
+            },
+            { type: 'text', text: ' there' },
+          ],
+        },
+      ],
+    };
+    const palette = [
+      { label: 'White', name: 'White', hex: '#ffffff', tag: '{CLR:F9:40:White}' },
+      { label: 'Gold', name: 'Gold', hex: '#e8c15a', tag: '{CLR:F9:42:Gold}' },
+    ];
+    expect(gameTextParser.serializeJSONToGameText(json, 'part1', palette)).toBe(
+      '{CLR:F9:42:Gold}Hi{CLR:F9:40:White} there',
+    );
+  });
+
+  it("White fecha a cor no fim do bloco (ex.: {CLR:Gold}Cie'th Stone{CLR:White})", () => {
+    const json = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: "Cie'th Stone",
+              marks: [
+                { type: 'textStyle', attrs: { color: '#e8c15a', gameColor: '{CLR:F9:42:Gold}' } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const palette = [
+      { label: 'White', name: 'White', hex: '#ffffff', tag: '{CLR:F9:40:White}', reset: true },
+      { label: 'Gold', name: 'Gold', hex: '#e8c15a', tag: '{CLR:F9:42:Gold}' },
+    ];
+    expect(gameTextParser.serializeJSONToGameText(json, 'part1', palette)).toBe(
+      "{CLR:F9:42:Gold}Cie'th Stone{CLR:F9:40:White}",
+    );
+  });
+
+  it('SPACE vira chip visível, não cor nem tabulação', () => {
+    const html = gameTextParser.parseGameTextToHTML('A{SPACE:85:60}B');
+    expect(html).toContain('data-game-tag="{SPACE:85:60}"');
+    expect(html).toContain('>⍽</span>');
+    expect(html).not.toContain('data-game-color');
+  });
+
+  it('Ex00 usa o hex representativo do grupo Ex', () => {
+    const html = gameTextParser.parseGameTextToHTML('{CLR:F9:32:Ex00}Oi');
+    expect(html).toContain('style="color: #111111"');
+    expect(html).toContain('data-game-color="{CLR:F9:32:Ex00}"');
+  });
+
+  it('cor de outro idioma vira chip inválido, preservando os bytes', () => {
+    const reject = () => false;
+    const html = gameTextParser.parseGameTextToHTML('{CLR:F9:40:White}Oi', reject);
+    expect(html).toContain('data-game-tag="{CLR:F9:40:White}"');
+    expect(html).toContain('data-invalid="true"');
+    expect(html).not.toContain('data-game-color');
+  });
+});
+
+describe('parseGameTextToHTML: quebra de linha do FF13', () => {
+  it('{NL:40:72} vira parágrafo, não chip', () => {
+    const html = gameTextParser.parseGameTextToHTML('A{NL:40:72}B');
+    expect(html).toBe('<p>A</p><p>B</p>');
+    expect(html).not.toContain('data-game-tag');
+  });
+
+  it('o serializer emite {NL:40:72} na versão FF13 e {TEXT_NEWLINE} no FFX', () => {
+    const json = {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'B' }] },
+      ],
+    };
+    expect(gameTextParser.serializeJSONToGameText(json, 'part1')).toBe('A{NL:40:72}B');
+    expect(gameTextParser.serializeJSONToGameText(json, 'ffx')).toBe('A{TEXT_NEWLINE}B');
   });
 });

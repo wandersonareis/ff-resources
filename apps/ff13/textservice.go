@@ -140,7 +140,11 @@ type unitContent struct {
 // readUnitContent decodifica a unidade: o pristine do primario, a traducao
 // de mods/ e as referencias dos demais idiomas.
 func readUnitContent(part string, unit *textUnit) (*unitContent, error) {
-	ks, err := keySet(part)
+	// O codec é por ARQUIVO, não por unidade: o slot editável é o "_us"
+	// (LatinJapanese), mas cada referência vem do codepage do seu sufixo
+	// (_ch = Big5, _kr = EUC-KR). Um codec único para todos é o que
+	// produzia o mojibake "ｾｵ ｼ� …" nas referências CJK.
+	ks, err := textCodecForLang(part, unit.PrimaryLang)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +211,11 @@ func readUnitContent(part string, unit *textUnit) (*unitContent, error) {
 		if !ok {
 			continue
 		}
+		refKS, err := textCodecForLang(part, lang)
+		if err != nil {
+			loggingService.Warn("referência %s sem charset: %v", rel, err)
+			continue
+		}
 		raw, err := readUnitFile(unit, lang)
 		if err != nil {
 			loggingService.Warn("referência %s ilegível: %v", rel, err)
@@ -217,7 +226,7 @@ func readUnitContent(part string, unit *textUnit) (*unitContent, error) {
 			loggingService.Warn("referência %s ilegível: %v", rel, err)
 			continue
 		}
-		texts, err := ks.DecodeLines(zf.Lines)
+		texts, err := refKS.DecodeLines(zf.Lines)
 		if err != nil {
 			loggingService.Warn("referência %s ilegível: %v", rel, err)
 			continue
@@ -260,7 +269,7 @@ func (FF13Service) ApplyTextCollection(part string, c dto.Collection) error {
 	if err != nil {
 		return err
 	}
-	ks, err := keySet(part)
+	ks, err := textCodec(part)
 	if err != nil {
 		return err
 	}
@@ -328,7 +337,7 @@ func writeZtrFile(f *ztr.File) ([]byte, error) {
 //
 // O pristine vem de data/ ou do white bin (quando o arquivo não foi
 // extraído para data/).
-func writeZtrText(unit *textUnit, ks *ztenc.KeySet, byKey map[string]string) ([]byte, error) {
+func writeZtrText(unit *textUnit, ks *ztenc.TextCodec, byKey map[string]string) ([]byte, error) {
 	raw, err := readUnitFile(unit, unit.PrimaryLang)
 	if err != nil {
 		return nil, err
@@ -349,7 +358,7 @@ func writeZtrText(unit *textUnit, ks *ztenc.KeySet, byKey map[string]string) ([]
 //
 // O container base e o de mods/ quando existe (o que o usuario ja salvou),
 // senao o pristine da unidade (data/ ou white bin).
-func packWpdText(modsDir string, unit *textUnit, ks *ztenc.KeySet, byKey map[string]string) ([]byte, error) {
+func packWpdText(modsDir string, unit *textUnit, ks *ztenc.TextCodec, byKey map[string]string) ([]byte, error) {
 	var raw []byte
 	if b, err := os.ReadFile(filepath.Join(modsDir, filepath.FromSlash(unit.Primary))); err == nil {
 		raw = b
@@ -407,7 +416,7 @@ func packWpdText(modsDir string, unit *textUnit, ks *ztenc.KeySet, byKey map[str
 
 // applyTexts reescreve as linhas do ZTR com os textos editados (por ID). As
 // linhas sem edicao mantem o texto pristine.
-func applyTexts(ks *ztenc.KeySet, zf *ztr.File, byKey map[string]string) ([][]byte, error) {
+func applyTexts(ks *ztenc.TextCodec, zf *ztr.File, byKey map[string]string) ([][]byte, error) {
 	texts := make([]string, len(zf.IDs))
 	for i, key := range zf.IDs {
 		if t, ok := byKey[key]; ok {
@@ -457,7 +466,7 @@ func (FF13Service) ListLanguages() []Language {
 		{Code: "us", Name: "English"},
 		{Code: "jp", Name: "Japanese"},
 		{Code: "fr", Name: "French"},
-		{Code: "de", Name: "German"},
+		{Code: "gr", Name: "German"},
 		{Code: "it", Name: "Italian"},
 		{Code: "sp", Name: "Spanish"},
 		{Code: "ch", Name: "Chinese"},
@@ -484,7 +493,16 @@ func normalizeInternalPath(id string) string {
 	return id
 }
 
-func keySet(part string) (*ztenc.KeySet, error) {
+// textCodec devolve o codec do slot EDITÁVEL da unidade (o "_us", sempre
+// LatinJapanese). Quem lê OUTRO idioma precisa de textCodecForLang: cada
+// codepage tem seus próprios pares/glifos e o charset é o do arquivo.
+func textCodec(part string) (*ztenc.TextCodec, error) {
+	return textCodecFor(part, ztenc.LatinJapanese)
+}
+
+// textCodecFor devolve o codec do (game, codepage), preparando sob demanda
+// (idempotente: rechamar sobrescreve o registro).
+func textCodecFor(part string, cp ztenc.Codepage) (*ztenc.TextCodec, error) {
 	var game ztenc.GameCode
 	switch normalizePart(part) {
 	case "part2":
@@ -494,10 +512,31 @@ func keySet(part string) (*ztenc.KeySet, error) {
 	default:
 		game = ztenc.FF131
 	}
-	if err := ztenc.PrepareKeySet(game, ztenc.LatinJapanese); err != nil {
+	if err := ztenc.PrepareTextCodec(game, cp); err != nil {
 		return nil, fmt.Errorf("charset %s: %w", game, err)
 	}
-	return ztenc.KeySetFor(game, ztenc.LatinJapanese)
+	return ztenc.TextCodecFor(game, cp)
+}
+
+// codepageOf devolve o codepage FÍSICO do .ztr de um idioma, pelo sufixo
+// do arquivo: _kr é EUC-KR, _ch é Big5 e _jp/_us são Shift-JIS. Os demais
+// códigos seguem no LatinJapanese — o texto desses arquivos é ASCII/glifo e
+// decodifica igual nos três codecs.
+//
+// ERRAR aqui é o bug do mojibake: ler EUC-KR/Big5 como Shift-JIS transforma
+// cada byte 0xA1–0xDF em kana de meia largura e os pares em ideographas
+// erradas. Também vale para o encode: gravar o idioma com o codec do outro
+// produziria bytes que o jogo não lê.
+func codepageOf(lang string) ztenc.Codepage {
+	if cp, ok := ztenc.CodepageForLanguage(lang); ok {
+		return cp
+	}
+	return ztenc.LatinJapanese
+}
+
+// textCodecForLang é o codepageOf resolvido no registro.
+func textCodecForLang(part, lang string) (*ztenc.TextCodec, error) {
+	return textCodecFor(part, codepageOf(lang))
 }
 
 // findRepoRoot sobe a partir do executável/diretório atual até achar o

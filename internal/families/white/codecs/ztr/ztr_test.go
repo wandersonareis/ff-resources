@@ -11,12 +11,12 @@ import (
 	"ffresources/internal/families/white/codecs/ztr/encoding"
 )
 
-// Fixtures validados contra o ZTRtool e os arquivos originais do jogo:
-// cada caso tem o .ztr original, o dump "id |:| linha crua\r\n", o blob de
-// IDs gravados pelo ZTRtool em debug e o txt oráculo. A regra de desempate
-// que reproduz cada original foi medida empiricamente (verificação cruzada
-// com o codec Python de referência): os txtres seguem o gerador original
-// (TieMinLast); o auto_yus segue o ZTRtool -c2 (TieFirst).
+// Fixtures validados contra a implementação de referência e os arquivos
+// originais do jogo: cada caso tem o .ztr original, o dump "id |:| linha
+// crua\r\n", o blob de IDs gravados em debug e o txt oráculo. A regra de
+// desempate que reproduz cada original foi medida empiricamente (verificação
+// cruzada com o codec Python de referência): os txtres seguem o gerador
+// original (TieMinLast); o auto_yus segue o modo -c2 de referência (TieFirst).
 //
 // O jogo de cada arquivo também é empírico: o src só reproduz seu txt
 // oráculo com os dicionários do FF132 ({Icon Objective} em (F0,61) só
@@ -56,7 +56,7 @@ func readZtr(t *testing.T, dir string) *ztr.File {
 }
 
 // TestReadOracle confere o unpack: o conteúdo lido tem que reproduzir
-// byte a byte o _raw.txt (id |:| linha crua) e o debug_IDs-dump do ZTRtool.
+// byte a byte o _raw.txt (id |:| linha crua) e o debug_IDs-dump de referência.
 func TestReadOracle(t *testing.T) {
 	for _, fx := range fixtures {
 		t.Run(fx.dir, func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestWriteCompressedOriginal(t *testing.T) {
 }
 
 // TestWriteUncompressed confere o modo sem compressão (-c) contra o arquivo
-// gerado pelo ZTRtool e faz o round-trip pelos dois modos.
+// gerado pela implementação de referência e faz o round-trip pelos dois modos.
 func TestWriteUncompressed(t *testing.T) {
 	f := readZtr(t, "auto_yus")
 
@@ -130,7 +130,7 @@ func TestWriteUncompressed(t *testing.T) {
 		t.Fatalf("Write: %v", err)
 	}
 	if want := readFixture(t, filepath.Join("auto_yus", "uncompressed.ztr")); !bytes.Equal(out, want) {
-		t.Errorf("Write(Uncompressed) diverge do -c do ZTRtool: got %d bytes, want %d", len(out), len(want))
+		t.Errorf("Write(Uncompressed) diverge do modo -c de referência: got %d bytes, want %d", len(out), len(want))
 	}
 
 	// O modo sem compressão relê para o mesmo conteúdo lógico.
@@ -149,29 +149,29 @@ func TestWriteUncompressed(t *testing.T) {
 	}
 }
 
-// stripCharaTags converte um txt do ZTRtool (formato antigo, chara com
-// chaves: "{—}") para o formato novo (chara como texto: "—"), usando as
-// próprias tabelas — é a única diferença esperada entre os oráculos e a
-// saída do encoding Go. Exceção documentada: o chara '-' decodifica como
-// U+2010 (hífen tipográfico) para não colidir com o ASCII.
-func stripCharaTags(ks *encoding.KeySet, data []byte) []byte {
+// stripGlyphTags converte um txt no formato antigo (glifo com chaves: "{—}")
+// para o formato novo (glifo como texto: "—"), usando as próprias tabelas —
+// é a única diferença esperada entre os oráculos e a saída do encoding Go.
+// Exceção documentada: o glifo '-' decodifica como U+2010 (hífen tipográfico)
+// para não colidir com o ASCII.
+func stripGlyphTags(tc *encoding.TextCodec, data []byte) []byte {
 	s := strings.ReplaceAll(string(data), "{-}", "\u2010")
-	for _, e := range ks.Chara {
+	for _, e := range tc.Glyphs {
 		s = strings.ReplaceAll(s, "{"+string(e.Rune)+"}", string(e.Rune))
 	}
 	return []byte(s)
 }
 
-func keyset(t *testing.T, game encoding.GameCode) *encoding.KeySet {
+func textCodec(t *testing.T, game encoding.GameCode) *encoding.TextCodec {
 	t.Helper()
-	if err := encoding.PrepareKeySet(game, encoding.LatinJapanese); err != nil {
+	if err := encoding.PrepareTextCodec(game, encoding.LatinJapanese); err != nil {
 		t.Fatal(err)
 	}
-	ks, err := encoding.KeySetFor(game, encoding.LatinJapanese)
+	tc, err := encoding.TextCodecFor(game, encoding.LatinJapanese)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ks
+	return tc
 }
 
 // TestTextDecodeEncode prova o pipeline completo de texto: decodificar as
@@ -181,15 +181,15 @@ func keyset(t *testing.T, game encoding.GameCode) *encoding.KeySet {
 func TestTextDecodeEncode(t *testing.T) {
 	for _, fx := range fixtures {
 		t.Run(fx.dir, func(t *testing.T) {
-			ks := keyset(t, fx.game)
+			tc := textCodec(t, fx.game)
 			f := readZtr(t, fx.dir)
 
-			texts, err := ks.DecodeLines(f.Lines)
+			texts, err := tc.DecodeLines(f.Lines)
 			if err != nil {
 				t.Fatalf("DecodeLines: %v", err)
 			}
 
-			want := stripCharaTags(ks, readFixture(t, filepath.Join(fx.dir, fx.txt)))
+			want := stripGlyphTags(tc, readFixture(t, filepath.Join(fx.dir, fx.txt)))
 			if got := ztr.WriteTxt(f.IDs, texts); !bytes.Equal(got, want) {
 				i := 0
 				for i < len(got) && i < len(want) && got[i] == want[i] {
@@ -208,7 +208,7 @@ func TestTextDecodeEncode(t *testing.T) {
 			}
 
 			// round-trip por linha: encode(decode(raw)) == raw
-			raws, err := ks.EncodeLines(texts)
+			raws, err := tc.EncodeLines(texts)
 			if err != nil {
 				t.Fatalf("EncodeLines: %v", err)
 			}
@@ -234,7 +234,7 @@ func TestTextDecodeEncode(t *testing.T) {
 }
 
 // TestV2PerGame valida os dicionários por jogo: o MESMO arquivo v2
-// decodificado com cada keyset tem que produzir o txt oráculo daquele jogo.
+// decodificado com cada codec tem que produzir o txt oráculo daquele jogo.
 func TestV2PerGame(t *testing.T) {
 	f := readZtr(t, "v2")
 	perGame := map[encoding.GameCode]string{
@@ -243,12 +243,12 @@ func TestV2PerGame(t *testing.T) {
 		encoding.FF133: "txt_ff133.txt",
 	}
 	for game, txtName := range perGame {
-		ks := keyset(t, game)
-		texts, err := ks.DecodeLines(f.Lines)
+		tc := textCodec(t, game)
+		texts, err := tc.DecodeLines(f.Lines)
 		if err != nil {
 			t.Fatalf("%s: DecodeLines: %v", game, err)
 		}
-		want := stripCharaTags(ks, readFixture(t, filepath.Join("v2", txtName)))
+		want := stripGlyphTags(tc, readFixture(t, filepath.Join("v2", txtName)))
 		if got := ztr.WriteTxt(f.IDs, texts); !bytes.Equal(got, want) {
 			t.Errorf("%s: txt diverge do oráculo (%d vs %d bytes)", game, len(got), len(want))
 			if os.Getenv("UPDATE_ORACLES") != "" {

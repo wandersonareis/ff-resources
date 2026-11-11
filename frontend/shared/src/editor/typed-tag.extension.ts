@@ -16,6 +16,7 @@ const TAG_TEXT_RE = /\{([^{}]+)\}/g;
 export function isFormattingTagText(inner: string): boolean {
   const upper = inner.trim().toUpperCase();
   if (upper.startsWith('CLR:') || upper.startsWith('COLOR:')) return true;
+  if (upper.startsWith('NL:')) return true;
   return upper === 'TEXT_ITALIC' || upper === 'TEXT_NORMAL' || upper === 'TEXT_NEWLINE';
 }
 
@@ -37,8 +38,11 @@ export function createTypedTagExtension(validate: ChipValidator): Extension {
               for (const match of node.text.matchAll(TAG_TEXT_RE)) {
                 const inner = match[1].trim();
                 // `{ }`/`{}`: o parser deixa como texto — não criar chip que
-                // a próxima leitura rejeitaria.
-                if (!inner || isFormattingTagText(inner)) continue;
+                // a próxima leitura rejeitaria. Cor inválida para o idioma é
+                // a exceção: vira chip inválido para preservar os bytes.
+                const formatting = isFormattingTagText(inner);
+                const color = /^(CLR|COLOR):/i.test(inner);
+                if (!inner || (formatting && !(color && !validate(inner)))) continue;
                 const from = pos + match.index;
                 targets.push({ from, to: from + match[0].length, inner });
               }

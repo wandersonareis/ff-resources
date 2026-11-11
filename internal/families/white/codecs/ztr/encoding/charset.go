@@ -12,7 +12,7 @@ import (
 // Charset converte a parte "texto comum" de uma linha (bytes que não são
 // tags nem pares chara) entre a codepage física e UTF-8.
 //
-// No ZTRtool C# isso é Encoding.Convert(CodepageToUse, UTF8, ...) no decode
+// Na implementação de referência isso é Encoding.Convert(CodepageToUse, UTF8, ...) no decode
 // e Encoding.Convert(UTF8, CodepageToUse, ...) no encode. Aqui a dependência
 // fica atrás de uma interface para permitir trocar a implementação (ex.:
 // tabelas extraídas do .NET) sem tocar nas máquinas de estado.

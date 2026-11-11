@@ -1,20 +1,21 @@
 package encoding
 
-// Codepage identifica a variante de encoding dos .ztr (equivalente aos
-// EncodingSwitches do ZTRtool: -lj/-ch/-kr → 932/950/51949).
-type Codepage int
+import "ffresources/internal/families/white/codecs/ztr/encoding/tags"
+
+// Codepage identifica a variante de encoding dos .ztr (932/950/51949).
+type Codepage = tags.Codepage
 
 const (
-	LatinJapanese Codepage = 932   // -lj (Shift-JIS)
-	Chinese       Codepage = 950   // -ch (Big5)
-	Korean        Codepage = 51949 // -kr (EUC-KR)
+	LatinJapanese = tags.LatinJapanese // -lj (Shift-JIS)
+	Chinese       = tags.Chinese       // -ch (Big5)
+	Korean        = tags.Korean        // -kr (EUC-KR)
 )
 
-// GameCode identifica o jogo dono do arquivo (-ff131/-ff132/-ff133).
-type GameCode string
+// GameCode identifica o jogo dono do arquivo.
+type GameCode = tags.GameCode
 
 const (
-	FF131 GameCode = "ff131"
-	FF132 GameCode = "ff132"
-	FF133 GameCode = "ff133"
+	FF131 = tags.FF131
+	FF132 = tags.FF132
+	FF133 = tags.FF133
 )

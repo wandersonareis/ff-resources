@@ -1,46 +1,44 @@
 package encoding
 
 // ÍNDICES: o que a máquina de estados consulta. Montados uma vez por
-// KeySet (buildIndexes) e imutáveis depois.
+// TextCodec (buildIndexes) e imutáveis depois.
 //
-//   - singleFwd/Rev: controles de byte único (0x00..0x05);
+//   - controlFwd/Rev: controles de byte único (0x00..0x05);
 //   - pairFwd: classe -> par de bytes -> Tag (o decode);
-//   - nameFwd: classe -> nome -> Tag (o encode do COLOR, a única classe
-//     resolvida por nome — as outras carregam o hex no texto);
-//   - charaFwd/Rev: par <-> runa.
+//   - nameFwd: classe -> nome -> Tag (validação/autocomplete; o encode de
+//     par usa o HEX, não o nome);
+//   - glyphFwd/Rev: par <-> rune.
 //
-// Os reversos guardam a PRIMEIRA ocorrência na ordem de inserção (espelham o
-// GetDictByteKey do C#), e a ordem dos slices gerados é a ordem de inserção
-// do fonte C#.
+// Os reversos guardam a PRIMEIRA ocorrência na ordem de inserção.
 
-func buildIndexes(set *KeySet) {
-	set.singleFwd = map[byte]string{}
-	set.singleRev = map[string]byte{}
-	set.pairFwd = map[TagClass]map[uint16]Tag{}
-	set.nameFwd = map[TagClass]map[string]Tag{}
-	set.charaFwd = map[uint16]rune{}
-	set.charaRev = map[rune]uint16{}
+func buildIndexes(tc *TextCodec) {
+	tc.controlFwd = map[byte]string{}
+	tc.controlRev = map[string]byte{}
+	tc.pairFwd = map[TagClass]map[uint16]Tag{}
+	tc.nameFwd = map[TagClass]map[string]Tag{}
+	tc.glyphFwd = map[uint16]rune{}
+	tc.glyphRev = map[rune]uint16{}
 
-	for _, e := range set.Single {
-		set.singleFwd[e.Key] = e.Value
-		if _, dup := set.singleRev[e.Value]; !dup {
-			set.singleRev[e.Value] = e.Key
+	for _, e := range tc.Controls {
+		tc.controlFwd[e.Key] = e.Value
+		if _, dup := tc.controlRev[e.Value]; !dup {
+			tc.controlRev[e.Value] = e.Key
 		}
 	}
 
 	add := func(list []Tag) {
 		for _, t := range list {
-			byPair := set.pairFwd[t.Class]
+			byPair := tc.pairFwd[t.Class]
 			if byPair == nil {
 				byPair = map[uint16]Tag{}
-				set.pairFwd[t.Class] = byPair
+				tc.pairFwd[t.Class] = byPair
 			}
 			byPair[t.Pair()] = t
 
-			byName := set.nameFwd[t.Class]
+			byName := tc.nameFwd[t.Class]
 			if byName == nil {
 				byName = map[string]Tag{}
-				set.nameFwd[t.Class] = byName
+				tc.nameFwd[t.Class] = byName
 			}
 			if _, dup := byName[t.Name]; !dup {
 				byName[t.Name] = t
@@ -48,45 +46,44 @@ func buildIndexes(set *KeySet) {
 		}
 	}
 
-	add(set.Color)
-	add(set.Icon)
-	add(set.Btn)
-	add(set.Special)
-	add(set.Raw)
-	if set.Raw2 != nil {
-		add(set.Raw2)
+	add(tc.Colors)
+	add(tc.Icons)
+	add(tc.Buttons)
+	add(tc.Specials)
+	add(tc.Raw)
+	if tc.RawExtra != nil {
+		add(tc.RawExtra)
 	}
 
-	for _, e := range set.Chara {
-		k := pairKey(set.charaLead, e.Trail)
-		set.charaFwd[k] = e.Rune
+	for _, e := range tc.Glyphs {
+		k := pairKey(tc.glyphLead, e.Trail)
+		tc.glyphFwd[k] = e.Rune
 		// O reverse só recebe runas não-ASCII: texto ASCII comum (ex.: o
-		// hífen 0x2D) codifica como byte único, nunca como par chara.
+		// hífen 0x2D) codifica como byte único, nunca como par de glifo.
 		if e.Rune >= 0x80 {
-			if _, dup := set.charaRev[e.Rune]; !dup {
-				set.charaRev[e.Rune] = k
+			if _, dup := tc.glyphRev[e.Rune]; !dup {
+				tc.glyphRev[e.Rune] = k
 			}
 		}
 	}
 }
 
 // resolveDecodePair devolve a Tag do par (b1,b2) consultando as classes na
-// ordem do decoder, com o chara no meio — parando no primeiro hit, igual às
-// condições encadeadas do C#.
-func (ks *KeySet) resolveDecodePair(b1, b2 byte) (tag Tag, r rune, isRune, ok bool) {
+// ordem do decoder, com os glifos no meio — parando no primeiro hit.
+func (tc *TextCodec) resolveDecodePair(b1, b2 byte) (tag Tag, r rune, isRune, ok bool) {
 	k := pairKey(b1, b2)
-	for _, class := range pairPreChara {
-		if m, has := ks.pairFwd[class]; has {
+	for _, class := range classesBeforeGlyphs {
+		if m, has := tc.pairFwd[class]; has {
 			if t, hit := m[k]; hit {
 				return t, 0, false, true
 			}
 		}
 	}
-	if v, hit := ks.charaFwd[k]; hit {
+	if v, hit := tc.glyphFwd[k]; hit {
 		return Tag{}, v, true, true
 	}
-	for _, class := range pairPostChara {
-		if m, has := ks.pairFwd[class]; has {
+	for _, class := range classesAfterGlyphs {
+		if m, has := tc.pairFwd[class]; has {
 			if t, hit := m[k]; hit {
 				return t, 0, false, true
 			}
@@ -95,9 +92,9 @@ func (ks *KeySet) resolveDecodePair(b1, b2 byte) (tag Tag, r rune, isRune, ok bo
 	return Tag{}, 0, false, false
 }
 
-// tagByName devolve a Tag de uma classe pelo NOME (usado pelo COLOR).
-func (ks *KeySet) tagByName(class TagClass, name string) (Tag, bool) {
-	if m, has := ks.nameFwd[class]; has {
+// tagByName devolve a Tag de uma classe pelo NOME (validação/autocomplete).
+func (tc *TextCodec) tagByName(class TagClass, name string) (Tag, bool) {
+	if m, has := tc.nameFwd[class]; has {
 		t, ok := m[name]
 		return t, ok
 	}
@@ -105,10 +102,10 @@ func (ks *KeySet) tagByName(class TagClass, name string) (Tag, bool) {
 }
 
 // tagByPair devolve a Tag de um par em qualquer classe (validação/log).
-func (ks *KeySet) tagByPair(b1, b2 byte) (Tag, bool) {
+func (tc *TextCodec) tagByPair(b1, b2 byte) (Tag, bool) {
 	k := pairKey(b1, b2)
-	for _, class := range append(append([]TagClass{}, pairPreChara...), pairPostChara...) {
-		if m, has := ks.pairFwd[class]; has {
+	for _, class := range append(append([]TagClass{}, classesBeforeGlyphs...), classesAfterGlyphs...) {
+		if m, has := tc.pairFwd[class]; has {
 			if t, hit := m[k]; hit {
 				return t, true
 			}
@@ -117,24 +114,23 @@ func (ks *KeySet) tagByPair(b1, b2 byte) (Tag, bool) {
 	return Tag{}, false
 }
 
-// CharaPair devolve o par chara de uma runa (1ª ocorrência na ordem de
-// inserção, como GetDictByteKey).
-func (ks *KeySet) CharaPair(r rune) (byte, byte, bool) {
-	v, ok := ks.charaRev[r]
+// GlyphBytes devolve o par de uma runa (1ª ocorrência na ordem de inserção).
+func (tc *TextCodec) GlyphBytes(r rune) (byte, byte, bool) {
+	v, ok := tc.glyphRev[r]
 	if !ok {
 		return 0, 0, false
 	}
 	return byte(v >> 8), byte(v), true
 }
 
-// DecodeByte resolve byte único -> tag (SingleKeys).
-func (ks *KeySet) DecodeByte(b byte) (string, bool) {
-	v, ok := ks.singleFwd[b]
+// DecodeControl resolve byte único -> tag.
+func (tc *TextCodec) DecodeControl(b byte) (string, bool) {
+	v, ok := tc.controlFwd[b]
 	return v, ok
 }
 
-// EncodeByte resolve tag -> byte único (SingleKeys).
-func (ks *KeySet) EncodeByte(tag string) (byte, bool) {
-	v, ok := ks.singleRev[tag]
+// EncodeControl resolve tag -> byte único.
+func (tc *TextCodec) EncodeControl(tag string) (byte, bool) {
+	v, ok := tc.controlRev[tag]
 	return v, ok
 }
