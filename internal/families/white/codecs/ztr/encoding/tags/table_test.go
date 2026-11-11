@@ -13,8 +13,8 @@ func TestForPerLanguage(t *testing.T) {
 				t.Errorf("%s/%d: tabela vazia (colors=%d icons=%d buttons=%d)",
 					g, cp, len(table.Colors), len(table.Icons), len(table.Buttons))
 			}
-			if len(table.Controls) != 6 || len(table.Glyphs) != 118 {
-				t.Errorf("%s/%d: controls=%d glyphs=%d; queria 6/118",
+			if len(table.Controls) != 6 || len(table.Glyphs) != 147 {
+				t.Errorf("%s/%d: controls=%d glyphs=%d; queria 6/147",
 					g, cp, len(table.Controls), len(table.Glyphs))
 			}
 		}

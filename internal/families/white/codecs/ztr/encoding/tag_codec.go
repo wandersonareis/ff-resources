@@ -44,9 +44,11 @@ func (tc *TextCodec) encodeTag(inner string) ([]byte, bool) {
 		if !ok {
 			return nil, false
 		}
-		if _, known := tc.tagByPair(b1, b2); !known {
+		if _, _, _, known := tc.resolveDecodePair(b1, b2); !known {
 			// Par fora das tabelas: aceita (hex é autoritativo) mas avisa —
 			// o decode seguinte emite {RAW:..} e a degradação fica visível.
+			// resolveDecodePair também cobre os glifos: {RAW:85:A8} antigo
+			// aponta para um par conhecido (É) e não gera warning.
 			loggingService.Warn("tag %s: par %02X %02X não está nas tabelas do jogo",
 				inner, b1, b2)
 		}

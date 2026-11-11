@@ -114,8 +114,8 @@ func TestPrepareTextCodec(t *testing.T) {
 	}
 
 	// Contagens da composição.
-	if len(tc.Glyphs) != 118 {
-		t.Errorf("len(Glyphs) = %d; queria 118", len(tc.Glyphs))
+	if len(tc.Glyphs) != 147 {
+		t.Errorf("len(Glyphs) = %d; queria 147", len(tc.Glyphs))
 	}
 	if len(tc.Colors) != 43 || len(tc.Icons) != 54 || len(tc.Buttons) != 33 {
 		t.Errorf("ff131 lj: colors=%d icons=%d buttons=%d; queria 43/54/33",
@@ -124,8 +124,8 @@ func TestPrepareTextCodec(t *testing.T) {
 	if len(tc.Specials) != 11 {
 		t.Errorf("len(Specials lj) = %d; queria 11", len(tc.Specials))
 	}
-	if len(tc.Raw) != 60 || len(tc.RawExtra) != 10 {
-		t.Errorf("ff131 lj: raw=%d rawExtra=%d; queria 60/10", len(tc.Raw), len(tc.RawExtra))
+	if len(tc.Raw) != 31 || len(tc.RawExtra) != 10 {
+		t.Errorf("ff131 lj: raw=%d rawExtra=%d; queria 31/10", len(tc.Raw), len(tc.RawExtra))
 	}
 
 	// Ch não consulta o segundo conjunto de pares crus.

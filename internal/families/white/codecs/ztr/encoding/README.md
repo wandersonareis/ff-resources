@@ -74,6 +74,14 @@ As tabelas ficam em `encoding/tags`, um arquivo por grupo:
 
 Os pares de glifos viram **runas**, não tags: `0x85 0x57` → `—`.
 
+O bloco canônico dos acentuados latinos nos binários de `data/` é
+`0x85 0x9F..0xDE` = `U+00C0..U+00FF` (`À..ÿ`), mais `0x85 0x80` = `¿`.
+O bloco compacto `0x85 0x81..0x9D` é um alias legado dos mesmos caracteres:
+fica **depois** do canônico na tabela porque o reverse do encoder usa a
+primeira ocorrência. Assim `É` volta como `0x85 0xA8` (par da fonte), não
+como o alias `0x85 0x89`; arquivos antigos com o alias continuam lendo
+`É`, mas normalizam no próximo encode.
+
 ## Pacote `encoding`
 
 | arquivo | responsabilidade |
@@ -103,7 +111,7 @@ só ordem para decode e encode. Nenhum par pode existir em duas categorias;
 
 ```
 $ go run ./scripts/tagtables_check
-ff131  LatinJapanese  colors=43  icons=54  buttons=33  specials=11  raw=60  raw_extra=10  glyphs=118 controls=6
+ff131  LatinJapanese  colors=43  icons=54  buttons=33  specials=11  raw=31  raw_extra=10  glyphs=147 controls=6
 ...
 tag tables ok
 ```
