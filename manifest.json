@@ -3,7 +3,7 @@
     {
       "id": "ffx",
       "title": "FINAL FANTASY X | X-2 HD Remaster",
-      "exe": "ffx/ffx-resources.exe",
+      "exe": "ffx/spira.exe",
       "cover": "assets/launcher/ffx.png",
       "profiles": [
         { "id": "ffx", "display": "FFX" },
@@ -15,7 +15,7 @@
     {
       "id": "ff13",
       "title": "FINAL FANTASY XIII Trilogy",
-      "exe": "ff13/ff13-resources.exe",
+      "exe": "ff13/pulse.exe",
       "cover": "assets/launcher/ff13.png",
       "profiles": [
         { "id": "part1", "display": "FINAL FANTASY XIII", "cover": "assets/launcher/ff13.png" },
