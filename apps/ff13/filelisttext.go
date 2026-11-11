@@ -63,7 +63,7 @@ func containerOfExt(name string) string {
 // filelistUnitID devolve o id da unidade ("<dir>/<base>") e o idioma de uma
 // entrada indexada. ok=false quando o arquivo não é de um formato de texto.
 //
-// O idioma pode vir vazio ("txtres_ck.ztr" tem "ck" fora do catálogo): nesse
+// O idioma pode vir vazio (um sufixo fora do catálogo da trilogia): nesse
 // caso a unidade existe mas não tem primário "_us" — ela não é editável,
 // como na árvore /data.
 func filelistUnitID(dataPath string) (id, lang string, ok bool) {

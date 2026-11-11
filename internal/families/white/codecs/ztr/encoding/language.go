@@ -1,26 +1,37 @@
 package encoding
 
-import "strings"
+import (
+	"strings"
+
+	"ffresources/internal/families/white/languages"
+)
 
 // DefaultLanguage é o idioma do slot editável (o "_us").
 const DefaultLanguage = "us"
 
-// A ordem é a do catálogo de idiomas da trilogia (us primeiro). O alemão é
+// A ordem é a do catálogo EXCLUSIVO da trilogia (us primeiro). O alemão é
 // "gr" nos arquivos do jogo (e na wiki); "de" fica só como alias de chamadas
 // antigas, não entra na lista canônica.
-var languageOrder = []string{"us", "jp", "fr", "gr", "it", "sp", "ch", "kr"}
+var languageOrder = languages.FF13Codes()
 
-var languageCodepages = map[string]Codepage{
-	"us": LatinJapanese,
-	"jp": LatinJapanese,
-	"fr": LatinJapanese,
-	"gr": LatinJapanese,
-	"de": LatinJapanese, // alias legado
-	"it": LatinJapanese,
-	"sp": LatinJapanese,
-	"ch": Chinese,
-	"kr": Korean,
-}
+// languageCodepages é o codepage FÍSICO de cada arquivo. ch/kr têm tabela
+// própria; os demais (incluindo ck/uk/ru) seguem o LatinJapanese — o texto
+// dessas traduções comunitárias é lido com a tabela do slot editável.
+var languageCodepages = func() map[string]Codepage {
+	out := make(map[string]Codepage, len(languages.FF13)+1)
+	for _, l := range languages.FF13 {
+		switch l.Code {
+		case "ch":
+			out[l.Code] = Chinese
+		case "kr":
+			out[l.Code] = Korean
+		default:
+			out[l.Code] = LatinJapanese
+		}
+	}
+	out["de"] = LatinJapanese // alias legado
+	return out
+}()
 
 // Languages devolve os códigos de idioma na ordem canônica.
 func Languages() []string {

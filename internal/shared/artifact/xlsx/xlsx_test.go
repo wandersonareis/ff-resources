@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -44,6 +45,55 @@ func sampleCollection() dto.Collection {
 }
 
 const jpKey = "jp"
+
+// A ordem das linhas por idioma é alfabética e a linha que carrega o target
+// (o `us`) é a última do grupo — o target não é uma linha própria no XLSX.
+func TestMarshalLanguageOrderAlphabeticalTargetLast(t *testing.T) {
+	c := dto.Collection{
+		"ev001": {
+			Metadata: dto.Metadata{Key: "part1/txtres/ev001/txtres", ID: "ev001"},
+			Rows: []dto.TextRow{{
+				Index: 0,
+				Text: map[string]string{
+					"us": "Hello", "sp": "Hola", "fr": "Bonjour", "ch": "你好",
+				},
+				Hash:   map[string]string{"us": "aaaa0000aaaa0000", "sp": "bbbb1111bbbb1111", "fr": "cccc2222cccc2222", "ch": "dddd3333dddd3333"},
+				Source: "Hello",
+				Target: "Ola",
+			}},
+		},
+	}
+	raw, err := NewXLSXFormatter().Marshal(c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	f, err := excelize.OpenReader(strings.NewReader(string(raw)))
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer f.Close()
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		t.Fatalf("GetRows: %v", err)
+	}
+	if len(rows) != 5 {
+		t.Fatalf("linhas = %d, queria header + 4 idiomas", len(rows))
+	}
+	var got []string
+	for _, row := range rows[1:] {
+		if len(row) < 9 {
+			t.Fatalf("linha malformada: %v", row)
+		}
+		got = append(got, row[4])
+		if row[4] == "us" && row[8] != "Ola" {
+			t.Fatalf("target deveria estar na última linha (us): %v", row)
+		}
+	}
+	want := []string{"ch", "fr", "sp", "us"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("ordem dos idiomas = %v, queria %v", got, want)
+	}
+}
 
 // As larguras saem CALCULADAS: todas começam em xlsxWidthBase (10) e
 // crescem pelo maior texto observado (runes), teto 80 com clamp.

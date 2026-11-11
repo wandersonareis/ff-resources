@@ -1,8 +1,11 @@
 package main
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 
 	"ffresources/apps/ff13/parts"
@@ -23,8 +26,11 @@ func TestParseUnitFileName(t *testing.T) {
 		{"txtres_fr.ztr", "txtres", "fr"},
 		{"txtres_gr.ztr", "txtres", "gr"},
 		{"txtres_jp.ztr", "txtres", "jp"},
+		{"txtres_ck.ztr", "txtres", "ck"},
+		{"txtres_uk.ztr", "txtres", "uk"},
+		{"txtres_ru.ztr", "txtres", "ru"},
 		{"data_backup.bin", "data_backup", ""},
-		{"txtres_ck.ztr", "txtres_ck", ""},
+		{"txtres_zz.ztr", "txtres_zz", ""},
 		{"book.ztr", "book", ""},
 		{"_us.ztr", "_us", ""},
 		{"us.ztr", "us", ""},
@@ -34,6 +40,44 @@ func TestParseUnitFileName(t *testing.T) {
 		if base != c.base || lang != c.lang {
 			t.Errorf("parseUnitFileName(%q) = (%q, %q), esperado (%q, %q)", c.name, base, lang, c.base, c.lang)
 		}
+	}
+}
+
+// TestTxtresSuffixesInCatalog trava a regra nos DADOS REAIS: todo sufixo
+// txtres_<code>.ztr presente em data/partN precisa estar no catálogo do FF13.
+// Sem isso, ck/uk/ru (traduções comunitárias) voltavam a ser unidades próprias
+// em vez de referências da unidade.
+func TestTxtresSuffixesInCatalog(t *testing.T) {
+	for _, part := range []string{"part1", "part2", "part3"} {
+		root := partDataRoot(t, part)
+		seen := map[string]bool{}
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			base := filepath.Base(path)
+			if !strings.HasPrefix(base, "txtres_") || !strings.HasSuffix(base, ".ztr") {
+				return nil
+			}
+			code := strings.TrimSuffix(strings.TrimPrefix(base, "txtres_"), ".ztr")
+			if len(code) != 2 {
+				return nil
+			}
+			seen[code] = true
+			if !isUnitLang(code) {
+				t.Errorf("%s: sufixo %q fora do catálogo (arquivo %s)", part, code, path)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("%s: varrendo data: %v", part, err)
+		}
+		codes := make([]string, 0, len(seen))
+		for code := range seen {
+			codes = append(codes, code)
+		}
+		sort.Strings(codes)
+		t.Logf("%s: sufixos encontrados: %v", part, codes)
 	}
 }
 

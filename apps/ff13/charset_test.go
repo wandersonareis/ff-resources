@@ -57,6 +57,7 @@ func TestCodepageOf(t *testing.T) {
 		"sp": ztenc.LatinJapanese,
 		"ck": ztenc.LatinJapanese,
 		"uk": ztenc.LatinJapanese,
+		"ru": ztenc.LatinJapanese,
 	}
 	for lang, want := range cases {
 		if got := codepageOf(lang); got != want {

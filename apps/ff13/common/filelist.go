@@ -102,8 +102,8 @@ type FilelistNode struct {
 	// árvore /data: a folha do filelist abre a mesma unidade.
 	UnitID string `json:"unitId,omitempty"`
 	// UnitLang é o IDIOMA do arquivo de texto ("us"/"jp"/…): é o idioma que
-	// a folha clicada representa. Vazio quando o nome não diz (ex.:
-	// "txtres_ck.ztr" — "ck" está fora do catálogo).
+	// a folha clicada representa. Vazio quando o nome não diz (ex.: um sufixo
+	// fora do catálogo da trilogia).
 	UnitLang string `json:"unitLang,omitempty"`
 	// Text marca o arquivo como texto (clique abre a tabela).
 	Text bool `json:"text,omitempty"`

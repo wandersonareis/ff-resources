@@ -102,6 +102,58 @@ func TestMarshalReferences(t *testing.T) {
 	if strings.Contains(got, "ref[fr]") {
 		t.Fatalf("referência do fr não deveria entrar no filtro:\n%s", got)
 	}
+
+	// Filtro SÓ com o default não pode virar "todos os idiomas".
+	raw, err = POFormatter{}.MarshalLangs(sampleCollection(), []string{common.DefaultLocalization})
+	if err != nil {
+		t.Fatalf("marshal langs us: %v", err)
+	}
+	if strings.Contains(string(raw), "ref[") {
+		t.Fatalf("filtro [us] não deveria emitir referências:\n%s", raw)
+	}
+}
+
+// As referências são data-driven: valem os idiomas presentes no DTO, não o
+// catálogo fixo do FFX. O FF13 usa gr/ck/uk/ru, que não existem em
+// common.SupportedLanguages, e todos precisam sair em ordem alfabética.
+func TestMarshalReferencesDataDrivenFF13(t *testing.T) {
+	c := dto.Collection{
+		"ev001": {
+			Metadata: dto.Metadata{Key: "part1/txtres/ev001/txtres", ID: "ev001"},
+			Rows: []dto.TextRow{{
+				Index: 0,
+				Text: map[string]string{
+					common.DefaultLocalization: "Hello",
+					"gr":                       "Hallo",
+					"ck":                       "Ahoj",
+					"uk":                       "Privit",
+					"ru":                       "Privet",
+				},
+				Source: "Hello",
+				Target: "Ola",
+			}},
+		},
+	}
+	raw, err := POFormatter{}.Marshal(c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	got := string(raw)
+	order := []string{"ref[ck]: Ahoj", "ref[gr]: Hallo", "ref[ru]: Privet", "ref[uk]: Privit"}
+	last := -1
+	for _, want := range order {
+		idx := strings.Index(got, "#. "+want)
+		if idx < 0 {
+			t.Fatalf("referência %q ausente:\n%s", want, got)
+		}
+		if idx < last {
+			t.Fatalf("referências fora de ordem alfabética:\n%s", got)
+		}
+		last = idx
+	}
+	if strings.Contains(got, "ref[us]") {
+		t.Fatalf("o idioma default não pode virar referência:\n%s", got)
+	}
 }
 
 // TestMarshalSkipsBlankRow: linha sem original e sem tradução não vira

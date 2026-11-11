@@ -15,20 +15,22 @@
 // bagunçar (ou remover) o JSON.
 //
 // O par traduzível é o do slot `us`: msgid = o original de data/ (Source) e
-// msgstr = a tradução que vive em mods/ (Target). Os demais idiomas do jogo
-// (ch/de/fr/it/jp/kr/sp) entram como REFERÊNCIAS read-only em
-// "#. ref[<idioma>]" — as mesmas referências dos demais artefatos de CAT.
+// msgstr = a tradução que vive em mods/ (Target). Os demais idiomas PRESENTES
+// na Collection (ch/de/fr/it/jp/kr/sp no FFX; gr/ck/uk/ru também no FF13)
+// entram como REFERÊNCIAS read-only em "#. ref[<idioma>]", em ordem
+// alfabética. O msgstr (target) é sempre o último campo da entrada.
 package po
 
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
 	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/artifact"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 )
 
@@ -94,7 +96,7 @@ func (f POFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 // marshal é o motor único da escrita: cabeçalho PO + uma entrada por row,
 // na ordem das entradas (SortedKeys) e das rows (Index).
 func (f POFormatter) marshal(c dto.Collection, langs []string) ([]byte, error) {
-	refs := referenceLanguages(langs)
+	refs := referenceLanguages(c, langs)
 	blocks := make([]string, 0)
 	for _, id := range c.SortedKeys() {
 		entry := c[id]
@@ -199,19 +201,14 @@ func contextOf(id string, row dto.TextRow) string {
 	return ctx
 }
 
-// referenceLanguages devolve os idiomas de REFERÊNCIA: todos os suportados
-// menos o `us` (que é o par traduzível). langs nil/vazio = todos — a mesma
-// regra dos demais formatos (o menu exporta sem lista = tudo).
-func referenceLanguages(langs []string) []string {
-	if len(langs) == 0 {
-		out := make([]string, 0, len(common.SupportedLanguages))
-		for _, code := range common.SupportedLanguageCodes() {
-			if code != common.DefaultLocalization {
-				out = append(out, code)
-			}
-		}
-		return out
-	}
+// referenceLanguages devolve os idiomas de REFERÊNCIA presentes na própria
+// Collection: todas as chaves de Text, menos o `us` (que é o par traduzível),
+// ordenadas alfabeticamente. A lista é data-driven de propósito: o FF13 usa
+// códigos que não existem no catálogo do FFX (gr, ck, uk, ru) e o PO não pode
+// depender de uma lista fixa de outro jogo. langs nil/vazio = todos os
+// idiomas presentes; com filtro, só os pedidos que também existem no DTO.
+func referenceLanguages(c dto.Collection, langs []string) []string {
+	filter := len(langs) > 0
 	wanted := make(map[string]bool, len(langs))
 	for _, lang := range langs {
 		lang = strings.TrimSpace(lang)
@@ -219,12 +216,26 @@ func referenceLanguages(langs []string) []string {
 			wanted[lang] = true
 		}
 	}
-	out := make([]string, 0, len(wanted))
-	for _, code := range common.SupportedLanguageCodes() {
-		if wanted[code] {
-			out = append(out, code)
+
+	present := make(map[string]bool)
+	for _, id := range c.SortedKeys() {
+		for _, row := range c[id].Rows {
+			for lang := range row.Text {
+				if lang == common.DefaultLocalization || lang == "" {
+					continue
+				}
+				if filter && !wanted[lang] {
+					continue
+				}
+				present[lang] = true
+			}
 		}
 	}
+	out := make([]string, 0, len(present))
+	for lang := range present {
+		out = append(out, lang)
+	}
+	sort.Strings(out)
 	return out
 }
 

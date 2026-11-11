@@ -23,6 +23,11 @@
 // e acompanha a linha do idioma fonte: com filtro de idiomas que exclui o
 // fonte, a tradução não é exportada.
 //
+// ORDEM DAS LINHAS de uma row: os idiomas de jogo (incluindo o fonte) em ordem
+// alfabética e, por último, a linha do idioma alvo. A ordem alfabética ajuda a
+// busca visual nos artefatos grandes; a âncora do target no fim separa o texto
+// aplicável das referências.
+//
 // row_count do header conta ROWS, não linhas: uma row pode ter duas linhas
 // (fonte + alvo). O parser casa as linhas por index:name, como sempre.
 //
@@ -130,33 +135,31 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 		dto.SortRows(rows)
 		id := lineID(entry.Metadata, k)
 		for _, row := range rows {
-			if filter == nil || filter[sourceLang] {
-				// Linha do idioma FONTE: o pristine de data/ no próprio
-				// valor — é o "source" do par. Só esta linha colapsa em
-				// ref "$hash" (dedup de conteúdo do pristine).
-				source := row.Text[sourceLang]
-				if source == "" {
-					source = row.Source
-				}
-				if source != "" {
-					h := row.Hash[sourceLang]
+			sourceAllowed := filter == nil || filter[sourceLang]
+			source := row.Text[sourceLang]
+			if source == "" {
+				source = row.Source
+			}
+
+			// Linhas dos idiomas de jogo em ORDEM ALFABÉTICA: o próprio
+			// idioma fonte entra na posição dele (o texto pode vir de
+			// row.Source quando o mapa Text não o traz).
+			langs := rowLangs(row, filter)
+			if sourceAllowed && source != "" {
+				langs = append(langs, sourceLang)
+				sort.Strings(langs)
+			}
+
+			for _, lang := range langs {
+				if lang == sourceLang {
+					// Linha do idioma FONTE: o pristine de data/ no próprio
+					// valor — é o "source" do par. Só esta linha colapsa em
+					// ref "$hash" (dedup de conteúdo do pristine).
+					h := row.Hash[lang]
 					if h == "" {
 						h = hash.Sum64Hex(source)
 					}
-					writeLine(&out, id, row, sourceLang, hash.Prefix(h), dedupValue(dedup, seen, h, source, row))
-				}
-				// Linha do idioma ALVO: a tradução de mods/ — o único texto
-				// que o import aplica. Sempre literal (nunca ref) e sempre
-				// que existe (target != ""), mesmo igual à fonte.
-				if row.Target != "" {
-					th := hash.Sum64Hex(row.Target)
-					writeLine(&out, id, row, targetLang, hash.Prefix(th), escapeValue(row.Target))
-				}
-			}
-			// Demais idiomas da unidade: referências, como sempre. A linha
-			// do idioma fonte já foi escrita acima.
-			for _, lang := range rowLangs(row, filter) {
-				if lang == sourceLang {
+					writeLine(&out, id, row, lang, hash.Prefix(h), dedupValue(dedup, seen, h, source, row))
 					continue
 				}
 				text := row.Text[lang]
@@ -168,6 +171,16 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 					h = hash.Sum64Hex(text)
 				}
 				writeLine(&out, id, row, lang, hash.Prefix(h), escapeValue(text))
+			}
+
+			// Linha do idioma ALVO: a tradução de mods/ — o único texto que
+			// o import aplica. Sempre a ÚLTIMA linha da row, sempre literal
+			// (nunca ref) e sempre que existe (target != ""), mesmo igual à
+			// fonte. Acompanha a linha do fonte: com filtro que exclui o
+			// fonte, a tradução não é exportada.
+			if sourceAllowed && row.Target != "" {
+				th := hash.Sum64Hex(row.Target)
+				writeLine(&out, id, row, targetLang, hash.Prefix(th), escapeValue(row.Target))
 			}
 		}
 	}
@@ -235,9 +248,9 @@ func langSet(langs []string) map[string]bool {
 }
 
 // rowLangs devolve os idiomas de REFERÊNCIA da row com texto, ordenados e
-// filtrados. O idioma fonte NÃO entra: a linha dele (e a do alvo) é escrita
-// à parte pelo marshalLangsOpt — a tradução do alvo não é um idioma de jogo
-// e por isso não vive no mapa Text.
+// filtrados. O idioma fonte NÃO entra: o chamador o insere na posição
+// alfabética dele e escreve a linha do alvo por último. A tradução do alvo
+// não é um idioma de jogo e por isso não vive no mapa Text.
 func rowLangs(row dto.TextRow, filter map[string]bool) []string {
 	langs := make([]string, 0, len(row.Text))
 	for lang, text := range row.Text {

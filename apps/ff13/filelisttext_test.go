@@ -51,9 +51,11 @@ func TestFilelistUnitID(t *testing.T) {
 		{"db/ai/npc/pack/auto_c01_us.bin", "db/ai/npc/pack/auto_c01", "us", true},
 		{"txtres/resident/book/txtres_us.ztr", "txtres/resident/book/txtres", "us", true},
 		{"zone/z000/txtres/x_us.ztr", "zone/z000/txtres/x", "us", true},
-		// "ck" está fora do catálogo de idiomas: o arquivo não tem idioma e
-		// a unidade não tem primário (não é editável).
-		{"txtres/resident/book/txtres_ck.ztr", "txtres/resident/book/txtres_ck", "", true},
+		// ck/uk/ru entram no catálogo exclusivo do FF13: o arquivo é uma
+		// referência da mesma unidade (não uma unidade própria).
+		{"txtres/resident/book/txtres_ck.ztr", "txtres/resident/book/txtres", "ck", true},
+		{"txtres/resident/book/txtres_uk.ztr", "txtres/resident/book/txtres", "uk", true},
+		{"txtres/resident/book/txtres_ru.ztr", "txtres/resident/book/txtres", "ru", true},
 		{"gui/resident/system.win32.imgb", "", "", false},
 		{"db/ai/npc/pack/auto_c01.clb", "", "", false},
 	}

@@ -44,11 +44,13 @@ bytes mudam entre LJ/Ch/Kr:
 
 | idioma | codepage | White |
 |---|---|---|
-| us/jp/fr/de/it/sp | Shift-JIS | `F9:40` |
+| us/jp/fr/gr/it/sp/ck/uk/ru | Shift-JIS | `F9:40` |
 | ch | Big5 | `FE:40` |
 | kr | EUC-KR | `AC:A1` |
 
 - vazio → `us`;
+- `ck/uk/ru` são as traduções comunitárias e usam a codepage do slot
+  editável (a leitura do texto pode depender da fonte aplicada pela tradução);
 - idioma fora do catálogo → `paleta de cores indisponível para o idioma XX`;
 - leitura de arquivo com sufixo fora do catálogo cai em Shift-JIS para o
   charset, mas o catálogo do editor é estrito.

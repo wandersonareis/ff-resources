@@ -11,6 +11,7 @@ import (
 	"ffresources/internal/families/white/codecs/wpd"
 	"ffresources/internal/families/white/codecs/ztr"
 	ztenc "ffresources/internal/families/white/codecs/ztr/encoding"
+	"ffresources/internal/families/white/languages"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 	loggingService "ffresources/internal/shared/logging"
@@ -460,18 +461,15 @@ type Language struct {
 
 // ListLanguages devolve o catalogo COMPLETO de idiomas da trilogia. O FF13
 // usa o esquema de sufixo txt_XX: o "_us" e o texto editavel e os demais
-// entram como referencias somente-leitura no dialogo do editor.
+// entram como referencias somente-leitura no dialogo do editor. A lista e a
+// mesma do codec/profile (internal/families/white/languages): inclui as
+// traducoes comunitarias ck/uk/ru.
 func (FF13Service) ListLanguages() []Language {
-	return []Language{
-		{Code: "us", Name: "English"},
-		{Code: "jp", Name: "Japanese"},
-		{Code: "fr", Name: "French"},
-		{Code: "gr", Name: "German"},
-		{Code: "it", Name: "Italian"},
-		{Code: "sp", Name: "Spanish"},
-		{Code: "ch", Name: "Chinese"},
-		{Code: "kr", Name: "Korean"},
+	out := make([]Language, 0, len(languages.FF13))
+	for _, l := range languages.FF13 {
+		out = append(out, Language{Code: l.Code, Name: l.Name})
 	}
+	return out
 }
 
 func normalizePart(part string) string {

@@ -557,6 +557,48 @@ func TestV2SourceTargetRoundTrip(t *testing.T) {
 	}
 }
 
+// A ordem das linhas de uma row é alfabética pelos idiomas de jogo (o fonte
+// incluído) e a linha do alvo vem SEMPRE por último.
+func TestV2LanguageOrderAlphabeticalTargetLast(t *testing.T) {
+	collection := dto.Collection{
+		"ev001": {
+			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
+			Rows: []dto.TextRow{{
+				Index: 0,
+				Hash: hash.Texts(map[string]string{
+					"us": "Hello", "sp": "Hola", "fr": "Bonjour", "ch": "你好",
+				}),
+				Text: map[string]string{
+					"us": "Hello", "sp": "Hola", "fr": "Bonjour", "ch": "你好",
+				},
+				Source: "Hello",
+				Target: "Ola",
+			}},
+		},
+	}
+	data, err := fmtstrings.Marshal(collection)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	var got []string
+	for _, line := range strings.Split(string(data), "\n") {
+		const prefix = "ev001:0:"
+		if !strings.HasPrefix(line, prefix) {
+			continue
+		}
+		rest := strings.TrimPrefix(line, prefix)
+		end := strings.Index(rest, "║")
+		if end < 0 {
+			t.Fatalf("linha sem separador: %q", line)
+		}
+		got = append(got, rest[:end])
+	}
+	want := []string{"ch", "fr", "sp", "us", "br"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("ordem dos idiomas = %v, queria %v\n%s", got, want, data)
+	}
+}
+
 // A linha do idioma-alvo sai SEMPRE que há tradução (target != "") — mesmo
 // quando a tradução é idêntica ao original (mods/ ainda espelha o inglês) —
 // e nunca colapsa em ref "$hash": tradução repetida fica literal.

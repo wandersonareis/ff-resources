@@ -3,7 +3,10 @@
 // os nomes de exibicao longos vivem aqui e no manifesto do launcher.
 package ff13
 
-import "ffresources/internal/shared/family"
+import (
+	"ffresources/internal/families/white/languages"
+	"ffresources/internal/shared/family"
+)
 
 type profile struct {
 	id       string
@@ -12,9 +15,9 @@ type profile struct {
 	langs    family.LanguageProfile
 }
 
-func (p profile) ID() string                   { return p.id }
-func (p profile) DisplayName() string          { return p.display }
-func (p profile) GameCode() string             { return p.gameCode }
+func (p profile) ID() string                        { return p.id }
+func (p profile) DisplayName() string               { return p.display }
+func (p profile) GameCode() string                  { return p.gameCode }
 func (p profile) Languages() family.LanguageProfile { return p.langs }
 
 // base monta um profile da trilogia com o perfil de idiomas do FF13: arquivos
@@ -25,7 +28,7 @@ func base(id, display, gameCode string) profile {
 		display:  display,
 		gameCode: gameCode,
 		langs: family.LanguageProfile{
-			Codes:             []string{"us", "jp", "fr", "de", "it", "sp", "ch", "kr"},
+			Codes:             languages.FF13Codes(),
 			ReferenceLanguage: "us",
 			TargetLanguage:    "us",
 			FilePattern:       `^(?P<base>.+)_(?P<lang>[a-z]{2})\.ztr$`,

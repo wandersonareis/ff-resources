@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -80,6 +81,48 @@ func TestUnmarshalRoundTripBulk(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// A ordem das linhas por idioma é alfabética e a linha que carrega o target
+// (o `us`) é a última do grupo — o target não é uma linha própria no CSV.
+func TestMarshalLanguageOrderAlphabeticalTargetLast(t *testing.T) {
+	c := dto.Collection{
+		"ev001": {
+			Metadata: dto.Metadata{Key: "part1/txtres/ev001/txtres", ID: "ev001"},
+			Rows: []dto.TextRow{{
+				Index: 0,
+				Text: map[string]string{
+					"us": "Hello", "sp": "Hola", "fr": "Bonjour", "ch": "你好",
+				},
+				Hash:   map[string]string{"us": "aaaa0000aaaa0000", "sp": "bbbb1111bbbb1111", "fr": "cccc2222cccc2222", "ch": "dddd3333dddd3333"},
+				Source: "Hello",
+				Target: "Ola",
+			}},
+		},
+	}
+	raw, err := NewCSVFormatter().Marshal(c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+	if len(lines) != 5 {
+		t.Fatalf("linhas = %d, queria header + 4 idiomas:\n%s", len(lines), raw)
+	}
+	var got []string
+	for _, line := range lines[1:] {
+		fields := strings.Split(line, ",")
+		if len(fields) < 9 {
+			t.Fatalf("linha malformada: %q", line)
+		}
+		got = append(got, fields[4])
+		if fields[4] == "us" && fields[8] != "Ola" {
+			t.Fatalf("target deveria estar na última linha (us): %q", line)
+		}
+	}
+	want := []string{"ch", "fr", "sp", "us"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("ordem dos idiomas = %v, queria %v\n%s", got, want, raw)
 	}
 }
 

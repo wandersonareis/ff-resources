@@ -15,6 +15,7 @@ import (
 	"ffresources/internal/families/white"
 	"ffresources/internal/families/white/codecs/whitebin"
 	"ffresources/internal/families/white/codecs/wpd"
+	"ffresources/internal/families/white/languages"
 	loggingService "ffresources/internal/shared/logging"
 )
 
@@ -29,11 +30,12 @@ import (
 // que tenha um registro .ztr dentro. Tudo o mais (imgb, xgr, wdb solto...) e
 // ignorado pela varredura.
 
-// unitLangs e o catalogo de idiomas da trilogia (o mesmo de
-// internal/families/white/titles/ff13/part1.go). O sufixo "_XX" do nome do
-// arquivo so conta quando e um destes codigos: "txtres_ck.ztr" (codigo fora
-// do catalogo) e um arquivo SEM idioma, com base "txtres_ck".
-var unitLangs = []string{"us", "jp", "fr", "gr", "it", "sp", "ch", "kr"}
+// unitLangs e o catalogo de idiomas da trilogia, vindo da lista exclusiva do
+// FF13 (internal/families/white/languages). O sufixo "_XX" do nome do arquivo
+// so conta quando e um destes codigos; codigo fora do catalogo (ex.: um sufixo
+// desconhecido) e tratado como arquivo SEM idioma, com a base incluindo o
+// sufixo.
+var unitLangs = languages.FF13Codes()
 
 // isUnitLang diz se o codigo e um idioma do catalogo.
 func isUnitLang(code string) bool {
