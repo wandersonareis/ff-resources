@@ -46,6 +46,11 @@ export interface PartUi {
    */
   titleEffect?: 'lightning';
   /**
+   * Fonte do logo do título (caminho em `public/`) quando a part troca o
+   * texto por imagem — o efeito de `titleEffect` passa a recortar no logo.
+   */
+  titleLogoSrc?: string;
+  /**
    * true quando os índices de ZONA viram o nó "Zone" no topo da árvore de
    * filelist (part1): o conteúdo da zona vive só ali.
    */

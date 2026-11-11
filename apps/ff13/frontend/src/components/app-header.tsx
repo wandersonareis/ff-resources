@@ -14,6 +14,8 @@ import { partUi } from '@/lib/parts';
 
 const TITLE = 'FINAL FANTASY XIII Trilogy Resources Editor';
 const TITLE_CLASS = 'text-xl font-malva-medium text-gradient';
+/** Logo do título (part3): altura do `text-xl`, largura pelo aspect ratio. */
+const TITLE_LOGO_CLASS = 'h-7 w-auto select-none';
 
 /**
  * Barra superior (título + tema + configurações + formato e idiomas de
@@ -22,7 +24,8 @@ const TITLE_CLASS = 'text-xl font-malva-medium text-gradient';
  * então nada disso atravessa props.
  *
  * `version` decide o efeito do título: cada part liga o seu em
- * `lib/parts/partN.ts` (`titleEffect`).
+ * `lib/parts/partN.ts` (`titleEffect`). O part3 troca o texto pelo logo
+ * (`titleLogoSrc`) — os raios recortam na imagem em vez do texto.
  */
 export function AppHeader({
   version,
@@ -31,12 +34,16 @@ export function AppHeader({
   version: GameVersionId;
   onOpenConfig: () => void;
 }) {
-  const effect = partUi(version).titleEffect;
+  const { titleEffect, titleLogoSrc } = partUi(version);
 
   return (
     <header className="sticky top-0 z-10 flex items-center gap-0.5 bg-chrome px-4 py-2 border-b">
-      {effect === 'lightning' ? (
-        <LightningText className={TITLE_CLASS}>{TITLE}</LightningText>
+      {titleEffect === 'lightning' ? (
+        titleLogoSrc ? (
+          <LightningText src={titleLogoSrc} alt={TITLE} className={TITLE_LOGO_CLASS} />
+        ) : (
+          <LightningText className={TITLE_CLASS}>{TITLE}</LightningText>
+        )
       ) : (
         <span className={TITLE_CLASS}>{TITLE}</span>
       )}

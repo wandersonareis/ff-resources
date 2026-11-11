@@ -4,29 +4,33 @@ import { useEffect, useRef } from 'react';
 import { type BoltPath, createBolt } from '@/lib/title-effects/lightning';
 
 /**
- * Texto com raios animados recortados NAS LETRAS (clip por glifos).
+ * Texto ou imagem com raios animados recortados NO CONTEÚDO (clip por máscara).
  *
- * Recebe apenas TEXTO PURO — não aceita componentes React/elementos. O
- * recorte é uma máscara desenhada no canvas com o mesmo `font` do texto, não
- * com o DOM: ícones, markup, quebras de linha ou fontes misturadas não têm
- * como ser mascarados. Para animar um componente, renderize-o fora e use
- * `LightningText` só no trecho de texto.
+ * DOIS MODOS:
+ * - TEXTO: recebe apenas TEXTO PURO — não aceita componentes React/elementos.
+ *   O recorte é uma máscara desenhada no canvas com o mesmo `font` do texto,
+ *   não com o DOM: ícones, markup, quebras de linha ou fontes misturadas não
+ *   têm como ser mascarados. Para animar um componente, renderize-o fora e use
+ *   `LightningText` só no trecho de texto.
+ * - IMAGEM: com `src`, o recorte é a imagem renderizada no canvas
+ *   (`drawImage`) — os raios ficam recortados nos glifos do logo. `alt`
+ *   descreve a imagem; `className` controla o tamanho (`h-* w-auto`).
  *
  * Cores aceitam qualquer formato CSS (`#4ade80`, `rgb(74 222 128)`,
- * `green`, `hsl(...)`).
+ * `green`, `hsl(...)`). Padrão: núcleo azul escuro com brilho azul claro
+ * (`#2563eb` + `#93c5fd`).
  *
  * ```tsx
  * <LightningText className="text-xl text-gradient" color="#4ade80">
  *   FINAL FANTASY XIII
  * </LightningText>
+ * <LightningText src="/title-logo.avif" alt="LR:FF13" className="h-7 w-auto" />
  * ```
  */
 export type LightningTextProps = {
-  /** Texto puro, em uma linha — é o que recebe o recorte dos raios. */
-  children: string;
-  /** Cor do núcleo do raio. Padrão: `#4ade80` (verde). */
+  /** Cor do núcleo do raio (azul escuro). Padrão: `#2563eb`. */
   color?: string;
-  /** Cor do brilho (glow). Padrão: `#10b981` (esmeralda). */
+  /** Cor do brilho (glow azul claro). Padrão: `#93c5fd`. */
   glowColor?: string;
   /** Liga/desliga a animação sem desmontar. Padrão: `true`. */
   active?: boolean;
@@ -34,9 +38,19 @@ export type LightningTextProps = {
   minInterval?: number;
   /** Intervalo máximo entre descargas, em ms. Padrão: `2400`. */
   maxInterval?: number;
-  /** Classes do texto (fonte, tamanho, degradê). */
+  /** Classes do texto (fonte, tamanho, degradê) ou do logo (`h-* w-auto`). */
   className?: string;
-};
+} & (
+  | { /** Texto puro, em uma linha — é o que recebe o recorte dos raios. */
+    children: string;
+    src?: undefined;
+    alt?: undefined }
+  | { /** Fonte da imagem que recebe o recorte dos raios (em vez do texto). */
+    children?: undefined;
+    src: string;
+    /** Texto alternativo do `<img>` (modo imagem). */
+    alt?: string }
+);
 
 type Strike = {
   path: BoltPath;
@@ -50,21 +64,27 @@ type Strike = {
 
 export function LightningText({
   children,
-  color = '#B1C8FC',
-  glowColor = '#4ade80',
+  src,
+  alt,
+  color = '#2563eb',
+  glowColor = '#93c5fd',
   active = true,
   minInterval = 700,
   maxInterval = 2400,
   className,
 }: LightningTextProps) {
   const textRef = useRef<HTMLSpanElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const textEl = textRef.current;
+    const imgEl = imgRef.current;
     const canvas = canvasRef.current;
-    if (!textEl || !canvas || !active) return;
-    // Sem movimento: o texto continua normal, sem raios.
+    // Um dos dois existe: o modo é decidido por qual elemento renderizou.
+    const boxEl: HTMLElement | null = textEl ?? imgEl;
+    if (!boxEl || !canvas || !active) return;
+    // Sem movimento: o conteúdo continua normal, sem raios.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = canvas.getContext('2d');
@@ -79,17 +99,20 @@ export function LightningText({
     let font = '';
     let letterSpacing = '0px';
 
-    /** Mede o texto e redimensiona o canvas (DPR incluso) quando muda. */
+    /** Mede o conteúdo e redimensiona o canvas (DPR incluso) quando muda. */
     const measure = () => {
-      const box = textEl.getBoundingClientRect();
+      const box = boxEl.getBoundingClientRect();
       const width = Math.max(1, Math.round(box.width));
       const height = Math.max(1, Math.round(box.height));
 
       // O `font`/espaçamento podem mudar sem mudar o tamanho (ex.: a fonte
       // real terminar de carregar): sempre relê antes do early-return.
-      const style = window.getComputedStyle(textEl);
-      font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-      letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing;
+      // Só importam no modo texto — a máscara de imagem é o drawImage dela.
+      if (textEl) {
+        const style = window.getComputedStyle(textEl);
+        font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing;
+      }
 
       if (width === cssWidth && height === cssHeight) return;
 
@@ -118,8 +141,31 @@ export function LightningText({
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#fff';
-      ctx.fillText(children, 0, cssHeight / 2);
+      ctx.fillText(children ?? '', 0, cssHeight / 2);
       ctx.globalCompositeOperation = 'source-over';
+    };
+
+    /**
+     * Aplica a IMAGEM como máscara alfa do que já foi desenhado no canvas:
+     * desenha o logo na caixa medida e o `destination-in` recorta os raios
+     * nos glifos dele (o alfa do AVIF faz o papel do fillText do modo texto).
+     */
+    const clipToImage = () => {
+      // Imagem quebrada ou ainda decodificando: máscara vazia, sem raios —
+      // o listener de `load` re-medindo traz o recorte quando ela chegar.
+      if (!imgEl?.complete || imgEl.naturalWidth === 0) return;
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.drawImage(imgEl, 0, 0, cssWidth, cssHeight);
+      ctx.globalCompositeOperation = 'source-over';
+    };
+
+    /** A máscara acompanha o modo: `src` define imagem, ausência = texto. */
+    const applyMask = () => {
+      if (src === undefined) clipToText();
+      else clipToImage();
     };
 
     const strokePath = (points: BoltPath['trunk'], width: number, alpha: number) => {
@@ -154,7 +200,7 @@ export function LightningText({
             strokePath(branch, strike.width * 0.6, alpha * 0.8);
           }
         }
-        clipToText();
+        applyMask();
         raf = requestAnimationFrame(frame);
       }
     };
@@ -202,7 +248,10 @@ export function LightningText({
     schedule();
 
     const observer = new ResizeObserver(measure);
-    observer.observe(textEl);
+    observer.observe(boxEl);
+    // No modo imagem, o carregamento muda a caixa (w-auto) e habilita a
+    // máscara: re-medir quando o logo chegar.
+    imgEl?.addEventListener('load', measure);
     void document.fonts?.ready.then(() => {
       if (!disposed) measure();
     });
@@ -212,17 +261,29 @@ export function LightningText({
       if (timer !== undefined) window.clearTimeout(timer);
       if (raf) cancelAnimationFrame(raf);
       observer.disconnect();
+      imgEl?.removeEventListener('load', measure);
       strikes = [];
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
-  }, [active, children, color, glowColor, minInterval, maxInterval]);
+  }, [active, children, src, color, glowColor, minInterval, maxInterval]);
 
   return (
     <span className="relative inline-block">
-      <span ref={textRef} className={className}>
-        {children}
-      </span>
+      {src === undefined ? (
+        <span ref={textRef} className={className}>
+          {children}
+        </span>
+      ):(
+        // biome-ignore lint/performance/noImgElement: app Vite/Wails sem next/image — o logo sai de public/ já otimizado no build.
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt ?? ''}
+          draggable={false}
+          className={className}
+        />
+      )}
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute left-0 top-0" />
     </span>
   );

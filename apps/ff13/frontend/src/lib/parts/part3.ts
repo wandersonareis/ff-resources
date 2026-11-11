@@ -34,6 +34,7 @@ export function part3FilelistOrder(name: string): string {
 export const part3: PartUi = {
   id: 'part3',
   titleEffect: 'lightning',
+  titleLogoSrc: '/title-logo.avif',
   dataGroupLabel: 'Data',
   filelistGroupLabel: 'Filelist',
   filelistZoneLabel: 'zone',
