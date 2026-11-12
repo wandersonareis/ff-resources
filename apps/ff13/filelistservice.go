@@ -126,7 +126,7 @@ func (FF13Service) ListFilelistRoots(part string) ([]common.FilelistRoot, error)
 	p := parts.Get(part)
 	disc := discoverPart(p)
 	checkFilelistPairs(p, disc.indexes)
-	return disc.roots, nil
+	return pruneKeyOnlyRoots(disc), nil
 }
 
 // listDiskRoots acha os índices EM DISCO: os da pasta do jogo (sys, udp,
@@ -153,6 +153,11 @@ func listDiskRoots(p parts.Part) []common.FilelistRoot {
 			}
 			name := strings.ToLower(d.Name())
 			if !isFilelistName(name) {
+				return nil
+			}
+			// Índice conhecido que só carrega a key do DLC: descarta antes
+			// de abrir/parsear (a lista está em keyOnlyFilelists).
+			if isKnownKeyOnlyFilelist(d.Name()) {
 				return nil
 			}
 			clean := filepath.Clean(path)
