@@ -238,7 +238,7 @@ func (FF13Service) ListFilelistDir(part, root, dir string) ([]common.FilelistNod
 	}
 	entries := indexEntries(p, idx, nil)
 	checkSource(idx, common.SourceOf(indexNameOf(idx)), entries)
-	return listDirNodes(p, buildIndexTree(entries), dir, zoneOfIndex(idx)), nil
+	return listDirNodes(p, buildIndexTree(entries), dir, zoneOfIndex(idx), root), nil
 }
 
 // ListFilelistZone devolve a UNIÃO do conteúdo de uma zona: o índice de zona

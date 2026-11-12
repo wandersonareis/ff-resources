@@ -107,8 +107,50 @@ type FilelistNode struct {
 	UnitLang string `json:"unitLang,omitempty"`
 	// Text marca o arquivo como texto (clique abre a tabela).
 	Text bool `json:"text,omitempty"`
-	// Container é o tipo do arquivo editável: "ztr" | "wpd".
+	// Container é o tipo do arquivo editável: "ztr" | "wpd" (texto) ou
+	// "wpd"/"trb" (container de imagem).
 	Container string `json:"container,omitempty"`
+	// Image marca o arquivo como imagem/container de imagem.
+	Image bool `json:"image,omitempty"`
+	// ImageRef é a referência opaca da imagem (ou do container, quando
+	// ImageContainer=true).
+	ImageRef string `json:"imageRef,omitempty"`
+	// ImageContainer marca um nó que pode ser expandido em imagens/arquivos.
+	ImageContainer bool `json:"imageContainer,omitempty"`
+	// Pair é o caminho do binário .imgb pareado com a tabela.
+	Pair string `json:"pair,omitempty"`
+	// ImageChildCount é o número de registros do container (quando conhecido).
+	ImageChildCount int `json:"imageChildCount,omitempty"`
+}
+
+// ImageNode é um filho de container WPD/TRB: imagem ou arquivo comum.
+type ImageNode struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Path       string `json:"path"`
+	Size       uint32 `json:"size,omitempty"`
+	Kind       string `json:"kind"` // "image" | "file"
+	ImageRef   string `json:"imageRef,omitempty"`
+	Container  string `json:"container,omitempty"` // wpd/trb
+	Expandable bool   `json:"expandable,omitempty"`
+	Pair       string `json:"pair,omitempty"`
+}
+
+// ImageDeleteFile é um arquivo que o delete de imagem vai apagar.
+type ImageDeleteFile struct {
+	Path  string `json:"path"`
+	Scope string `json:"scope"` // data | mods
+	Kind  string `json:"kind"`  // container | payload | file
+	Size  int64  `json:"size,omitempty"`
+}
+
+// ImageDeletePlan descreve a consequência do delete de uma imagem.
+type ImageDeletePlan struct {
+	ID          string            `json:"id"`
+	Label       string            `json:"label"`
+	Files       []ImageDeleteFile `json:"files"`
+	RecordCount int               `json:"recordCount,omitempty"`
+	Warning     string            `json:"warning,omitempty"`
 }
 
 // zoneIDPattern casa o id da zona no nome do índice ("filelist_z000u" → "z000").

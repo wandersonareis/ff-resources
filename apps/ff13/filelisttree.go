@@ -133,7 +133,11 @@ func buildIndexTree(entries []indexEntry) *treeNode {
 //
 // p é a part: o idioma do índice embutido ("u"/"c" no part1/2, "a"/"v" no
 // part3) é uma convenção de cada jogo.
-func listDirNodes(p parts.Part, root *treeNode, dirPath string, zone string) []common.FilelistNode {
+func listDirNodes(p parts.Part, root *treeNode, dirPath string, zone string, rootRefs ...string) []common.FilelistNode {
+	rootRef := ""
+	if len(rootRefs) > 0 {
+		rootRef = rootRefs[0]
+	}
 	dir := findDir(root, dirPath)
 	if dir == nil {
 		return nil
@@ -191,6 +195,49 @@ func listDirNodes(p parts.Part, root *treeNode, dirPath string, zone string) []c
 				node.UnitLang = lang
 				node.Text = true
 				node.Container = containerOfExt(child.Name)
+			}
+			// Face do GUI: .imgb sem tabela externa (DXT1 128x256 implícito).
+			if isResidentFaceImage(dataPath) {
+				if child.Size > 8 {
+					node.Image = true
+					node.ImageRef = encodeImageRef(imageRef{
+						Source:   "filelist",
+						Root:     rootRef,
+						Path:     child.Path,
+						Platform: imagePlatformOf(child.Name),
+					})
+				}
+			} else {
+				// Imagem direta (.dds/.png) ou container de imagem. A tabela
+				// (.xgr/.xfv/.bin/.trb) é expansível; o .imgb é a metade
+				// binária e continua folha comum.
+				ext := strings.ToLower(path.Ext(child.Name))
+				switch ext {
+				case ".dds", ".png":
+					node.Image = true
+					node.ImageRef = encodeImageRef(imageRef{
+						Source:   "filelist",
+						Root:     rootRef,
+						Path:     child.Path,
+						Platform: imagePlatformOf(child.Name),
+					})
+				case ".xgr", ".xfv", ".bin", ".trb", ".wpd", ".wdb", ".xwb", ".xwp", ".grs":
+					node.Image = true
+					node.ImageContainer = true
+					if ext == ".trb" {
+						node.Container = "trb"
+					} else {
+						node.Container = "wpd"
+					}
+					node.Pair = imagePairPath(child.Path)
+					node.ImageRef = encodeImageRef(imageRef{
+						Source:   "filelist",
+						Root:     rootRef,
+						Path:     child.Path,
+						Payload:  imagePairPath(filelistDataPath(zone, child.Path)),
+						Platform: imagePlatformOf(child.Name),
+					})
+				}
 			}
 		}
 		out = append(out, node)
@@ -309,7 +356,7 @@ func zoneNodes(p parts.Part, disc partDiscovery, zone, dir string) []common.File
 		}
 	}
 
-	return listDirNodes(p, buildIndexTree(entries), dir, zone)
+	return listDirNodes(p, buildIndexTree(entries), dir, zone, zoneRootPrefix+zone)
 }
 
 // zoneRootPrefix marca a raiz virtual de uma ZONA no protocolo do frontend:

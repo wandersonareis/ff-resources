@@ -51,8 +51,17 @@ type DataEntry struct {
 	Primary string `json:"primary,omitempty"`
 	// Files mapeia idioma -> arquivo da unidade.
 	Files map[string]string `json:"files,omitempty"`
-	// Container é o tipo do arquivo editável ("ztr" | "wpd").
+	// Container é o tipo do arquivo editável ("ztr" | "wpd") ou o tipo do
+	// container de imagem ("wpd" | "trb").
 	Container string `json:"container,omitempty"`
+	// Image marca a entrada como imagem/container de imagem.
+	Image bool `json:"image,omitempty"`
+	// ImageRef é a referência opaca da imagem/container.
+	ImageRef string `json:"imageRef,omitempty"`
+	// ImageContainer marca um nó expansível de imagem.
+	ImageContainer bool `json:"imageContainer,omitempty"`
+	// Pair é o binário .imgb pareado.
+	Pair string `json:"pair,omitempty"`
 	// Modded marca a unidade que já tem tradução em mods/partN. A árvore
 	// usa isso para escolher a cópia certa quando o mesmo caminho visual
 	// existe no data/ global e no de zona (as duas são idênticas no
@@ -184,6 +193,18 @@ func buildDataCollection(part string) (*dataCollection, error) {
 			Text:  false,
 		})
 	}
+	// Imagens/containers de imagem do inventário. O conjunto inclui os
+	// arquivos das unidades de texto para o pareamento .xgr/.bin + .imgb.
+	all := make(map[string]bool, len(others)+64)
+	for _, rel := range others {
+		all[lowerRel(rel)] = true
+	}
+	for _, u := range units {
+		for _, f := range u.Files {
+			all[lowerRel(f)] = true
+		}
+	}
+	coll.entries = append(coll.entries, imageDataEntries(part, all)...)
 	sort.Slice(coll.entries, func(i, j int) bool { return coll.entries[i].ID < coll.entries[j].ID })
 	return coll, nil
 }
