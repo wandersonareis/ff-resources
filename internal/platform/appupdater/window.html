@@ -29,8 +29,8 @@
   --error:     #dc2626; /* red-600  */
   --warning:   #b45309; /* amber-700 */
 
-  --radius:    10px;
-  --radius-sm: 6px;
+  --radius:    4px;
+  --radius-sm: 4px;
   --pad:       20px;
   --gap:       14px;
 
@@ -86,7 +86,7 @@ body {
   flex: 0 0 auto;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 4px;
   background: var(--accent-dim);
   color: var(--accent);
   display: flex;
@@ -156,7 +156,7 @@ body {
   font-style: italic;
 }
 .u__notes::-webkit-scrollbar { width: 10px; }
-.u__notes::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--surface); border-radius: 5px; }
+.u__notes::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--surface); border-radius: 4px; }
 /* Markdown subset rendered by renderMarkdown() inside notes */
 .u__notes p { margin: 0 0 8px 0; }
 .u__notes p:last-child { margin-bottom: 0; }
@@ -167,12 +167,12 @@ body {
   font-size: 11.5px;
   padding: 1px 5px;
   background: var(--surface-2);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .u__notes pre {
   background: var(--surface-2);
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: 4px;
   overflow-x: auto;
   margin: 6px 0;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -229,12 +229,12 @@ body {
   width: 100%;
   height: 4px;
   border: none;
-  border-radius: 2px;
+  border-radius: 4px;
   background: var(--surface-2);
 }
-.u__bar::-webkit-progress-bar { background: var(--surface-2); border-radius: 2px; }
-.u__bar::-webkit-progress-value { background: var(--accent); border-radius: 2px; transition: width 80ms linear; }
-.u__bar::-moz-progress-bar { background: var(--accent); border-radius: 2px; }
+.u__bar::-webkit-progress-bar { background: var(--surface-2); border-radius: 4px; }
+.u__bar::-webkit-progress-value { background: var(--accent); border-radius: 4px; transition: width 80ms linear; }
+.u__bar::-moz-progress-bar { background: var(--accent); border-radius: 4px; }
 .u__bar:indeterminate {
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--accent-dim) 50%, var(--surface-2) 75%);
   background-size: 200% 100%;

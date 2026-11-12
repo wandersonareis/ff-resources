@@ -128,16 +128,21 @@
   --font-heading: "Malva", ui-sans-serif, system-ui, sans-serif;
   --font-malva-medium: "Malva Medium", "Malva", ui-sans-serif, system-ui, sans-serif;
 
-  /* Raio — DESIGN.md manda 4px nos controles; 0.5rem como base deixa
-     rounded-md≈6px e rounded-lg≈8px, batendo com os mockups. */
-  --radius: 0.5rem;
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Raio único: 4px em TODO o projeto — controles, cartões, menus,
+     diálogos (bate com DESIGN.md). Todos os tokens da escala valem 4px:
+     `rounded` e `rounded-sm` a `rounded-4xl` renderizam 4px, e o
+     `rounded-[min(var(--radius-md),N)]` do Button também. Os nomes dos
+     tokens continuam iguais para não quebrar utilitários/consumidores.
+     FORA do 4px só o que é círculo/pílula de propósito (rounded-full,
+     50%, 9999px): raio de caixa não se aplica a eles. */
+  --radius: 4px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
 }
 
 /* ──────────────────────────────────────────────────────────────────────

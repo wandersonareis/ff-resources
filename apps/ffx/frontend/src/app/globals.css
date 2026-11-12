@@ -145,7 +145,7 @@
     margin-left: 0.2em;
     padding: 0 0.3em;
     border: 1px solid rgb(255 255 255 / 0.45);
-    border-radius: 3px;
+    border-radius: 4px;
     background: #000;
     color: #fff;
     font-size: 0.7em;
@@ -159,7 +159,7 @@
   /* Decoracão do `{query` enquanto o autocomplete está ativo. */
   .tag-suggestion-active {
     background: color-mix(in srgb, var(--primary) 18%, transparent);
-    border-radius: 3px;
+    border-radius: 4px;
     text-decoration: underline dotted;
   }
 
@@ -187,7 +187,7 @@
     background: var(--popover);
     color: var(--popover-foreground);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 4px;
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.18),
       0 2px 6px rgba(0, 0, 0, 0.12);
@@ -207,7 +207,7 @@
     align-items: baseline;
     gap: 0.5rem;
     padding: 0.28rem 0.5rem;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
   }
 

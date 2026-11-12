@@ -8,7 +8,7 @@
     --glass: rgba(255, 255, 255, 0.05);
     --glass-strong: rgba(255, 255, 255, 0.08);
     --glass-border: rgba(255, 255, 255, 0.12);
-    --radius: 11px;
+    --radius: 4px;
     --grad: linear-gradient(135deg, #ff5a4d 0%, #ff2d72 100%);
 
     /* Golden-ratio spacing scale (φ ≈ 1.618), used for the vertical rhythm. */
@@ -229,7 +229,7 @@ input[type="text"] {
     background: var(--grad);
     color: #fff;
     padding: 6px 15px;
-    border-radius: 8px;
+    border-radius: 4px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -259,7 +259,7 @@ input[type="text"] {
     padding: 11px 16px;
     background: rgba(13, 17, 28, 0.72);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: 4px;
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
