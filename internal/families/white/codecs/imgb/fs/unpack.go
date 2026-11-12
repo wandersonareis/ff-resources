@@ -2,7 +2,6 @@
 package imgb
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -233,44 +232,10 @@ func readMipInfoTable(headerBlockFile string, gtex *imgbcore.GTEX) ([]imgbcore.M
 	if err != nil {
 		return nil, err
 	}
-
-	offset := int(gtex.MipInfoTableOffset)
-	if offset < 0 || offset+8 > len(data) {
-		return nil, fmt.Errorf("offset de tabela de mipmaps inválido: 0x%X", gtex.MipInfoTableOffset)
-	}
-
-	var mipTable []imgbcore.MipInfo
-	for i := 0; i < int(gtex.MipCount); i++ {
-		entryOffset := offset + i*8
-		if entryOffset+8 > len(data) {
-			break
-		}
-		mipTable = append(mipTable, imgbcore.MipInfo{
-			Offset: binary.LittleEndian.Uint32(data[entryOffset : entryOffset+4]),
-			Size:   binary.LittleEndian.Uint32(data[entryOffset+4 : entryOffset+8]),
-		})
-	}
-
-	return mipTable, nil
+	return imgbcore.ParseMipInfoTable(data, gtex)
 }
 
 // GetGTEXChunkOffset obtém o offset do chunk GTEX no arquivo (equivalente a SharedMethods.GetGTEXChunkOffset).
 func GetGTEXChunkOffset(path string) (int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return -1, err
-	}
-
-	// Procurar por header GTEX válido
-	for offset := 0; offset+32 <= len(data); offset += 4 {
-		if offset+16 <= len(data) {
-			width := binary.LittleEndian.Uint16(data[offset+6 : offset+8])
-			height := binary.LittleEndian.Uint16(data[offset+8 : offset+10])
-			mipCount := data[offset+3]
-			if width > 0 && width <= 4096 && height > 0 && height <= 4096 && mipCount > 0 && mipCount <= 16 {
-				return offset, nil
-			}
-		}
-	}
-	return -1, fmt.Errorf("GTEX não encontrado em %s", path)
+	return imgbcore.GetGTEXChunkOffset(path)
 }

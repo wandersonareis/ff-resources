@@ -149,12 +149,19 @@ type GTEXFormat byte
 
 // Formatos GTEX relevantes para o processamento de imagem.
 //
-// Conforme DDSHelpers.cs, 3 e 4 são R8G8B8A8 não comprimido. O IMGBBlibrary
-// usa ainda 24/25/26 para DXT1/DXT3/DXT5, mas este port adota 0/1/2 para os
-// formatos DXT (ver GTEXFormatToDDS).
+// O FF13 usa os valores reais do IMGBlibrary/Pulse: 3/4 = X8R8G8B8/A8R8G8B8
+// (não comprimido) e 24/25/26 = DXT1/DXT3/DXT5. Os valores 0/1/2 ficam como
+// aliases legados do primeiro port, aceitos na leitura.
 const (
-	GTEXFormatRGB  GTEXFormat = 3 // R8G8B8A8 (com mipmaps)
-	GTEXFormatRGBA GTEXFormat = 4 // R8G8B8A8
+	GTEXFormatRGB  GTEXFormat = 3  // X8R8G8B8 (com mipmaps)
+	GTEXFormatRGBA GTEXFormat = 4  // A8R8G8B8
+	GTEXFormatDXT1 GTEXFormat = 24 // DXT1
+	GTEXFormatDXT3 GTEXFormat = 25 // DXT3
+	GTEXFormatDXT5 GTEXFormat = 26 // DXT5
+
+	GTEXFormatLegacyDXT1 GTEXFormat = 0
+	GTEXFormatLegacyDXT3 GTEXFormat = 1
+	GTEXFormatLegacyDXT5 GTEXFormat = 2
 )
 
 // GTEX é o header de informação de textura encontrado nos arquivos de bloco de header
@@ -211,27 +218,35 @@ type IMGBEntryVeffs struct {
 	Size   int32 // Signed, -1 = unused
 }
 
-// TRBHeader é o header do formato TRB (SEDBRES).
+// TRBHeader é o header do formato TRB (SEDBRES), conforme o Pulse.FS
+// (SeDbResHeader). O layout é:
+//
+//	magic[8] + unknown1[4] + unknown2[4] + unknownBuff[32] +
+//	count[4] + unknown3[4] + unknown4[4] + unknown5[4] + entries[count]
+//
+// As entradas começam no offset 0x40. O Offset de cada entrada é relativo a
+// DataOffset (count*16 + 0x40).
 type TRBHeader struct {
-	Magic       uint64 // "SEDBRES "
-	Val1        uint32 // 4000
-	Val2        uint32 // 0x400200
-	FileSize    uint32 // Tamanho total do arquivo
-	Reserved1   uint32
-	Reserved2   uint32
-	Reserved3   uint32
-	FirstOffset uint32  // Offset do primeiro dado (geralmente 0x2F = 47)
-	DataOffset  uint32  // Offset dos dados (0x198000)
-	_           uint32  // Padding
-	Name        [8]byte // "brt" + zeros
+	Magic        uint64 // "SEDBRES " (little-endian)
+	Val1         uint32 // 4000 (0xFA0)
+	Val2         uint32 // 0x00400200
+	Reserved     [32]byte
+	Count        uint32
+	Unknown3     uint32
+	Unknown4     uint32
+	Unknown5     uint32
+	Entries      []TRBEntry
+	DataOffset   uint32 // count*16 + 0x40
+	OriginalSize int
 }
 
-// TRBEntry é uma entrada na tabela do TRB (16 bytes).
+// TRBEntry é uma entrada na tabela do TRB (16 bytes): Index, Offset, Length,
+// Unknown. Offset é relativo a TRBHeader.DataOffset.
 type TRBEntry struct {
-	Index    uint32 // Índice sequencial
-	Offset1  uint32 // Offset 1
-	Offset2  uint32 // Offset 2
-	NameHash uint32 // Hash do nome (ou 0x02000000 para entradas genéricas)
+	Index   uint32
+	Offset  uint32
+	Length  uint32
+	Unknown uint32
 }
 
 // IMGBFormat identifica o formato do arquivo IMGB.
@@ -259,71 +274,92 @@ func ReadGTEX(path string) (*GTEX, error) {
 	return g, nil
 }
 
-// GTEXMagic é o magic "GTEX" em little-endian.
+// GTEXMagic é o magic "GTEX" (bytes "G","T","E","X").
 const GTEXMagic = 0x58455447
 
-// ParseGTEX interpreta os bytes de um header GTEX.
+// parseGTEXAt interpreta o GTEX que começa em magicOffset. Os campos
+// multibyte são BIG-ENDIAN, como no IMGBlibrary/Pulse (GtexHeader.
+// ReadFromStream). GTEXOffset aponta para o magic; MipInfoTableOffset é
+// relativo ao magic.
+func parseGTEXAt(data []byte, magicOffset int) (*GTEX, bool) {
+	h := magicOffset + 4
+	if h+16 > len(data) {
+		return nil, false
+	}
+	g := &GTEX{
+		Version:            data[h+0],
+		UnkFlag:            data[h+1],
+		Format:             GTEXFormat(data[h+2]),
+		MipCount:           data[h+3],
+		UnkFlag2:           data[h+4],
+		Type:               GTEXType(data[h+5]),
+		Width:              binary.BigEndian.Uint16(data[h+6 : h+8]),
+		Height:             binary.BigEndian.Uint16(data[h+8 : h+10]),
+		Depth:              binary.BigEndian.Uint16(data[h+10 : h+12]),
+		MipInfoTableOffset: binary.BigEndian.Uint32(data[h+12 : h+16]),
+		GTEXOffset:         uint32(magicOffset),
+	}
+	if !g.IsValidGTEX() {
+		return nil, false
+	}
+	g.IsValid = true
+	return g, true
+}
+
+// ParseGTEX interpreta os bytes de um header GTEX. Procura o magic "GTEX" em
+// qualquer offset (TXBH/VTEX têm headers antes dele) e valida os campos.
 func ParseGTEX(data []byte) (*GTEX, error) {
-	if len(data) < 32 {
-		return nil, fmt.Errorf("dados GTEX muito pequenos: %d bytes (mínimo 32)", len(data))
+	if len(data) < 20 {
+		return nil, fmt.Errorf("dados GTEX muito pequenos: %d bytes (mínimo 20)", len(data))
 	}
 
-	// Primeiro, procurar pelo magic "GTEX" (0x58455447)
+	// Procura pelo magic "GTEX" byte a byte.
 	for offset := 0; offset+4 <= len(data); offset++ {
-		magic := binary.LittleEndian.Uint32(data[offset : offset+4])
-		if magic == GTEXMagic {
-			// Encontrado magic GTEX, o header começa 4 bytes depois
-			headerOffset := offset + 4
-			if headerOffset+16 <= len(data) {
-				g := &GTEX{}
-				g.Version = data[headerOffset+0]
-				g.UnkFlag = data[headerOffset+1]
-				g.Format = GTEXFormat(data[headerOffset+2])
-				g.MipCount = data[headerOffset+3]
-				g.UnkFlag2 = data[headerOffset+4]
-				g.Type = GTEXType(data[headerOffset+5])
-				g.Width = binary.LittleEndian.Uint16(data[headerOffset+6 : headerOffset+8])
-				g.Height = binary.LittleEndian.Uint16(data[headerOffset+8 : headerOffset+10])
-				g.Depth = binary.LittleEndian.Uint16(data[headerOffset+10 : headerOffset+12])
-				g.MipInfoTableOffset = binary.LittleEndian.Uint32(data[headerOffset+12 : headerOffset+16])
-
-				// Validação básica (sem verificar MipInfoTableOffset já que pode estar em outro arquivo)
-				if g.Version > 0 && g.Version <= 10 &&
-					g.MipCount > 0 && g.MipCount <= 16 &&
-					g.Width > 0 && g.Width <= 4096 &&
-					g.Height > 0 && g.Height <= 4096 &&
-					g.Type.IsKnownGTEXType() {
-					g.GTEXOffset = uint32(headerOffset)
-					g.IsValid = true
-					return g, nil
-				}
-			}
+		if data[offset] != 'G' || data[offset+1] != 'T' || data[offset+2] != 'E' || data[offset+3] != 'X' {
+			continue
+		}
+		if g, ok := parseGTEXAt(data, offset); ok {
+			return g, nil
 		}
 	}
 
-	// Fallback: procurar pelo padrão de header GTEX válido (sem magic)
-	for offset := 0; offset+32 <= len(data); offset += 4 {
-		g := &GTEX{}
-		g.Version = data[offset+0]
-		g.UnkFlag = data[offset+1]
-		g.Format = GTEXFormat(data[offset+2])
-		g.MipCount = data[offset+3]
-		g.UnkFlag2 = data[offset+4]
-		g.Type = GTEXType(data[offset+5])
-		g.Width = binary.LittleEndian.Uint16(data[offset+6 : offset+8])
-		g.Height = binary.LittleEndian.Uint16(data[offset+8 : offset+10])
-		g.Depth = binary.LittleEndian.Uint16(data[offset+10 : offset+12])
-		g.MipInfoTableOffset = binary.LittleEndian.Uint32(data[offset+12 : offset+16])
-
-		// Validação básica
+	// Fallback: algum header GTEX sem o magic (raro). Mantém o comportamento
+	// antigo, mas com leitura big-endian.
+	for offset := 0; offset+16 <= len(data); offset += 4 {
+		g := &GTEX{
+			Version:            data[offset+0],
+			UnkFlag:            data[offset+1],
+			Format:             GTEXFormat(data[offset+2]),
+			MipCount:           data[offset+3],
+			UnkFlag2:           data[offset+4],
+			Type:               GTEXType(data[offset+5]),
+			Width:              binary.BigEndian.Uint16(data[offset+6 : offset+8]),
+			Height:             binary.BigEndian.Uint16(data[offset+8 : offset+10]),
+			Depth:              binary.BigEndian.Uint16(data[offset+10 : offset+12]),
+			MipInfoTableOffset: binary.BigEndian.Uint32(data[offset+12 : offset+16]),
+			GTEXOffset:         uint32(offset),
+		}
 		if g.IsValidGTEX() {
-			g.GTEXOffset = uint32(offset)
 			g.IsValid = true
 			return g, nil
 		}
 	}
 
 	return nil, fmt.Errorf("header GTEX válido não encontrado no arquivo")
+}
+
+// MipTableAbs devolve o offset ABSOLUTO da tabela de mips no header block.
+// MipInfoTableOffset é relativo ao magic GTEX (igual ao IMGBlibrary/Pulse).
+func (g *GTEX) MipTableAbs() int {
+	return int(g.GTEXOffset) + int(g.MipInfoTableOffset)
+}
+
+// LayerCount é o número de entradas da tabela de mips: 6 faces para cubemap.
+func (g *GTEX) LayerCount() int {
+	if g.Type.IsCubemap() {
+		return int(g.MipCount) * 6
+	}
+	return int(g.MipCount)
 }
 
 // IsValidGTEX verifica se os valores do GTEX parecem válidos.
@@ -343,7 +379,12 @@ func (g *GTEX) IsValidGTEX() bool {
 	if !g.Type.IsKnownGTEXType() {
 		return false
 	}
-	return true
+	switch g.Format {
+	case GTEXFormatRGB, GTEXFormatRGBA, GTEXFormatDXT1, GTEXFormatDXT3, GTEXFormatDXT5,
+		GTEXFormatLegacyDXT1, GTEXFormatLegacyDXT3, GTEXFormatLegacyDXT5:
+		return true
+	}
+	return false
 }
 
 // ReadTRB lê um arquivo TRB (SEDBRES).
@@ -355,9 +396,12 @@ func ReadTRB(path string) (*TRBHeader, []TRBEntry, error) {
 	return ParseTRB(data)
 }
 
-// ParseTRB interpreta um arquivo TRB.
+// ParseTRB interpreta um arquivo TRB (SEDBRES), conforme o Pulse.FS:
+// SeDbResHeader. A tabela de entradas começa em 0x40 e o Offset de cada
+// entrada é relativo a DataOffset = Count*16 + 0x40.
 func ParseTRB(data []byte) (*TRBHeader, []TRBEntry, error) {
-	if len(data) < 48 {
+	const headerFixed = 0x40
+	if len(data) < headerFixed {
 		return nil, nil, fmt.Errorf("arquivo TRB muito pequeno: %d bytes", len(data))
 	}
 
@@ -367,38 +411,48 @@ func ParseTRB(data []byte) (*TRBHeader, []TRBEntry, error) {
 	}
 
 	h := &TRBHeader{
-		Magic:       magic,
-		Val1:        binary.LittleEndian.Uint32(data[8:12]),
-		Val2:        binary.LittleEndian.Uint32(data[12:16]),
-		FileSize:    binary.LittleEndian.Uint32(data[16:20]),
-		Reserved1:   binary.LittleEndian.Uint32(data[20:24]),
-		Reserved2:   binary.LittleEndian.Uint32(data[24:28]),
-		Reserved3:   binary.LittleEndian.Uint32(data[28:32]),
-		FirstOffset: binary.LittleEndian.Uint32(data[32:36]),
-		DataOffset:  binary.LittleEndian.Uint32(data[36:40]),
+		Magic:        magic,
+		Val1:         binary.LittleEndian.Uint32(data[8:12]),
+		Val2:         binary.LittleEndian.Uint32(data[12:16]),
+		Count:        binary.LittleEndian.Uint32(data[48:52]),
+		Unknown3:     binary.LittleEndian.Uint32(data[52:56]),
+		Unknown4:     binary.LittleEndian.Uint32(data[56:60]),
+		Unknown5:     binary.LittleEndian.Uint32(data[60:64]),
+		DataOffset:   0,
+		OriginalSize: len(data),
 	}
-	copy(h.Name[:], data[40:48])
+	copy(h.Reserved[:], data[16:48])
 
-	// Tabela de entradas começa no offset 0x30 (48)
-	tableStart := 48
-	var entries []TRBEntry
+	count := int(h.Count)
+	if count < 0 || headerFixed+count*16 > len(data) {
+		return nil, nil, fmt.Errorf("TRB: contagem de entradas inválida (%d)", count)
+	}
+	h.DataOffset = uint32(headerFixed + count*16)
 
-	for i := tableStart; i+16 <= len(data); i += 16 {
-		e := TRBEntry{
-			Index:    binary.LittleEndian.Uint32(data[i : i+4]),
-			Offset1:  binary.LittleEndian.Uint32(data[i+4 : i+8]),
-			Offset2:  binary.LittleEndian.Uint32(data[i+8 : i+12]),
-			NameHash: binary.LittleEndian.Uint32(data[i+12 : i+16]),
-		}
-		entries = append(entries, e)
-
-		// Parar se encontrar entrada zerada (fim da tabela)
-		if e.Index == 0 && e.Offset1 == 0 && e.Offset2 == 0 && e.NameHash == 0 {
-			break
+	entries := make([]TRBEntry, count)
+	for i := 0; i < count; i++ {
+		off := headerFixed + i*16
+		entries[i] = TRBEntry{
+			Index:   binary.LittleEndian.Uint32(data[off+0 : off+4]),
+			Offset:  binary.LittleEndian.Uint32(data[off+4 : off+8]),
+			Length:  binary.LittleEndian.Uint32(data[off+8 : off+12]),
+			Unknown: binary.LittleEndian.Uint32(data[off+12 : off+16]),
 		}
 	}
+	h.Entries = entries
 
 	return h, entries, nil
+}
+
+// SectionData devolve os bytes de uma entrada do TRB (já considerando
+// DataOffset). O intervalo é validado contra o arquivo.
+func (h *TRBHeader) SectionData(data []byte, e TRBEntry) ([]byte, error) {
+	start := int(h.DataOffset) + int(e.Offset)
+	end := start + int(e.Length)
+	if start < 0 || end > len(data) || start > end {
+		return nil, fmt.Errorf("TRB: seção fora do arquivo (offset=%d size=%d)", start, e.Length)
+	}
+	return data[start:end], nil
 }
 
 // ReadIMGBVeffs lê um arquivo IMGB no formato veffs (hash table).
@@ -508,15 +562,13 @@ func GetGTEXChunkOffset(path string) (int, error) {
 		return -1, err
 	}
 
-	// Procurar por header GTEX válido
-	for offset := 0; offset+32 <= len(data); offset += 4 {
-		if offset+16 <= len(data) {
-			width := binary.LittleEndian.Uint16(data[offset+6 : offset+8])
-			height := binary.LittleEndian.Uint16(data[offset+8 : offset+10])
-			mipCount := data[offset+3]
-			if width > 0 && width <= 4096 && height > 0 && height <= 4096 && mipCount > 0 && mipCount <= 16 {
-				return offset, nil
-			}
+	// Procurar pelo magic "GTEX" e validar o header big-endian.
+	for offset := 0; offset+20 <= len(data); offset++ {
+		if data[offset] != 'G' || data[offset+1] != 'T' || data[offset+2] != 'E' || data[offset+3] != 'X' {
+			continue
+		}
+		if _, ok := parseGTEXAt(data, offset); ok {
+			return offset, nil
 		}
 	}
 	return -1, fmt.Errorf("GTEX não encontrado em %s", path)
@@ -538,11 +590,45 @@ func (b ByteReaderAt) ReadAt(p []byte, off int64) (int, error) {
 
 // GTEXFormatToDDS mapeia formato GTEX para FourCC DDS.
 var GTEXFormatToDDS = map[GTEXFormat]uint32{
-	0: 0x31545844, // DXT1
-	1: 0x33545844, // DXT3
-	2: 0x35545844, // DXT5
-	3: 0x00000000, // RGB
-	4: 0x00000000, // RGBA
+	GTEXFormatDXT1:       0x31545844, // DXT1
+	GTEXFormatDXT3:       0x33545844, // DXT3
+	GTEXFormatDXT5:       0x35545844, // DXT5
+	GTEXFormatLegacyDXT1: 0x31545844,
+	GTEXFormatLegacyDXT3: 0x33545844,
+	GTEXFormatLegacyDXT5: 0x35545844,
+	GTEXFormatRGB:        0x00000000,
+	GTEXFormatRGBA:       0x00000000,
+}
+
+// IsCompressedFormat diz se o formato é DXT (FourCC).
+func (f GTEXFormat) IsCompressed() bool {
+	switch f {
+	case GTEXFormatDXT1, GTEXFormatDXT3, GTEXFormatDXT5,
+		GTEXFormatLegacyDXT1, GTEXFormatLegacyDXT3, GTEXFormatLegacyDXT5:
+		return true
+	}
+	return false
+}
+
+// ddsPitch devolve o pitch/linear size do mip 0.
+func ddsPitch(g *GTEX) uint32 {
+	w, h := uint32(g.Width), uint32(g.Height)
+	bw := (w + 3) / 4
+	bh := (h + 3) / 4
+	if bw == 0 {
+		bw = 1
+	}
+	if bh == 0 {
+		bh = 1
+	}
+	switch g.Format {
+	case GTEXFormatDXT1, GTEXFormatLegacyDXT1:
+		return bw * bh * 8
+	case GTEXFormatDXT3, GTEXFormatDXT5, GTEXFormatLegacyDXT3, GTEXFormatLegacyDXT5:
+		return bw * bh * 16
+	default:
+		return w * 4
+	}
 }
 
 // DDSHeader representa o header de um arquivo DDS.
@@ -570,58 +656,92 @@ type DDSHeader struct {
 	DwReserved2         uint32
 }
 
-// GetDDSHeader gera um header DDS a partir de um GTEX (equivalente a DDSHelpers.GetDDSHeader).
+// GetDDSHeader gera um header DDS a partir de um GTEX.
 func GetDDSHeader(g *GTEX) ([]byte, error) {
+	return GetDDSHeaderMips(g, int(g.MipCount), 0)
+}
+
+// GetDDSHeaderMips gera o header DDS com uma contagem de mips explícita.
+// layerCount > 0 mantém o flags de cubemap/volume do GTEX; para prévia use 1
+// mip e layerCount 0 (o Pulse faz o mesmo em DxTextureReader).
+func GetDDSHeaderMips(g *GTEX, mipCount, layerCount int) ([]byte, error) {
+	if g == nil || !g.IsValid {
+		return nil, fmt.Errorf("GTEX inválido")
+	}
+	if mipCount <= 0 {
+		mipCount = 1
+	}
+
 	fourCC := GTEXFormatToDDS[g.Format]
-	isCompressed := fourCC != 0
+	compressed := g.Format.IsCompressed()
+
+	const (
+		ddscapsComplex = 0x8
+		ddscapsTexture = 0x1000
+		ddscapsMipmap  = 0x400000
+		ddsdCaps       = 0x1
+		ddsdHeight     = 0x2
+		ddsdWidth      = 0x4
+		ddsdPitch      = 0x8
+		ddsdPixelFmt   = 0x1000
+		ddsdMipCount   = 0x20000
+		ddsdLinearSize = 0x80000
+		ddsdDepth      = 0x800000
+		ddpfAlphaPix   = 0x1
+		ddpfFourCC     = 0x4
+		ddpfRGB        = 0x40
+	)
 
 	h := DDSHeader{
 		DwSize:        124,
-		DwFlags:       0x00021007, // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE
+		DwFlags:       ddsdCaps | ddsdHeight | ddsdWidth | ddsdPixelFmt,
 		DwHeight:      uint32(g.Height),
 		DwWidth:       uint32(g.Width),
-		DwDepth:       0, // preenchido apenas para volume maps
-		DwMipMapCount: uint32(g.MipCount),
-		DwFlags2:      32,
+		DwMipMapCount: uint32(mipCount),
 		DwSize2:       32,
+		DwCaps1:       ddscapsTexture,
 	}
 
-	if isCompressed {
+	if compressed {
+		h.DwFlags |= ddsdLinearSize
+		h.DwPitchOrLinearSize = ddsPitch(g)
+		h.DwFlags2 = ddpfFourCC
 		h.DwFourCC = fourCC
-		h.DwPitchOrLinearSize = ((uint32(g.Width) + 3) / 4) * ((uint32(g.Height) + 3) / 4) * 8
-		if fourCC == 0x31545844 { // DXT1
-			h.DwPitchOrLinearSize /= 2
-		}
-		h.DwCaps1 = 0x00001000 | 0x00400000 // DDSCAPS_TEXTURE | DDSCAPS_MIPMAP
 	} else {
+		h.DwFlags |= ddsdPitch
+		h.DwFlags2 = ddpfRGB
+		if g.Format == GTEXFormatRGBA {
+			h.DwFlags2 |= ddpfAlphaPix
+			h.DwABitMask = 0xFF000000
+		}
 		h.DwRGBBitCount = 32
 		h.DwRBitMask = 0x00FF0000
 		h.DwGBitMask = 0x0000FF00
 		h.DwBBitMask = 0x000000FF
-		h.DwABitMask = 0xFF000000
 		h.DwPitchOrLinearSize = uint32(g.Width) * 4
-		h.DwCaps1 = 0x00001000
 	}
 
-	if g.MipCount > 1 {
-		h.DwFlags |= 0x00020000 // DDSD_MIPMAPCOUNT
-		h.DwCaps1 |= 0x00400000 // DDSCAPS_MIPMAP
+	if mipCount > 1 {
+		h.DwFlags |= ddsdMipCount
+		h.DwCaps1 |= ddscapsMipmap | ddscapsComplex
 	}
 
-	if g.Type.IsCubemap() {
-		h.DwCaps2 = 0x00000200 | 0x00000400 | 0x00000800 | 0x00001000 | 0x00002000 | 0x00004000 | 0x00008000 // All cube faces
-		h.DwCaps1 |= 0x00000008                                                                              // DDSCAPS_COMPLEX
+	if layerCount == 0 && g.Type.IsCubemap() {
+		layerCount = 6
+	}
+	if layerCount > 0 && g.Type.IsCubemap() {
+		h.DwCaps2 = 0x200 | 0x400 | 0x800 | 0x1000 | 0x2000 | 0x4000 | 0x8000
+		h.DwCaps1 |= ddscapsComplex
 	}
 
 	if g.Type.IsVolumemap() {
-		h.DwFlags |= 0x00800000 // DDSD_DEPTH
-		h.DwCaps2 = 0x00200000  // DDSCAPS2_VOLUME
-		h.DwCaps1 |= 0x00000008 // DDSCAPS_COMPLEX
+		h.DwFlags |= ddsdDepth
+		h.DwCaps2 = 0x200000
+		h.DwCaps1 |= ddscapsComplex
 		h.DwDepth = uint32(g.Depth)
 	}
 
-	// Serializar
-	buf := make([]byte, 148)
+	buf := make([]byte, 128)
 	binary.LittleEndian.PutUint32(buf[0:4], 0x20534444) // "DDS "
 	binary.LittleEndian.PutUint32(buf[4:8], h.DwSize)
 	binary.LittleEndian.PutUint32(buf[8:12], h.DwFlags)
@@ -630,7 +750,6 @@ func GetDDSHeader(g *GTEX) ([]byte, error) {
 	binary.LittleEndian.PutUint32(buf[20:24], h.DwPitchOrLinearSize)
 	binary.LittleEndian.PutUint32(buf[24:28], h.DwDepth)
 	binary.LittleEndian.PutUint32(buf[28:32], h.DwMipMapCount)
-	// Reserved1 (44 bytes) already zero
 	binary.LittleEndian.PutUint32(buf[76:80], h.DwSize2)
 	binary.LittleEndian.PutUint32(buf[80:84], h.DwFlags2)
 	binary.LittleEndian.PutUint32(buf[84:88], h.DwFourCC)
@@ -641,37 +760,37 @@ func GetDDSHeader(g *GTEX) ([]byte, error) {
 	binary.LittleEndian.PutUint32(buf[104:108], h.DwABitMask)
 	binary.LittleEndian.PutUint32(buf[108:112], h.DwCaps1)
 	binary.LittleEndian.PutUint32(buf[112:116], h.DwCaps2)
-	binary.LittleEndian.PutUint32(buf[116:120], h.DwCaps3)
-	binary.LittleEndian.PutUint32(buf[120:124], h.DwCaps4)
-	binary.LittleEndian.PutUint32(buf[124:128], h.DwReserved2)
-
 	return buf, nil
 }
 
-// ReadMipInfoTable lê a tabela de informação de mipmaps do arquivo de header.
+// ReadMipInfoTable lê a tabela de mipmaps do header block. Os valores são
+// big-endian e os offsets são relativos ao arquivo de conteúdo (.imgb).
 func ReadMipInfoTable(headerBlockFile string, gtex *GTEX) ([]MipInfo, error) {
 	data, err := os.ReadFile(headerBlockFile)
 	if err != nil {
 		return nil, err
 	}
+	return ParseMipInfoTable(data, gtex)
+}
 
-	offset := int(gtex.MipInfoTableOffset)
+// ParseMipInfoTable lê a tabela de mipmaps de um header block em memória.
+func ParseMipInfoTable(data []byte, gtex *GTEX) ([]MipInfo, error) {
+	offset := gtex.MipTableAbs()
+	n := gtex.LayerCount()
 	if offset < 0 || offset+8 > len(data) {
-		return nil, fmt.Errorf("offset de tabela de mipmaps inválido: 0x%X", gtex.MipInfoTableOffset)
+		return nil, fmt.Errorf("offset de tabela de mipmaps inválido: 0x%X", offset)
 	}
-
-	var mipTable []MipInfo
-	for i := 0; i < int(gtex.MipCount); i++ {
+	mipTable := make([]MipInfo, 0, n)
+	for i := 0; i < n; i++ {
 		entryOffset := offset + i*8
 		if entryOffset+8 > len(data) {
 			break
 		}
 		mipTable = append(mipTable, MipInfo{
-			Offset: binary.LittleEndian.Uint32(data[entryOffset : entryOffset+4]),
-			Size:   binary.LittleEndian.Uint32(data[entryOffset+4 : entryOffset+8]),
+			Offset: binary.BigEndian.Uint32(data[entryOffset : entryOffset+4]),
+			Size:   binary.BigEndian.Uint32(data[entryOffset+4 : entryOffset+8]),
 		})
 	}
-
 	return mipTable, nil
 }
 
