@@ -48,12 +48,15 @@ export function ExtractImageDialog({ view, action }: ActionProps) {
         if (!open && !busy) close();
       }}
     >
-      <DialogContent className="sm:max-w-lg" showCloseButton={!busy}>
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] min-w-0 overflow-y-auto sm:max-w-lg"
+        showCloseButton={!busy}
+      >
         <DialogHeader>
           <DialogTitle>Extrair {action.label}?</DialogTitle>
           <DialogDescription>
-            Gera .dds e .png em mods/images (a cópia de trabalho, sem tocar em data/ nem em
-            mods/*.dds.phyre). Escolha o alcance.
+            Gera .dds e .png em mods/edits/images (a cópia de trabalho, sem tocar em data/).
+            Escolha o alcance.
           </DialogDescription>
         </DialogHeader>
 

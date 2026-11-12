@@ -106,11 +106,12 @@ export function EntryActionsMenu({
   }, [targetId, isImage, initialId, initialDuplicates, fetched, version]);
 
   const canFile = targetId !== null;
+  const readOnly = Boolean(target?.readOnly);
   const canExtract = isImage && canFile;
   const loading = canExtract && duplicates === null;
   const copies = duplicates?.length ?? 0;
-  const canReplicate = canExtract && !loading && copies > 0;
-  const canDelete = isImage && canFile;
+  const canReplicate = canExtract && !loading && copies > 0 && !readOnly;
+  const canDelete = isImage && canFile && !readOnly;
 
   const openAction = (type: 'extract' | 'replicate' | 'delete') => {
     if (!targetId || !target) return;
@@ -193,7 +194,7 @@ export function EntryActionsMenu({
                 <ContextMenuSeparator />
               </>
             ) : null}
-            {isImage && selectedImageCount > 0 ? (
+            {isImage && selectedImageCount > 0 && !readOnly ? (
               <>
                 <ContextMenuItem onSelect={onExtractImageSelection}>
                   <Download size={16} />

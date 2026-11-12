@@ -11,8 +11,11 @@ import {
 } from './filelist-common';
 import {
   filelistEntryOf,
+  filelistImageEntryOf,
   filelistLeafLabel,
   filelistOpaqueLabel,
+  isFilelistImageContainer,
+  isFilelistImageLeaf,
   isFilelistTextLeaf,
 } from './filelist-entry';
 
@@ -141,7 +144,9 @@ export function buildFilelistChildren(
     // No part1 o diretório "zone" dentro de um índice some: o conteúdo da
     // zona vive só no nó "Zone".
     if (part.zoneAsTopLevel && node.isDir && lowerName(node.name) === 'zone') continue;
-    const id = `filelist:${root}|${node.path}`;
+    const id = node.imageContainer && node.imageRef
+      ? `imagecontainer:${node.imageRef}`
+      : `filelist:${root}|${node.path}`;
     if (node.isDir) {
       out.push({
         id,
@@ -155,22 +160,35 @@ export function buildFilelistChildren(
       continue;
     }
     const nested = node.kind === 'index';
-    const entry = nested ? undefined : filelistEntryOf(node, version);
+    const imageContainer = isFilelistImageContainer(node);
+    const imageLeaf = isFilelistImageLeaf(node);
+    const entry =
+      nested || imageContainer
+        ? undefined
+        : isFilelistTextLeaf(node)
+          ? filelistEntryOf(node, version)
+          : imageLeaf
+            ? filelistImageEntryOf(node)
+            : undefined;
     out.push({
       id,
       label: nested
         ? filelistLabel(node)
-        : isFilelistTextLeaf(node)
+        : isFilelistTextLeaf(node) || imageLeaf
           ? filelistLeafLabel(node)
           : filelistOpaqueLabel(node),
-      type: 'file',
+      type: imageContainer ? 'folder' : 'file',
+      kind: imageContainer || imageLeaf ? 'images' : undefined,
       filelist: true,
       filelistRoot: root,
       filelistPath: node.path,
       entry,
-      unsupported: !nested && !entry,
+      unsupported: !nested && !entry && !imageContainer,
       nestedFilelist: nested,
-      expandable: nested,
+      expandable: nested || imageContainer,
+      imageContainer,
+      imageRef: node.imageRef,
+      readOnly: imageContainer || imageLeaf || undefined,
     });
   }
   return out;

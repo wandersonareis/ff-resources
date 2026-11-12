@@ -116,17 +116,14 @@ const DELETE_IRREVERSIBLE =
 
 const DELETE_SCOPE_NOTICES: Record<DeleteScope, string> = {
   data:
-    'Sai da árvore o binário .dds.phyre original em data/. Os derivados ' +
-    '.dds e .png em mods/images/ também são apagados, e a ' +
-    'substituição em mods/ permanece.',
+    'Apaga em data/ a tabela do container (.xgr/.xfv/.bin/.trb) e o ' +
+    '.imgb pareado. A cópia em mods/ permanece.',
   mods:
-    'Sai a substituição .dds.phyre em mods/, junto com os derivados ' +
-    '.dds e .png em mods/images/. O binário original em data/ ' +
-    'permanece e a textura volta ao conteúdo original.',
+    'Apaga em mods/ a tabela do container e o .imgb pareado. O original ' +
+    'em data/ permanece.',
   both:
-    'Sai dos dois lados: o binário .dds.phyre original em data/ E a ' +
-    'substituição .dds.phyre em mods/, além dos derivados .dds e .png ' +
-    'em mods/images/. A textura sai da árvore por completo.',
+    'Apaga dos dois lados a tabela do container e o .imgb pareado. ' +
+    'A textura sai da árvore por completo.',
 };
 
 /** Alerta destrutivo cuja descrição acompanha o escopo escolhido. */

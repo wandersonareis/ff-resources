@@ -33,7 +33,10 @@ export function entryKindsFor(version: GameVersionId): EntryKind[] {
 }
 
 export function imageKindsFor(_version: GameVersionId): EntryKind[] {
-  return [];
+  // As imagens do FF13 moram nas pastas reais de data/partN e são misturadas
+  // com o texto. A raiz "Imagens" é o único agrupamento visual usado para
+  // elas; o filelist tem as suas próprias folhas.
+  return ['images'];
 }
 
 export function allKindsFor(version: GameVersionId): EntryKind[] {

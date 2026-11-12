@@ -65,8 +65,16 @@ export interface EntrySummary {
   primary?: string;
   /** Idioma -> arquivo (FF13: os idiomas da unidade). */
   files?: Record<string, string>;
-  /** Tipo do arquivo editável (FF13: "ztr" | "wpd"). */
+  /** Tipo do arquivo editável (FF13: "ztr" | "wpd") ou container de imagem. */
   container?: string;
+  /** FF13: a entrada é imagem/container de imagem. */
+  image?: boolean;
+  /** FF13: referência opaca da imagem/container. */
+  imageRef?: string;
+  /** FF13: nó expansível de container de imagem. */
+  imageContainer?: boolean;
+  /** FF13: binário .imgb pareado. */
+  pair?: string;
   /**
    * FF13: a unidade já tem tradução em `mods/partN`. A árvore prefere essa
    * cópia quando o mesmo caminho visual aparece no `data/` global e no de
@@ -171,7 +179,7 @@ export interface GameApi {
   ): Promise<any>;
   saveImage(kind: string, id: string, format: string, destPath: string, version: string): Promise<void>;
   saveImageTo(kind: string, id: string, format: string, destRoot: string, version: string): Promise<string>;
-  selectImageExportDir(): Promise<string>;
+  selectImageExportDir(version?: string): Promise<string>;
   selectImageFile(id: string, version: string): Promise<string>;
   selectImageSavePath(
     format: string,

@@ -227,6 +227,7 @@ export function useContentTreeActions({
       const isVbf = row.getAttribute('data-node-vbf') === 'true';
       const id = row.getAttribute('data-node-id') ?? '';
       const label = row.getAttribute('data-node-label') ?? '';
+      const readOnly = row.getAttribute('data-node-readonly') === 'true';
       if (isVbf) {
         const vbfRoot = row.getAttribute('data-node-vbf-root') ?? '';
         const selectedVbfPaths = vbfSelection.pathsOf(vbfRoot);
@@ -245,7 +246,7 @@ export function useContentTreeActions({
         );
         return;
       }
-      setCtxNode(kind ? { id, kind, label } : null);
+      setCtxNode(kind ? { id, kind, label, readOnly } : null);
     },
     [setCtxNode],
   );

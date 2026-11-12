@@ -2,6 +2,7 @@
 // sobre o adaptor local (bindings/ffxresources/textservice), que por sua vez
 // fala com o FF13Service do Go. Imagens/busca/import ainda são stubs.
 import * as text from '@/bindings/ffxresources/textservice';
+import * as image from '@/bindings/ffxresources/imageservice';
 import type { GameApi } from '@ff-resources/ui/api/GameApi';
 
 const emptySummary = { entryCount: 0, changedTexts: 0, warnings: [], errors: [] };
@@ -36,8 +37,31 @@ export const ff13Api: GameApi = {
       primary?: string;
       files?: Record<string, string> | null;
       container?: string;
+      image?: boolean;
+      imageRef?: string;
+      imageContainer?: boolean;
+      pair?: string;
       modded?: boolean;
     }>;
+    if (kind === 'images') {
+      return entries
+        .filter((e) => e.image === true)
+        .map((e) => ({
+          kind: 'images' as const,
+          id: e.imageRef ?? e.id,
+          key: e.imageRef ?? e.id,
+          type: e.type,
+          text: false,
+          title: e.id,
+          label: e.label ?? e.id,
+          image: true,
+          imageRef: e.imageRef,
+          imageContainer: e.imageContainer === true,
+          container: e.container,
+          pair: e.pair,
+          source: 'data' as const,
+        }));
+    }
     return (
       entries
         .filter((e) => e.text === true)
@@ -94,28 +118,43 @@ export const ff13Api: GameApi = {
   selectImportFile: async () => '',
   listLanguages: () => text.ListLanguages() as Promise<any>,
 
-  /* ---- imagens (fase posterior) ---- */
-  getImageEntry: async () => ({ metadata: {}, preview: null }),
-  imageExists: async () => false,
-  imageDuplicates: async () => ({ ids: [] }),
+  /* ---- imagens ---- */
+  getImageEntry: (_kind, id, version) => image.GetImageEntry(version, id) as Promise<any>,
+  imageExists: (_kind, id, version) => image.ImageExists(version, id),
+  imageDuplicates: async () => ({ duplicates: [], dupPayload: 0 }),
   imageSelectionCopies: async () => [],
-  imageExportPath: async () => '',
-  extractImage: async () => [],
-  extractImageGroup: async () => emptyBatchResult,
-  extractImageSelection: async () => emptyBatchResult,
-  importImage: async () => {},
+  imageExportPath: (_kind, id, format, version) =>
+    image.ImageExportPath(version, id, format) as Promise<string>,
+  extractImage: (_kind, id, version) =>
+    image.ExtractImageSelection(version, [id], '') as Promise<any>,
+  extractImageGroup: (_kind, id, targets, version) =>
+    image.ExtractImageSelection(version, [id, ...(targets ?? [])], '') as Promise<any>,
+  extractImageSelection: (_kind, ids, version) =>
+    image.ExtractImageSelection(version, ids, '') as Promise<any>,
+  importImage: async () => {
+    throw new Error('import de imagem será implementado na fase 4');
+  },
   importImageGroup: async () => emptyImageResult,
   importImages: async () => emptyImageResult,
   previewImportImages: async () => ({ entries: [], errors: [] }),
   refreshImageDuplicates: async () => {},
   replicateImage: async () => emptyBatchResult,
-  deleteImages: async () => emptyBatchResult,
-  deleteImageSelection: async () => emptyBatchResult,
-  saveImage: async () => {},
-  saveImageTo: async () => '',
-  selectImageExportDir: async () => '',
-  selectImageFile: async () => '',
-  selectImageSavePath: async () => '',
+  deleteImages: (_kind, id, targets, scope, version) =>
+    image.DeleteImages(version, [id, ...(targets ?? [])], scope) as Promise<any>,
+  deleteImageSelection: (_kind, ids, _withCopies, scope, version) =>
+    image.DeleteImageSelection(version, ids, scope) as Promise<any>,
+  saveImage: (_kind, id, format, destPath, version) =>
+    image.SaveImage(version, id, format, destPath),
+  saveImageTo: async (_kind, id, format, destRoot, version) => {
+    const path = await image.ImageExportPath(version, id, format);
+    const target = destRoot ? path.replace(/mods[\\/]edits[\\/]images/, destRoot) : path;
+    await image.SaveImage(version, id, format, target);
+    return target;
+  },
+  selectImageExportDir: (version) => image.SelectImageExportDir(version ?? 'part1'),
+  selectImageFile: (_id, version) => image.SelectImageFile(version, _id),
+  selectImageSavePath: (format, suggestedName, id, version) =>
+    image.SelectImageSavePath(version, format, suggestedName, id),
 
   /* ---- log ---- */
   writeLog: async () => {},

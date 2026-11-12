@@ -154,6 +154,9 @@ export function ImagePanel({ view }: { view: EntryView }) {
           onToggleFlip={preview.toggleFlip}
           onToggleInfo={toggleImageInfo}
           onRefresh={() => void onRefresh()}
+          showImport={false}
+          showReplicate={false}
+          showRefresh={false}
         />
 
         {/* O grupo preenche a altura DISPONÍVEL da aba — não mede mais pelo

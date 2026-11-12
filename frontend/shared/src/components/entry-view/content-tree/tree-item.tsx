@@ -63,7 +63,7 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
   // `Texto` é só visual (sem kind) e imagens seguem pela marcação de
   // folha/grupo, que alimenta extrair/deletar.
   const isTextRoot = node.id === TEXT_ROOT_NODE_ID || node.id.startsWith('kind:images');
-  const selectable = !isVbfContainerRoot && !isTextRoot && !!node.kind;
+  const selectable = !isVbfContainerRoot && !isTextRoot && !node.readOnly && !!node.kind;
   const vbfRoot = node.vbfRoot ?? node.entry?.vbf?.root;
   const vbfPath = node.vbfPath ?? node.entry?.vbf?.path ?? '';
   const selected = node.kind ? (selectedByKind.get(node.kind) ?? EMPTY_IDS) : EMPTY_IDS;
@@ -94,6 +94,7 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
         data-node-id={node.id}
         data-node-kind={node.kind}
         data-node-label={node.label}
+        data-node-readonly={node.readOnly ? 'true' : undefined}
         data-node-entry={node.entry ? 'true' : undefined}
         data-node-vbf={isVbf ? 'true' : undefined}
         data-node-vbf-file={isVbf && !hasChildren && !isVbfContainerRoot ? 'true' : undefined}

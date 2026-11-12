@@ -25,6 +25,30 @@ export function isFilelistTextLeaf(node: FilelistNode): boolean {
   return Boolean(node.text && node.unitId);
 }
 
+/** A folha é uma imagem direta (.dds/.png) indexada pelo filelist? */
+export function isFilelistImageLeaf(node: FilelistNode): boolean {
+  return Boolean(node.image && node.imageRef && !node.imageContainer);
+}
+
+/** A folha é uma tabela de imagem (.xgr/.xfv/.bin/.trb) expansível? */
+export function isFilelistImageContainer(node: FilelistNode): boolean {
+  return Boolean(node.imageContainer && node.imageRef);
+}
+
+export function filelistImageEntryOf(node: FilelistNode): EntryRow | undefined {
+  if (!isFilelistImageLeaf(node) || !node.imageRef) return undefined;
+  const label = lowerName(node.name);
+  return {
+    kind: 'images',
+    id: node.imageRef,
+    key: node.imageRef,
+    label,
+    image: true,
+    imageRef: node.imageRef,
+    source: 'filelist',
+  };
+}
+
 /**
  * Entry da folha de texto: a UNIDADE de texto (o mesmo id da árvore /data:
  * "txtres/resident/book/txtres"), com o IDIOMA do arquivo clicado.

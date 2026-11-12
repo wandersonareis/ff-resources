@@ -1,6 +1,7 @@
 import * as dto from '@ff-resources/ui/dto';
 import { createStore } from '@tanstack/store';
 import { InvalidateDataCollection } from '@/bindings/ffxresources/textservice';
+import { ListImageContainer } from '@/bindings/ffxresources/imageservice';
 import type * as services from '@/bindings/ffxresources/backend/services/models';
 import { isBlankSourceRow } from '@/lib/ffx/blank-us';
 import {
@@ -10,12 +11,7 @@ import {
   type SideNode,
   TEXT_ROOT_NODE_ID,
 } from '@/lib/ffx/content-tree/model';
-import {
-  type EntryKind,
-  IMAGE_TREE_PREFIX,
-  KIND_LABELS,
-  resolveEntryLabel,
-} from '@/lib/ffx/display-names';
+import { type EntryKind, KIND_LABELS, resolveEntryLabel } from '@/lib/ffx/display-names';
 import { editDraft, rowKey } from '@/lib/ffx/edit-draft';
 import { type EntryProgress, entryProgress } from '@/lib/ffx/entry-progress';
 import { sendErrorNotification, sendErrorNotificationWithMessage } from '@/lib/ffx/error-handler';
@@ -51,6 +47,7 @@ import {
   type VbfNode,
 } from '@/lib/ffx/vbf';
 import { partUi } from '@/lib/parts';
+import { buildUnitTree } from '@/lib/parts/unit-tree';
 
 /** Estado de carga de um item principal da árvore. */
 export type KindLoadStatus = 'loading' | 'ready' | 'error';
@@ -445,55 +442,214 @@ const NO_SELECTION: Partial<EntryViewState> = {
   pendingTableRowFocus: null,
 };
 
+/** Pasta da árvore de imagens do FF13 (pastas reais de data/partN). */
+interface ImageDirNode {
+  path: string;
+  name: string;
+  entries: EntryRow[];
+  children: Map<string, ImageDirNode>;
+}
+
+function newImageDir(path: string): ImageDirNode {
+  return {
+    path,
+    name: path.slice(path.lastIndexOf('/') + 1),
+    entries: [],
+    children: new Map(),
+  };
+}
+
+function imageDisplayPath(entry: EntryRow): string {
+  // O backend manda o caminho relativo a data/partN no `title` (id original
+  // da entrada) e o imageRef no id.
+  return String(entry.title ?? entry.id).replace(/\\/g, '/');
+}
+
 /**
- * Árvore de imagens: categoria (1º segmento após gamedata/ps3data) →
- * diretório da textura (o trecho antes de /d3d11, que é só a variante de
- * renderizador) → folha com o nome do arquivo. Os ids são caminhos longos e
- * repetitivos; agrupar assim deixa a árvore navegável sem perder o caminho.
+ * Árvore de imagens do FF13: as pastas reais de data/partN, misturando
+ * arquivos de imagem e containers (que expandem sob demanda).
  */
 function imageTreeNodes(entries: EntryRow[]): SideNode[] {
-  const byCategory = new Map<string, Map<string, EntryRow[]>>();
+  const root = newImageDir('');
   for (const entry of entries) {
-    const rel = entry.id.startsWith(IMAGE_TREE_PREFIX)
-      ? entry.id.slice(IMAGE_TREE_PREFIX.length)
-      : entry.id;
-    const firstSlash = rel.indexOf('/');
-    const category = firstSlash < 0 ? rel : rel.slice(0, firstSlash);
-    const rest = firstSlash < 0 ? '' : rel.slice(firstSlash + 1);
-    const lastSlash = rest.lastIndexOf('/');
-    const dir = lastSlash < 0 ? '' : rest.slice(0, lastSlash).replace(/(^|\/)d3d11$/, '');
-    const byDir = byCategory.get(category) ?? new Map<string, EntryRow[]>();
-    const list = byDir.get(dir) ?? [];
-    list.push(entry);
-    byDir.set(dir, list);
-    byCategory.set(category, byDir);
+    const rel = imageDisplayPath(entry);
+    const segments = rel.split('/').filter(Boolean);
+    if (segments.length === 0) continue;
+    let dir = root;
+    for (let i = 0; i < segments.length - 1; i++) {
+      const name = segments[i];
+      let child = dir.children.get(name);
+      if (!child) {
+        child = newImageDir(dir.path ? `${dir.path}/${name}` : name);
+        dir.children.set(name, child);
+      }
+      dir = child;
+    }
+    dir.entries.push(entry);
   }
 
-  const nodes: SideNode[] = [];
-  for (const [category, byDir] of [...byCategory.entries()].sort(([a], [b]) =>
-    a.localeCompare(b),
-  )) {
-    const count = [...byDir.values()].reduce((n, list) => n + list.length, 0);
-    nodes.push({
-      id: `group:images:${category}`,
-      label: `${category} (${count})`,
-      kind: 'images',
-      children: [...byDir.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([dir, list]) => ({
-          id: `group:images:${category}/${dir}`,
-          label: dir ? `${dir} (${list.length})` : `raiz (${list.length})`,
-          kind: 'images' as EntryKind,
-          children: list.map((entry) => ({
-            id: `leaf:images:${entry.id}`,
+  const render = (dir: ImageDirNode): SideNode[] => {
+    const nodes: SideNode[] = dir.entries
+      .map((entry) => {
+        if (entry.imageContainer) {
+          return {
+            id: `imagecontainer:${entry.id}`,
             label: entry.label,
-            kind: entry.kind,
-            entry,
-          })),
-        })),
-    });
+            type: 'folder',
+            imageContainer: true,
+            imageRef: entry.imageRef ?? entry.id,
+            expandable: true,
+          } satisfies SideNode;
+        }
+        return {
+          id: `leaf:images:${entry.id}`,
+          label: entry.label,
+          kind: 'images' as EntryKind,
+          type: 'image',
+          entry,
+        } satisfies SideNode;
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+    for (const child of dir.children.values()) {
+      const collapsed = collapseImageDir(child);
+      nodes.push({
+        id: `imgdir:${collapsed.path}`,
+        label: collapsed.name,
+        type: 'folder',
+        children: render(collapsed),
+      });
+    }
+    return nodes.sort((a, b) => a.label.localeCompare(b.label));
+  };
+
+  return render(root);
+}
+
+function collapseImageDir(dir: ImageDirNode): ImageDirNode {
+  let current = dir;
+  while (current.entries.length === 0 && current.children.size === 1) {
+    current = current.children.values().next().value as ImageDirNode;
   }
-  return nodes;
+  return current;
+}
+
+/**
+ * Árvore única do grupo Data (FF13): pastas reais de data/partN com texto e
+ * imagem misturados. As unidades de texto mantêm o id de unidade; as imagens
+ * usam o `title` (caminho em data/) porque o id delas é a ref opaca.
+ */
+function buildDataRoot(
+  entries: EntryRow[],
+  id: string,
+  label: string,
+  kind?: EntryKind,
+): SideNode | null {
+  if (entries.length === 0) return null;
+  const root = newImageDir('');
+  for (const entry of entries) {
+    const rel = entry.kind === 'images' ? imageDisplayPath(entry) : entry.id;
+    const segments = rel.split('/').filter(Boolean);
+    if (segments.length === 0) continue;
+    let dir = root;
+    for (let i = 0; i < segments.length - 1; i++) {
+      const name = segments[i];
+      let child = dir.children.get(name);
+      if (!child) {
+        child = newImageDir(dir.path ? `${dir.path}/${name}` : name);
+        dir.children.set(name, child);
+      }
+      dir = child;
+    }
+    dir.entries.push(entry);
+  }
+
+  const render = (dir: ImageDirNode): SideNode[] => {
+    const nodes: SideNode[] = dir.entries.map((entry) => {
+      if (entry.kind === 'images' && entry.imageContainer) {
+        return {
+          id: `imagecontainer:${entry.id}`,
+          label: entry.label,
+          kind: 'images',
+          type: 'folder',
+          imageContainer: true,
+          imageRef: entry.imageRef ?? entry.id,
+          expandable: true,
+        } satisfies SideNode;
+      }
+      if (entry.kind === 'images') {
+        return {
+          id: `leaf:images:${entry.id}`,
+          label: entry.label,
+          kind: 'images',
+          type: 'image',
+          entry,
+        } satisfies SideNode;
+      }
+      return {
+        id: `leaf:${entry.kind}:${entry.id}`,
+        label: entry.label,
+        kind: entry.kind,
+        type: entry.type ?? 'text',
+        entry,
+      } satisfies SideNode;
+    });
+    for (const child of dir.children.values()) {
+      const collapsed = collapseImageDir(child);
+      nodes.push({
+        id: `datadir:${id}:${collapsed.path}`,
+        label: collapsed.name,
+        type: 'folder',
+        children: render(collapsed),
+      });
+    }
+    return nodes.sort((a, b) => a.label.localeCompare(b.label));
+  };
+
+  return {
+    id,
+    label,
+    kind,
+    children: render(root),
+  };
+}
+
+/**
+ * Raiz de TEXTO: mantém o agrupamento por família (Residentes, Eventos…) e a
+ * projeção do `buildUnitTree`, que remove o prefixo estrutural
+ * (`txtres/<kind>`) e as cópias de zona. É o comportamento anterior — o
+ * diretório `txtres` não aparece como pasta.
+ */
+function buildTextRoot(entries: EntryRow[]): SideNode | null {
+  if (entries.length === 0) return null;
+  const byKind = new Map<EntryKind, EntryRow[]>();
+  for (const entry of entries) {
+    const list = byKind.get(entry.kind) ?? [];
+    list.push(entry);
+    byKind.set(entry.kind, list);
+  }
+  const children: SideNode[] = [...byKind.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, list]) => ({
+      id: `kind:${kind}`,
+      label: `${KIND_LABELS[kind]} (${list.length})`,
+      kind,
+      children: buildUnitTree(list),
+    }));
+  return {
+    id: TEXT_ROOT_NODE_ID,
+    label: `Texto (${entries.length})`,
+    children,
+  };
+}
+
+/** Separação VIRTUAL do /data: Texto e Imagens têm árvores próprias. */
+function buildDataRoots(entries: EntryRow[]): SideNode[] {
+  const text = entries.filter((entry) => entry.kind !== 'images');
+  const images = entries.filter((entry) => entry.kind === 'images');
+  return [
+    buildTextRoot(text),
+    buildDataRoot(images, 'kind:images', `Imagens (${images.length})`, 'images'),
+  ].filter((node): node is SideNode => Boolean(node));
 }
 
 /**
@@ -673,70 +829,44 @@ export function createEntryView(version: GameVersionId): EntryView {
    */
   const loadAllKinds = async (gen: number): Promise<void> => {
     const kinds = allKindsFor(version);
-    await Promise.allSettled(
-      kinds.map(async (kind) => {
-        try {
-          const entries = await loadKindEntries(kind, version);
-          if (gen !== generationCounter.current) return;
-          store.setState((prev) => {
-            const byKind = new Map(
-              prev.roots.flatMap((r) => (r.kind ? [[r.kind, r] as const] : [])),
-            );
-            // Kind sem nada (ex.: images numa versão sem texturas) não vira
-            // raiz vazia "Imagens (0)" — a árvore só mostra o que existe.
-            if (entries.length === 0) byKind.delete(kind);
-            else byKind.set(kind, buildKindNode(kind, entries));
-            const roots = kinds.map((k) => byKind.get(k)).filter((n): n is SideNode => Boolean(n));
-            // A árvore nasce FECHADA, inclusive a de data/: nada é expandido
-            // automaticamente. O expanded que já está aqui guarda só o que
-            // o USUÁRIO abriu, e sobrevive ao reload (união) — quem quer ver
-            // os filhos expande o nó.
-            return {
-              ...prev,
-              roots,
-              kindStatus: { ...prev.kindStatus, [kind]: 'ready' as const },
-            };
-          });
-          // Revalida a seleção quando o KIND dela completa (não no fim de
-          // tudo): entrada removida por import limpa a tabela. Seleção que
-          // veio do .vbf fica de fora — a árvore de data/ não tem como
-          // revalidá-la (o arquivo pode nem estar extraído ali); se o
-          // container sumir, a própria carga da entrada avisa.
-          const current = store.state.selectedEntry;
-          if (current && !current.vbf && current.kind === kind) {
-            const found = entries.find((e) => e.id === current.id);
-            if (found) {
-              // O `lang` é preservado: a folha do filelist e a folha da
-              // árvore /data têm o MESMO id (a unidade) — sem o idioma, a
-              // revalidação trocaria o japonês pelo inglês.
-              await selectEntry({ ...found, lang: current.lang });
-            } else if (
-              kind === 'images' &&
-              entries.length > 0 &&
-              (await imageExists(current.id, version))
-            ) {
-              // Cópia oculta do grupo: a árvore só guarda o representante,
-              // mas o id continua servível (a lista "Repetidas" navega até
-              // ele) — quem decide se ainda existe é a carga, não a lista.
-              await selectEntry(current);
-            } else {
-              // Não existe mais (ex.: imagem + cópias apagadas com escopo
-              // both): limpa em SILÊNCIO — o Resolve erroaria "não
-              // encontrada em data/ nem em mods/" para o id que o delete
-              // acabou de remover com sucesso.
-              patch({ ...NO_SELECTION });
-            }
-          }
-        } catch (error) {
-          if (gen !== generationCounter.current) return;
-          store.setState((prev) => ({
-            ...prev,
-            kindStatus: { ...prev.kindStatus, [kind]: 'error' as const },
-          }));
-          sendErrorNotification(error);
-        }
-      }),
+    const results = await Promise.allSettled(
+      kinds.map(async (kind) => ({ kind, entries: await loadKindEntries(kind, version) })),
     );
+    if (gen !== generationCounter.current) return;
+
+    const status = { ...store.state.kindStatus };
+    const all: EntryRow[] = [];
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const kind = kinds[i];
+      if (result.status === 'fulfilled') {
+        status[kind] = 'ready';
+        all.push(...result.value.entries);
+      } else {
+        status[kind] = 'error';
+        sendErrorNotification(result.reason);
+      }
+    }
+    const roots = buildDataRoots(all);
+    store.setState((prev) => ({
+      ...prev,
+      roots,
+      kindStatus: status,
+    }));
+
+    // Revalida a seleção no fim da carga: entrada removida por import/delete
+    // limpa a tabela; imagem ainda servível continua aberta.
+    const current = store.state.selectedEntry;
+    if (current && !current.vbf) {
+      const found = all.find((e) => e.kind === current.kind && e.id === current.id);
+      if (found) {
+        await selectEntry({ ...found, lang: current.lang });
+      } else if (current.kind === 'images' && (await imageExists(current.id, version))) {
+        await selectEntry(current);
+      } else {
+        patch({ ...NO_SELECTION });
+      }
+    }
   };
 
   /**
@@ -844,6 +974,72 @@ export function createEntryView(version: GameVersionId): EntryView {
     }
   };
 
+  /** Expansão preguiçosa de um container de imagem (WPD/TRB). */
+  const loadingImages = new Set<string>();
+  const loadImageChildren = async (node: SideNode): Promise<void> => {
+    const ref = node.imageRef ?? node.entry?.imageRef;
+    if (!ref || loadingImages.has(node.id)) return;
+    loadingImages.add(node.id);
+    patchNode(node.id, { loading: true });
+    try {
+      const list = (await ListImageContainer(version, ref)) as Array<{
+        id: string;
+        name: string;
+        path: string;
+        size?: number;
+        kind: string;
+        imageRef?: string;
+        container?: string;
+        expandable?: boolean;
+        pair?: string;
+      }>;
+      const children: SideNode[] = list.map((child) => {
+        if (child.kind === 'image') {
+          const imageRef = child.imageRef ?? child.id;
+          return {
+            id: `leaf:images:${imageRef}`,
+            label: child.name,
+            kind: 'images',
+            type: 'image',
+            readOnly: node.filelist === true,
+            entry: {
+              kind: 'images',
+              id: imageRef,
+              key: imageRef,
+              label: child.name,
+              image: true,
+              imageRef,
+              pair: child.pair,
+              source: node.filelist ? 'filelist' : 'data',
+            },
+          };
+        }
+        return {
+          id: `imagefile:${node.id}:${child.path}`,
+          label: child.name,
+          type: 'file',
+          unsupported: true,
+        };
+      });
+      patchNode(node.id, {
+        children,
+        loading: false,
+        expandable: children.length > 0,
+      });
+      if (children.length > 0) {
+        store.setState((prev) => ({
+          ...prev,
+          expanded: new Set(prev.expanded).add(node.id),
+        }));
+      }
+    } catch (error) {
+      patchNode(node.id, { loading: false, expandable: false });
+      sendErrorNotification(error);
+    } finally {
+      loadingImages.delete(node.id);
+    }
+  };
+
   /** Carga da aba: marca todos os principais como loading e carrega. */
   const reload = async (): Promise<void> => {
     const gen = ++generationCounter.current;
@@ -879,7 +1075,10 @@ export function createEntryView(version: GameVersionId): EntryView {
     // termo fica) — o modal stale re-executa a consulta sozinho ao reabrir.
     invalidateTextSearchResults(version);
     patch({
-      roots: kinds.map((kind) => loadingRootNode(kind)),
+      roots: [
+        { id: TEXT_ROOT_NODE_ID, label: 'Texto', loading: true },
+        { id: 'kind:images', label: 'Imagens', loading: true },
+      ],
       vbfRoots: [],
       vbfStatus: 'loading' as const,
       filelistRoots: [],
@@ -910,6 +1109,10 @@ export function createEntryView(version: GameVersionId): EntryView {
    * o container nunca é indexado de uma vez.
    */
   const toggleNode = (node: SideNode): void => {
+    if (node.imageContainer && node.expandable && !node.children) {
+      void loadImageChildren(node);
+      return;
+    }
     if (node.filelist && node.expandable && !node.children) {
       void loadFilelistChildren(node);
       return;
@@ -1029,18 +1232,20 @@ export function createEntryView(version: GameVersionId): EntryView {
     coldReload,
     selectEntry,
     selectNode: async (node) => {
+      if (node.imageContainer && !node.entry) {
+        toggleNode(node);
+        return;
+      }
       if (node.filelist) {
-        // Filelist: diretório expande; índice embutido (kind "index")
-        // expande também (ele aponta para OUTRO white bin). Arquivo de
-        // TEXTO (.ztr solto ou .bin container WPD) abre a unidade — o mesmo
-        // id da árvore /data, com o pristine, a tradução e as referências.
-        // Os demais formatos (imgb, xgr, clb…) avisam como o .vbf faz.
-        if (!node.unsupported && (node.expandable || node.children?.length)) {
-          toggleNode(node);
-          return;
-        }
+        // Filelist: folha de texto/imagem abre; diretório/índice embutido
+        // expande. O `entry` tem prioridade porque um .bin de texto também
+        // pode ser um container expansível (o chevron continua expandindo).
         if (node.entry) {
           await selectEntry(node.entry);
+          return;
+        }
+        if (!node.unsupported && (node.expandable || node.children?.length)) {
+          toggleNode(node);
           return;
         }
         sendErrorNotificationWithMessage(`Formato fora do escopo do app: ${node.label}`);

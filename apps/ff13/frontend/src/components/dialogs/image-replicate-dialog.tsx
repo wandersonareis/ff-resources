@@ -72,7 +72,7 @@ export function ReplicateImageDialog({ view, action }: ActionProps) {
         if (!open && !busy) close();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100vh-2rem)] min-w-0 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             Replicar {action.label}
@@ -142,3 +142,4 @@ export function ReplicateImageDialog({ view, action }: ActionProps) {
     </Dialog>
   );
 }
+

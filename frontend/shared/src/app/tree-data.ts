@@ -15,6 +15,8 @@ export interface EntryRow {
   label: string;
   /** Categoria de conteúdo vinda do backend (system, mission, event, ...). */
   type?: string;
+  /** Caminho original/rótulo auxiliar do backend (FF13: caminho em data/). */
+  title?: string;
   /**
    * false = arquivo que o app NÃO decodifica (imagem, script, índice…): a
    * árvore mostra a folha como "fora do escopo" e ela não é selecionável.
@@ -39,8 +41,15 @@ export interface EntryRow {
   primary?: string;
   /** Idioma -> arquivo (FF13: os idiomas da unidade). */
   files?: Record<string, string>;
-  /** Tipo do arquivo editável (FF13: "ztr" | "wpd"). */
+  /** Tipo do arquivo editável (FF13: "ztr" | "wpd") ou container de imagem. */
   container?: string;
+  /** FF13: imagem/container de imagem. */
+  image?: boolean;
+  imageRef?: string;
+  imageContainer?: boolean;
+  pair?: string;
+  /** Origem da folha (FF13): data/ editável ou filelist somente leitura. */
+  source?: 'data' | 'filelist';
   /**
    * FF13: a unidade já tem tradução em `mods/partN`. A árvore usa para
    * preferir a cópia traduzida quando o mesmo caminho visual aparece no
@@ -113,6 +122,7 @@ export async function loadKindEntries(
       id: s.id,
       key: s.key,
       type: s.type,
+      title: s.title,
       text: s.text,
       // O backend pode mandar o rótulo (FF13: a unidade de texto, sem o
       // sufixo de idioma). Sem ele, a árvore resolve pelo id (FFX).
@@ -121,6 +131,10 @@ export async function loadKindEntries(
       primary: s.primary,
       files: s.files,
       container: s.container,
+      image: s.image,
+      imageRef: s.imageRef,
+      imageContainer: s.imageContainer,
+      pair: s.pair,
       modded: s.modded,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -370,8 +384,8 @@ export function saveImageTo(
 }
 
 /** Seletor nativo de pasta do "Exportar para…" (default mods/images). "" = cancelou. */
-export function selectImageExportDir(): Promise<string> {
-  return api().selectImageExportDir();
+export function selectImageExportDir(version?: GameVersionId): Promise<string> {
+  return api().selectImageExportDir(version);
 }
 
 /** Exporta a entrada em JSON + .strings (mods/edits). */

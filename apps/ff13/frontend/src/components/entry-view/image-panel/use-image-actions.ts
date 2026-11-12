@@ -76,7 +76,7 @@ export function useImageActions({
    * extrair usa o caminho interno e importar/salvar grava fora dele. Delete e
    * replicate de grupos continuam restritos à árvore data/.
    */
-  const readOnly = Boolean(entry?.vbf);
+  const readOnly = Boolean(entry?.vbf) || entry?.source === 'filelist';
 
   const refuseVbf = (): boolean => {
     if (!readOnly) return false;
@@ -173,7 +173,9 @@ export function useImageActions({
     if (!entry) return;
     setBusy('extractTo');
     try {
-      const destRoot = entry.vbf ? await selectVbfImageExtractDir() : await selectImageExportDir();
+      const destRoot = entry.vbf
+        ? await selectVbfImageExtractDir()
+        : await selectImageExportDir(version);
       if (!destRoot) return; // usuário cancelou
       const fmtLabel = format === 'dds+png' ? '.dds e .png' : `.${format}`;
       if (entry.vbf) {

@@ -61,6 +61,16 @@ export interface SideNode {
   filelistZone?: string;
   /** Tooltip da linha (metadado do nó: plataforma, pasta de origem…). */
   hint?: string;
+
+  // ---- FF13: containers de imagem/data ----
+  /** Referência opaca da imagem/container (backend). */
+  imageRef?: string;
+  /** Nó expansível de container de imagem. */
+  imageContainer?: boolean;
+  /** Nó de imagem (ícone e painel). */
+  image?: boolean;
+  /** Folha de filelist: somente leitura (sem delete). */
+  readOnly?: boolean;
 }
 
 /** IDs das folhas de entrada contidas no nó; grupos de imagens são aninhados. */

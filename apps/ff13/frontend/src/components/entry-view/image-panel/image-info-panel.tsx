@@ -8,7 +8,7 @@ import { formatBytes } from '@/lib/ffx/bytes';
 import {
   copyState,
   IMAGE_SOURCE_LABELS,
-  imageLanguage,
+  imageFileLanguage,
   LANGUAGE_LABELS,
   resolveEntryLabel,
 } from '@/lib/ffx/display-names';
@@ -76,10 +76,9 @@ export function ImageInfoPanel({
           </span>,
         ];
 
-  // Linha "Idioma" (cosmético): o código da pasta em que a textura está,
-  // lido do caminho interno embutido no container (assetPath) com fallback
-  // para o id da árvore. Sem idioma no caminho, a linha NÃO existe.
-  const lang = imageLanguage(image.assetPath, image.metadata.id);
+  // Linha "Idioma" (cosmético): só quando o NOME DO ARQUIVO tem _XX. Sem
+  // sufixo de idioma no arquivo, a linha NÃO existe.
+  const lang = imageFileLanguage(image.assetPath, image.metadata.id);
   const langRows: Array<[label: string, value: ReactNode]> = lang
     ? [
         [

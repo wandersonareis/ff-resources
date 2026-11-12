@@ -85,7 +85,16 @@ export function DeleteImageSelectionDialog({ view, action }: ActionProps) {
         if (!open && !busy) close();
       }}
     >
-      <DialogContent className="sm:max-w-lg" showCloseButton={!busy}>
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] min-w-0 overflow-y-auto sm:max-w-lg"
+        showCloseButton={!busy}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !busy && duplicatesReady && ids.length > 0) {
+            event.preventDefault();
+            void run();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             Deletar {ids.length} {ids.length === 1 ? 'imagem selecionada' : 'imagens selecionadas'}?
@@ -166,3 +175,4 @@ export function DeleteImageSelectionDialog({ view, action }: ActionProps) {
     </Dialog>
   );
 }
+

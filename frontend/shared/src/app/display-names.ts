@@ -119,19 +119,38 @@ export const IMAGE_TREE_PREFIX = 'gamedata/ps3data/';
  * `event/es`, `help_es`, `btl_ch`, `map_2d_ui_us`… `inter` (internacional)
  * não é idioma e fica de fora por não estar na lista.
  */
-const IMAGE_LANG_CODES = new Set(['ch', 'cn', 'de', 'es', 'fr', 'it', 'jp', 'kr', 'sp', 'us']);
+const IMAGE_LANG_CODES = new Set([
+  'ch',
+  'cn',
+  'ck',
+  'de',
+  'es',
+  'fr',
+  'gr',
+  'it',
+  'jp',
+  'kr',
+  'ru',
+  'sp',
+  'uk',
+  'us',
+]);
 
 /** Código de idioma → nome de exibição (PT-BR). */
 export const LANGUAGE_LABELS: Record<string, string> = {
   ch: 'Chinês',
   cn: 'Chinês',
+  ck: 'Tcheco',
   de: 'Alemão',
   es: 'Espanhol',
   fr: 'Francês',
+  gr: 'Alemão',
   it: 'Italiano',
   jp: 'Japonês',
   kr: 'Coreano',
+  ru: 'Russo',
   sp: 'Espanhol',
+  uk: 'Ucraniano',
   us: 'Inglês',
 };
 
@@ -160,6 +179,27 @@ export function imageLanguage(assetPath?: string | null, id?: string | null): st
     if (!source) continue;
     const found = languageOfPath(source);
     if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Idioma do ARQUIVO da imagem (FF13): só existe quando o nome tem um sufixo
+ * `_XX` de idioma (`system_us.win32.xgr`, `veffs_jp.win32.xfv`,
+ * `b00_us.white.win32.bin`). Sem `_XX`, devolve null — a linha "Idioma" não
+ * aparece, mesmo que a pasta tenha um código.
+ */
+export function imageFileLanguage(
+  assetPath?: string | null,
+  id?: string | null,
+): string | null {
+  const codes = [...IMAGE_LANG_CODES];
+  const suffix = new RegExp(`_(${codes.join('|')})(?:\\.|$)`, 'i');
+  for (const source of [assetPath, id]) {
+    if (!source) continue;
+    const base = source.split(/[\\/]/).pop() ?? '';
+    const m = suffix.exec(base);
+    if (m) return m[1].toLowerCase();
   }
   return null;
 }

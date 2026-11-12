@@ -1,7 +1,8 @@
 'use client';
 
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ImageDeletePlans } from '@/bindings/ffxresources/imageservice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,6 +42,28 @@ export function DeleteImageDialog({ view, action }: ActionProps) {
   const targets = withCopies ? copies.map((d) => d.id) : [];
   const divergent = copies.filter((d) => !d.identical).length;
   const close = () => actions.closeImageAction();
+  const [plans, setPlans] = useState<
+    Array<{ warning?: string; files?: Array<{ path: string; scope: string }> | null }>
+  >([]);
+
+  useEffect(() => {
+    let dead = false;
+    void ImageDeletePlans(version, [action.id])
+      .then((res) => {
+        if (!dead) setPlans((res ?? []) as typeof plans);
+      })
+      .catch(() => {
+        if (!dead) setPlans([]);
+      });
+    return () => {
+      dead = true;
+    };
+  }, [action.id, version]);
+
+  const deleteFiles = plans
+    .flatMap((p) => p.files ?? [])
+    .filter((file) => scope === 'both' || file.scope === scope);
+  const deleteWarning = plans.find((p) => p.warning)?.warning;
 
   const run = async () => {
     setBusy(true);
@@ -63,7 +86,15 @@ export function DeleteImageDialog({ view, action }: ActionProps) {
         if (!open && !busy) close();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] min-w-0 overflow-y-auto sm:max-w-lg"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !busy && list !== null) {
+            event.preventDefault();
+            void run();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Deletar {action.label}?</DialogTitle>
           <DialogDescription>
@@ -79,6 +110,28 @@ export function DeleteImageDialog({ view, action }: ActionProps) {
           legend="Escopo"
           name="image-delete-scope"
         />
+
+        {deleteWarning ? (
+          <Alert variant="warning">
+            <AlertTriangle />
+            <AlertTitle>Container inteiro</AlertTitle>
+            <AlertDescription>{deleteWarning}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {deleteFiles.length > 0 ? (
+          <div className="max-h-32 overflow-y-auto rounded border p-2 text-xs">
+            <p className="mb-1 font-medium">Arquivos que serão apagados:</p>
+            <ul className="space-y-0.5">
+              {deleteFiles.map((file) => (
+                <li key={`${file.scope}:${file.path}`} className="break-all opacity-80">
+                  <span className="mr-1 uppercase opacity-60">{file.scope}</span>
+                  {file.path}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {copies.length > 0 ? (
           <>
@@ -126,3 +179,4 @@ export function DeleteImageDialog({ view, action }: ActionProps) {
     </Dialog>
   );
 }
+

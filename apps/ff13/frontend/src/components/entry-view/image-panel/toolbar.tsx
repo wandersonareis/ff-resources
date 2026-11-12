@@ -30,11 +30,17 @@ export function ImageToolbar({
   onToggleFlip,
   onToggleInfo,
   onRefresh,
+  showImport = true,
+  showReplicate = true,
+  showRefresh = true,
 }: {
   busy: ImageBusy;
   readOnly: boolean;
   flipped: boolean;
   duplicateCount: number;
+  showImport?: boolean;
+  showReplicate?: boolean;
+  showRefresh?: boolean;
   /** Coluna de informações oculta (estado de sessão, vem do imageInfoStore). */
   infoHidden: boolean;
   /** Exporta no formato selecionado para mods/images (sem diálogo). */
@@ -57,14 +63,16 @@ export function ImageToolbar({
       <div className="flex flex-wrap items-center gap-1">
         <ImageExportFormatMenu />
         <ImageExportMenu disabled={busy !== null} onExport={onExport} onExtractTo={onExtractTo} />
-        <ImageImportMenu
-          disabled={busy !== null}
-          duplicateCount={duplicateCount}
-          onImportFile={onImport}
-          onImportTranslated={onImportTranslated}
-          busy={busy}
-        />
-        {duplicateCount > 0 ? (
+        {showImport ? (
+          <ImageImportMenu
+            disabled={busy !== null}
+            duplicateCount={duplicateCount}
+            onImportFile={onImport}
+            onImportTranslated={onImportTranslated}
+            busy={busy}
+          />
+        ) : null}
+        {showReplicate && duplicateCount > 0 ? (
           <Button
             size="sm"
             variant="outline"
@@ -93,7 +101,7 @@ export function ImageToolbar({
         </Button>
       </div>
       <div className="flex flex-wrap items-center gap-1">
-        {!readOnly ? (
+        {showRefresh && !readOnly ? (
           <Button
             size="sm"
             variant="ghost"
