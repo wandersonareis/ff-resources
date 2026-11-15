@@ -44,6 +44,14 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // O jsdom é criado por ARQUIVO (isolamento total entre testes) e o aviso
+    // de performance "Environment: jsdom was created N times" é esperado: as
+    // alternativas sugeridas (pool vmThreads / isolate false) quebram o setup
+    // que instala `window.chrome` e outros globais por teste. O diagnóstico é
+    // só um hint, então desligamos apenas ele.
+    experimental: {
+      diagnostics: { environment: false },
+    },
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     alias: {
