@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ffresources/internal/shared/appconfig"
+	"ffresources/internal/families/white/profile/appconfig"
 )
 
 // TestLoadCreatesPlaceholder garante que o arquivo de config é criado com

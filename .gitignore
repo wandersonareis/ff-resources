@@ -53,3 +53,6 @@ testdata/ffx/**/*.dcp
 
 # Bindings gerados pelo wails3 (regenerados em `wails3 build`)
 apps/*/frontend/bindings-ff13/
+
+# Config local do FF13: criado com placeholders pelo app/testes, nunca versionado.
+ff13.config.json

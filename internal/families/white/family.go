@@ -9,8 +9,8 @@ package white
 import (
 	"sort"
 
+	"ffresources/internal/families/white/family"
 	"ffresources/internal/families/white/titles/ff13"
-	"ffresources/internal/shared/family"
 )
 
 type Family struct{}

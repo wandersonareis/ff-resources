@@ -4,8 +4,8 @@
 package ff13
 
 import (
+	"ffresources/internal/families/white/family"
 	"ffresources/internal/families/white/languages"
-	"ffresources/internal/shared/family"
 )
 
 type profile struct {

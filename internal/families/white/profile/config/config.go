@@ -15,8 +15,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"ffresources/internal/families/white/profile/appconfig"
 	"ffresources/internal/families/white/profile/parts"
-	"ffresources/internal/shared/appconfig"
 )
 
 // NormalizePart devolve o id canônico da part (part1/part2/part3). Ids

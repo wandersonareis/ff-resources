@@ -89,19 +89,19 @@ func ParseTextureHeader(data []byte) (TextureHeader, error) {
 
 // VtexHeader é o header dos registros VTEX (0x64 bytes, conforme o Pulse).
 type VtexHeader struct {
-	Unknown1       int32
-	DataLength     int32
-	Unknown2       int16
-	Unknown3       int16
-	Unknown4       int16
-	CounterOrType  int16
-	Unknown6       []int32
-	Name           string
-	Extension      string
-	Unknown17      int32
-	GtexOffset     int32 // relativo ao fim do SectionHeader
-	Unknown18      int32
-	Unknown19      int32
+	Unknown1      int32
+	DataLength    int32
+	Unknown2      int16
+	Unknown3      int16
+	Unknown4      int16
+	CounterOrType int16
+	Unknown6      []int32
+	Name          string
+	Extension     string
+	Unknown17     int32
+	GtexOffset    int32 // relativo ao fim do SectionHeader
+	Unknown18     int32
+	Unknown19     int32
 }
 
 // VtexHeaderSize é o tamanho fixo do VtexHeader.

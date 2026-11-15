@@ -136,9 +136,12 @@ espelhando o FFX:
 
 - **`internal/families/white/codecs`** — codecs de formato (ZTR, WPD, filelist,
   whitebin, imgb).
+- **`internal/families/white/imagery`** — conversão DDS→PNG usada pelo serviço
+  de imagem.
 - **`internal/families/white/profile/config`** — configuração de execução:
   raiz de dados/mods (`bin/data`), raiz de instalação por part, snapshot do
-  config local e preferências (part ativa e `enableMods`).
+  config local e preferências (part ativa e `enableMods`). Inclui o
+  `profile/appconfig` (arquivo local `ff13.config.json`).
 - **`internal/families/white/profile/parts`** — particularidades de cada jogo
   (part1/part2/part3).
 - **`internal/families/white/profile/common`** — DTOs compartilhados do
@@ -146,6 +149,8 @@ espelhando o FFX:
 - **`internal/families/white/service`** — orquestração: unidades de texto,
   filelists (descoberta, índice, árvore, zona e extração), imagens (WPD/TRB/
   faces), coleção cacheada de `data/partN`, export e catálogo de tags.
+- **`internal/families/white/family`** — contratos de família/perfil (hoje só
+  o White implementa).
 
 No app, **`backend/service`** só registra o `FF13Service` (que EMBUTE o núcleo
 e promove os métodos de domínio para o binding), mais `Parts`, `LocalConfig`,
@@ -211,7 +216,7 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
     (white bin sem filelist ou índice sem white bin).
 - Os caminhos de instalação NÃO são hardcoded: vêm do arquivo local
   `apps/ff13/ff13.config.json` (gitignored, criado com placeholders quando
-  falta). O backend lê esse arquivo (`internal/shared/appconfig`), os testes
+  falta). O backend lê esse arquivo (`internal/families/white/profile/appconfig`), os testes
   usam o MESMO arquivo e a interface mostra o caminho em
   Configuração → "Instalação do jogo (config local)".
 - Os índices **embutidos** (um filelist dentro de um white bin, como

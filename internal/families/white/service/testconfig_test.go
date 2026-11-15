@@ -5,8 +5,19 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ffresources/internal/shared/appconfig"
+	"ffresources/internal/families/white/profile/appconfig"
 )
+
+// TestMain fixa o arquivo de config no APP (apps/ff13/ff13.config.json) para
+// que os testes não criem um placeholder no diretório do pacote quando
+// procuram a raiz do jogo.
+func TestMain(m *testing.M) {
+	cfg, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "apps", "ff13", "ff13.config.json"))
+	if err == nil {
+		_ = os.Setenv(appconfig.EnvPath, cfg)
+	}
+	os.Exit(m.Run())
+}
 
 // partDataRoot devolve a pasta data/partN do app (relativa ao package do
 // teste, que é a raiz do app ff13).
