@@ -87,9 +87,9 @@ func main() {
 		// filhas (config, logs) nascem ligadas a ela e fecham junto.
 		Name:  "main",
 		Title: "FINAL FANTASY XIII Trilogy Resources Editor",
-		// Window sized to the golden ratio (1000 / 618 ≈ 1.618).
-		Width:  1000,
-		Height: 618,
+		// Window sized to the golden ratio (1280 / 800 ≈ 1.6).
+		Width:  1280,
+		Height: 800,
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
