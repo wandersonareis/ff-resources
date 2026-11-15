@@ -400,8 +400,10 @@ func exportFormatLabel(format string) string {
 	return format
 }
 
-// exportSummaryDestination resume o destino para o estado final do modal:
-// caminho único, ou "N arquivos em <diretório>".
+// exportSummaryDestination devolve o destino para o estado final do modal:
+// o caminho do único arquivo ou o diretório comum aos vários. Vazio quando
+// os artefatos saíram para diretórios diferentes — a contagem já é exibida
+// separadamente pelo frontend, então não repetimos "N arquivos" aqui.
 func exportSummaryDestination(paths []string) string {
 	if len(paths) == 0 {
 		return ""
@@ -412,8 +414,8 @@ func exportSummaryDestination(paths []string) string {
 	dir := filepath.Dir(paths[0])
 	for _, p := range paths[1:] {
 		if filepath.Dir(p) != dir {
-			return fmt.Sprintf("%d arquivos", len(paths))
+			return ""
 		}
 	}
-	return fmt.Sprintf("%d arquivos em %s", len(paths), dir)
+	return dir
 }

@@ -30,12 +30,12 @@ export function ExportFormatMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-56 h-8 gap-1 px-2 text-xs">
+        <Button variant="ghost" size="sm" className="min-w-19 h-8 gap-1 px-2 text-xs">
           {EXPORT_FORMAT_LABELS[exportFormat]}
           <ChevronDown size={14} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuLabel className="text-muted-foreground">Formato</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={exportFormat}

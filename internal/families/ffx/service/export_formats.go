@@ -9,17 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/event"
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/platform/uilog"
 	"ffresources/internal/shared/artifact"
 	_ "ffresources/internal/shared/artifact/csv"
 	jsonfmt "ffresources/internal/shared/artifact/json"
 	_ "ffresources/internal/shared/artifact/po"
 	_ "ffresources/internal/shared/artifact/strings"
 	_ "ffresources/internal/shared/artifact/xlsx"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/progress"
-	"ffresources/internal/platform/uilog"
 )
 
 // ExportPlanItem é UMA ação do lote: um kind e os ids dele (vazio = tudo
@@ -100,9 +100,14 @@ func (s *MetadataService) ExportArtifactBatch(items []ExportPlanItem, version co
 			return all, err
 		}
 	}
-	batch.SetSummary(len(all), exportSummaryDestination(all))
+	dest := exportSummaryDestination(all)
+	batch.SetSummary(len(all), dest)
 	batch.End()
-	uilog.Success("Export", "Export concluído: %d arquivo(s) em %s", len(all), exportSummaryDestination(all))
+	if dest != "" {
+		uilog.Success("Export", "Export concluído: %d arquivo(s) em %s", len(all), dest)
+	} else {
+		uilog.Success("Export", "Export concluído: %d arquivo(s)", len(all))
+	}
 	return all, nil
 }
 
@@ -123,8 +128,10 @@ func exportFormatLabel(format string) string {
 	return format
 }
 
-// exportSummaryDestination resume o destino para o estado final do modal:
-// caminho único, ou "N arquivos em <diretório>".
+// exportSummaryDestination devolve o destino para o estado final do modal:
+// o caminho do único arquivo ou o diretório comum aos vários. Vazio quando
+// os artefatos saíram para diretórios diferentes — a contagem já é exibida
+// separadamente pelo frontend, então não repetimos "N arquivos" aqui.
 func exportSummaryDestination(paths []string) string {
 	if len(paths) == 0 {
 		return ""
@@ -135,10 +142,10 @@ func exportSummaryDestination(paths []string) string {
 	dir := filepath.Dir(paths[0])
 	for _, p := range paths[1:] {
 		if filepath.Dir(p) != dir {
-			return fmt.Sprintf("%d arquivos", len(paths))
+			return ""
 		}
 	}
-	return fmt.Sprintf("%d arquivos em %s", len(paths), dir)
+	return dir
 }
 
 // exportKind extrai e escreve o artefato de UM kind no formato pedido.

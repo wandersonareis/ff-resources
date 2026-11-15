@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, CheckCircle2, CircleDashed, Loader2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleDashed, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import {
@@ -29,14 +29,13 @@ function stepCount(step: ProgressStep): string {
   return step.total > 0 ? `${fmt(step.processed)}/${fmt(step.total)}` : fmt(step.processed);
 }
 
-/** Uma ação da lista: kind à esquerda, barra preenchendo o resto, estado e
- *  contagem por último. */
+/** Uma ação da lista: nome, barra e contagem usam as MESMAS colunas em todas
+ *  as linhas (grid do pai + subgrid aqui), então a barra não muda de largura
+ *  conforme o texto/contagem de cada ação. */
 function StepRow({ step }: { step: ProgressStep }) {
   const dim = step.state === 'pending';
   const icon =
-    step.state === 'running' ? (
-      <Loader2 className="size-4 animate-spin" aria-label="Executando" />
-    ) : step.state === 'done' ? (
+    step.state === 'done' ? (
       step.issueCount > 0 ? (
         <AlertTriangle className="size-4 text-warning" aria-label="Concluída com falhas" />
       ) : (
@@ -44,28 +43,33 @@ function StepRow({ step }: { step: ProgressStep }) {
       )
     ) : step.state === 'error' ? (
       <XCircle className="size-4 text-destructive" aria-label="Falhou" />
-    ) : (
+    ) : step.state === 'pending' ? (
       <CircleDashed className="size-4" aria-label="Aguardando" />
-    );
+    ) : null;
   return (
-    <div className={dim ? 'opacity-50' : ''} role="status">
-      <div className="flex items-center justify-between gap-3">
-        <span className="min-w-0 truncate text-sm">{step.label}</span>
-        {step.state === 'running' ? (
-          <Progress
-            value={step.total > 0 ? Math.min(100, (step.processed / step.total) * 100) : 0}
-            className="h-1.5 min-w-0 flex-1"
-          />
+    <div
+      className={`col-span-3 grid grid-cols-subgrid items-center gap-x-3 gap-y-0 ${dim ? 'opacity-50' : ''}`}
+      role="status"
+    >
+      <span className="min-w-0 truncate text-sm" title={step.label}>
+        {step.label}
+      </span>
+      {step.state === 'running' ? (
+        <Progress
+          value={step.total > 0 ? Math.min(100, (step.processed / step.total) * 100) : 0}
+          className="h-1.5 min-w-0"
+        />
+      ) : (
+        <span aria-hidden="true" />
+      )}
+      <span className="flex items-center justify-end gap-1.5">
+        {step.state !== 'pending' ? (
+          <span className="text-xs tabular-nums text-muted-foreground">{stepCount(step)}</span>
         ) : null}
-        <span className="flex shrink-0 items-center gap-1.5">
-          {step.state !== 'pending' ? (
-            <span className="text-xs tabular-nums text-muted-foreground">{stepCount(step)}</span>
-          ) : null}
-          {icon}
-        </span>
-      </div>
+        {icon}
+      </span>
       {step.state === 'error' && step.error ? (
-        <p className="mt-0.5 truncate text-xs text-destructive" title={step.error}>
+        <p className="col-span-3 mt-0.5 truncate text-xs text-destructive" title={step.error}>
           {step.error}
         </p>
       ) : null}
@@ -109,8 +113,10 @@ function BatchResult({ batch }: { batch: ProgressBatch }) {
         // carácter E reduz o min-content, então o modal mantém a largura e
         // o texto desce para a linha de baixo.
         <p className="text-center text-xs tabular-nums text-muted-foreground wrap-anywhere">
-          {fmt(batch.written)} arquivo(s)
-          {batch.destination ? ` — ${batch.destination}` : ''}
+          {fmt(batch.written)} arquivo(s){batch.destination ? ':' : ''}
+          {batch.destination ? (
+            <span className="mt-0.5 block">{batch.destination}</span>
+          ) : null}
         </p>
       ) : null}
     </div>
@@ -180,7 +186,7 @@ export function ProgressModal() {
           done ? (
             <BatchResult batch={batch} />
           ) : (
-            <div className="space-y-2.5 py-1">
+            <div className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-1">
               {batch.steps.map((step) => (
                 <StepRow key={step.label} step={step} />
               ))}
