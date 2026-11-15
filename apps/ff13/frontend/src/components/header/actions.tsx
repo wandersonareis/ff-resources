@@ -1,13 +1,13 @@
 'use client';
 
 import { Settings } from 'lucide-react';
-import { ExportFormatMenu } from '@/components/export-format-menu';
-import { ExportLangsMenu } from '@/components/export-langs-menu';
-import { LogWindowToggle } from '@/components/log-window-toggle';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SHORTCUTS, shortcutTip } from '@/lib/ffx/shortcuts';
+import { ExportFormatMenu } from './export-format-menu';
+import { ExportLangsMenu } from './export-langs-menu';
+import { LogWindowToggle } from './log-window-toggle';
+import { ThemeToggle } from './theme-toggle';
 
 /**
  * Botões do header. `ml-auto`/`justify-end` mantêm o grupo no canto direito

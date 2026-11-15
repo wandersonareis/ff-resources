@@ -43,7 +43,7 @@ export function ExportLangsMenu() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 gap-1 px-2 text-xs"
+          className="h-8 gap-1 px-2 text-sm"
           title={`Idiomas da exportação — ${defaultName} (${DEFAULT_LANG}) sai sempre nos artefatos; os extras marcados entram junto. A escolha fica salva e vale para todos os exports.`}
         >
           {summary}

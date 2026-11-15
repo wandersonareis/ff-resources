@@ -5,12 +5,12 @@ import { useSelector } from '@tanstack/react-store';
 import { startTransition, useCallback, useEffect, useState } from 'react';
 import { QuitApp } from '@/bindings/ffresources/apps/ffx/app';
 import { SetGameVersion } from '@/bindings/ffresources/apps/ffx/configservice';
-import { AppHeader } from '@/components/app-header';
 import { ConfigDialog } from '@/components/dialogs/config-dialog';
 import { DeleteOrphanDialog } from '@/components/dialogs/delete-orphan-dialog';
 import { PruneOrphansDialog } from '@/components/dialogs/prune-orphans-dialog';
 import { ExportImportControls } from '@/components/export-import-controls';
 import { GameVersionTab } from '@/components/game-version-tab';
+import { AppHeader } from '@/components/header';
 import { LogDrawer } from '@/components/log-drawer';
 import { ProgressModal } from '@/components/progress/progress-modal';
 import { ProgressNotifier } from '@/components/progress-notifier';
@@ -186,7 +186,10 @@ export function AppShell() {
                   </TabsTrigger>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {shortcutTip(SHORTCUTS.versionTabs.label, versionTabKeys(GAME_VERSIONS.length)[index])}
+                  {shortcutTip(
+                    SHORTCUTS.versionTabs.label,
+                    versionTabKeys(GAME_VERSIONS.length)[index],
+                  )}
                 </TooltipContent>
               </Tooltip>
             ))}

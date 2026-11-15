@@ -23,7 +23,7 @@ export function LogWindowToggle() {
       <TooltipTrigger asChild>
         <label
           htmlFor="log-window-toggle"
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs text-foreground select-none transition-colors hover:bg-muted"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-sm text-foreground select-none transition-colors hover:bg-muted"
         >
           <Checkbox
             id="log-window-toggle"
