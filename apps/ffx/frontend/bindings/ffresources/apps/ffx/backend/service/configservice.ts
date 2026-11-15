@@ -14,7 +14,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as dto$0 from "../../internal/shared/dto/models.js";
+import * as dto$0 from "../../../../internal/shared/dto/models.js";
 
 /**
  * GetConfigSnapshot devolve o config inteiro em UMA consulta: é a carga
@@ -22,7 +22,7 @@ import * as dto$0 from "../../internal/shared/dto/models.js";
  * AppConfigChanged, dispensando re-fetch ao reabrir o diálogo.
  */
 export function GetConfigSnapshot(): $CancellablePromise<dto$0.AppConfigSnapshot> {
-    return $Call.ByID(470399063).then(($result: any) => {
+    return $Call.ByID(3291638152).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -32,7 +32,7 @@ export function GetConfigSnapshot(): $CancellablePromise<dto$0.AppConfigSnapshot
  * (config EnableMods). Consulta sob demanda para o checkbox de config.
  */
 export function GetEnableMods(): $CancellablePromise<boolean> {
-    return $Call.ByID(2950908459);
+    return $Call.ByID(4252432196);
 }
 
 /**
@@ -41,7 +41,7 @@ export function GetEnableMods(): $CancellablePromise<boolean> {
  * "" = o usuário ainda não escolheu (sem raízes VBF na sidebar).
  */
 export function GetGameExeLocation(): $CancellablePromise<string> {
-    return $Call.ByID(1209081398);
+    return $Call.ByID(2584331959);
 }
 
 /**
@@ -50,7 +50,7 @@ export function GetGameExeLocation(): $CancellablePromise<string> {
  * diálogo de config não depender do evento de startup.
  */
 export function GetGameFilesLocation(): $CancellablePromise<string> {
-    return $Call.ByID(1625974813);
+    return $Call.ByID(4149746696);
 }
 
 /**
@@ -58,7 +58,7 @@ export function GetGameFilesLocation(): $CancellablePromise<string> {
  * boot para alinhar o backend ao que está no localStorage.
  */
 export function GetTheme(): $CancellablePromise<string> {
-    return $Call.ByID(243714106);
+    return $Call.ByID(3218933587);
 }
 
 /**
@@ -66,7 +66,7 @@ export function GetTheme(): $CancellablePromise<string> {
  * reimport (<game>/mods/translated por padrão). Consulta sob demanda.
  */
 export function GetTranslateLocation(): $CancellablePromise<string> {
-    return $Call.ByID(2573491630);
+    return $Call.ByID(3497359335);
 }
 
 /**
@@ -79,11 +79,11 @@ export function GetTranslateLocation(): $CancellablePromise<string> {
  * filha. decision: "save" | "discard".
  */
 export function ResolveEnableModsChange(enabled: boolean, decision: string): $CancellablePromise<void> {
-    return $Call.ByID(3211847695, enabled, decision);
+    return $Call.ByID(1437089880, enabled, decision);
 }
 
 export function SelectDirectory(title: string): $CancellablePromise<string> {
-    return $Call.ByID(3940172930, title);
+    return $Call.ByID(1819249733, title);
 }
 
 /**
@@ -94,7 +94,7 @@ export function SelectDirectory(title: string): $CancellablePromise<string> {
  * escolha inválida.
  */
 export function SelectGameExeFile(): $CancellablePromise<string> {
-    return $Call.ByID(271055909);
+    return $Call.ByID(2973696378);
 }
 
 /**
@@ -108,7 +108,7 @@ export function SelectGameExeFile(): $CancellablePromise<string> {
  * então o reload que ele dispara nunca pega cache velho.
  */
 export function SetEnableMods(enabled: boolean): $CancellablePromise<void> {
-    return $Call.ByID(1081754423, enabled);
+    return $Call.ByID(2438585480, enabled);
 }
 
 /**
@@ -117,7 +117,7 @@ export function SetEnableMods(enabled: boolean): $CancellablePromise<void> {
  * mais alcançáveis (a próxima ListVbfRoots reabre os da nova pasta).
  */
 export function SetGameExeLocation(path: string): $CancellablePromise<void> {
-    return $Call.ByID(2136912450, path);
+    return $Call.ByID(513202475, path);
 }
 
 /**
@@ -125,14 +125,14 @@ export function SetGameExeLocation(path: string): $CancellablePromise<void> {
  * e acompanha o translated se ele era derivado.
  */
 export function SetGameLocation(path: string): $CancellablePromise<void> {
-    return $Call.ByID(1043169468, path);
+    return $Call.ByID(3769412355, path);
 }
 
 /**
  * SetGameVersion persiste a versão do jogo.
  */
 export function SetGameVersion(version: string): $CancellablePromise<void> {
-    return $Call.ByID(451997909, version);
+    return $Call.ByID(2427978600, version);
 }
 
 /**
@@ -142,14 +142,14 @@ export function SetGameVersion(version: string): $CancellablePromise<void> {
  * docs/updater.md §5.
  */
 export function SetTheme(theme: string): $CancellablePromise<void> {
-    return $Call.ByID(1831643238, theme);
+    return $Call.ByID(2107184775, theme);
 }
 
 /**
  * SetTranslateLocation persiste o diretório de tradução.
  */
 export function SetTranslateLocation(path: string): $CancellablePromise<void> {
-    return $Call.ByID(1228565642, path);
+    return $Call.ByID(2005079275, path);
 }
 
 // Private type creation functions

@@ -6,8 +6,8 @@
  * edições não salvas e os poucos métodos que não pertencem a um domínio.
  * 
  * No v2 ele era um god object com ~62 métodos bound de todos os domínios; no
- * v3 cada domínio virou um service próprio (service_config.go, service_vbf.go,
- * service_text.go, service_image.go) e só isto permanece aqui.
+ * v3 cada domínio virou um service próprio (config.go, vbf.go, text.go,
+ * image.go) e só isto permanece aqui.
  * @module
  */
 
@@ -23,7 +23,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
  * mantém sincronizada via SetUnsavedEdits a cada mudança de rascunho.
  */
 export function HasUnsavedEdits(): $CancellablePromise<boolean> {
-    return $Call.ByID(1437247688);
+    return $Call.ByID(1118255999);
 }
 
 /**
@@ -33,7 +33,7 @@ export function HasUnsavedEdits(): $CancellablePromise<boolean> {
  * versões inválidas são ignoradas com aviso no log de arquivo.
  */
 export function PreloadVersions(versions: string[]): $CancellablePromise<void> {
-    return $Call.ByID(3310318019, versions);
+    return $Call.ByID(1219700016, versions);
 }
 
 /**
@@ -42,18 +42,18 @@ export function PreloadVersions(versions: string[]): $CancellablePromise<void> {
  * atravessava o beforeClose — com edições pendentes, o diálogo aparece de novo.
  */
 export function QuitApp(): $CancellablePromise<void> {
-    return $Call.ByID(3730234565);
+    return $Call.ByID(270190014);
 }
 
 export function ReadFileAsString(file: string): $CancellablePromise<string> {
-    return $Call.ByID(1204323234, file);
+    return $Call.ByID(2464594667, file);
 }
 
 /**
  * SetUnsavedEdits recebe do frontend o estado de edições não salvas.
  */
 export function SetUnsavedEdits(dirty: boolean): $CancellablePromise<void> {
-    return $Call.ByID(1787628248, dirty);
+    return $Call.ByID(3539358263, dirty);
 }
 
 /**
@@ -63,5 +63,5 @@ export function SetUnsavedEdits(dirty: boolean): $CancellablePromise<void> {
  * Nível: debug | info | warn | error.
  */
 export function WriteLog(level: string, message: string, fields: { [_ in string]?: any }): $CancellablePromise<void> {
-    return $Call.ByID(1800746550, level, message, fields);
+    return $Call.ByID(42108267, level, message, fields);
 }

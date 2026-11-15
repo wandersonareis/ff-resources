@@ -1,12 +1,13 @@
-package main
+package service
 
 import (
-	"ffresources/internal/platform/appupdater"
+	"ffresources/apps/ffx/backend/dialog"
 	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/profile/interactions"
-	"ffresources/internal/shared/logging"
 	"ffresources/internal/families/ffx/service"
+	"ffresources/internal/platform/appupdater"
+	"ffresources/internal/shared/dto"
+	"ffresources/internal/shared/logging"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -49,7 +50,7 @@ func (c *ConfigService) emitConfigChanged() {
 }
 
 func (c *ConfigService) SelectDirectory(title string) string {
-	return pickDirectory(title, common.GetExecDir())
+	return dialog.PickDirectory(title, common.GetExecDir())
 }
 
 // GetGameFilesLocation devolve o diretório dos arquivos do jogo
@@ -184,7 +185,7 @@ func (c *ConfigService) SetTranslateLocation(path string) error {
 // qualquer nome no campo de arquivo. Devolve "" no cancelamento e numa
 // escolha inválida.
 func (c *ConfigService) SelectGameExeFile() string {
-	selection := pickFile(
+	selection := dialog.PickFile(
 		"Selecionar o executável do jogo (FFX.exe ou FFX-2.exe)", "",
 		application.FileFilter{
 			DisplayName: "Executável do jogo (FFX.exe; FFX-2.exe)",

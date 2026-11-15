@@ -2,12 +2,12 @@
 
 import { FolderOpen } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { HasUnsavedEdits } from '@/bindings/ffresources/apps/ffx/app';
+import { HasUnsavedEdits } from '@/bindings/ffresources/apps/ffx/backend/service/app';
 import {
   ResolveEnableModsChange,
   SelectDirectory,
   SelectGameExeFile,
-} from '@/bindings/ffresources/apps/ffx/configservice';
+} from '@/bindings/ffresources/apps/ffx/backend/service/configservice';
 import {
   type ModsGuardDecision,
   ModsToggleGuardDialog,

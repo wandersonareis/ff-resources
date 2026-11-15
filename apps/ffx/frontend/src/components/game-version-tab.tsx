@@ -2,7 +2,7 @@
 
 import { useSelector } from '@tanstack/react-store';
 import { useEffect, useMemo, useState } from 'react';
-import { PreloadVersions, SetUnsavedEdits } from '@/bindings/ffresources/apps/ffx/app';
+import { PreloadVersions, SetUnsavedEdits } from '@/bindings/ffresources/apps/ffx/backend/service/app';
 import { ImageActionDialogs } from '@/components/dialogs/image-action-dialogs';
 import { TranslationDialog } from '@/components/dialogs/translation-dialog';
 import { ContentTree } from '@/components/entry-view/content-tree';

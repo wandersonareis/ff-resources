@@ -1,5 +1,5 @@
 import { createStore } from '@tanstack/store';
-import { OpenWindow } from '@/bindings/ffresources/apps/ffx/windowservice';
+import { OpenWindow } from '@/bindings/ffresources/apps/ffx/backend/service/windowservice';
 import { isDesktop } from './env';
 import { loggedToast } from '@/lib/ffx/toast-logged';
 

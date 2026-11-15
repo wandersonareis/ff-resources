@@ -3,8 +3,8 @@
 import { useHotkey, useHotkeys } from '@tanstack/react-hotkeys';
 import { useSelector } from '@tanstack/react-store';
 import { startTransition, useCallback, useEffect, useState } from 'react';
-import { QuitApp } from '@/bindings/ffresources/apps/ffx/app';
-import { SetGameVersion } from '@/bindings/ffresources/apps/ffx/configservice';
+import { QuitApp } from '@/bindings/ffresources/apps/ffx/backend/service/app';
+import { SetGameVersion } from '@/bindings/ffresources/apps/ffx/backend/service/configservice';
 import { ConfigDialog } from '@/components/dialogs/config-dialog';
 import { DeleteOrphanDialog } from '@/components/dialogs/delete-orphan-dialog';
 import { PruneOrphansDialog } from '@/components/dialogs/prune-orphans-dialog';

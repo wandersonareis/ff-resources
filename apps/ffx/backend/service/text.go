@@ -1,12 +1,13 @@
-package main
+package service
 
 import (
+	"ffresources/apps/ffx/backend/dialog"
 	"fmt"
 
 	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/families/ffx/service"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/progress"
-	"ffresources/internal/families/ffx/service"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -166,7 +167,7 @@ func (s *TextService) ExportArtifactBatch(items []services.ExportPlanItem, versi
 // SelectImportFile abre o seletor nativo de arquivo para importar
 // (.json / .strings / .csv / .xlsx / .po). Devolve "" quando o usuário cancela.
 func (s *TextService) SelectImportFile() string {
-	return pickFile("Selecionar arquivo para importar", "",
+	return dialog.PickFile("Selecionar arquivo para importar", "",
 		application.FileFilter{DisplayName: "Arquivos de importação (*.json; *.strings; *.csv; *.xlsx; *.po)", Pattern: "*.json;*.strings;*.csv;*.xlsx;*.po"},
 		application.FileFilter{DisplayName: "JSON (*.json)", Pattern: "*.json"},
 		application.FileFilter{DisplayName: "Strings (*.strings)", Pattern: "*.strings"},

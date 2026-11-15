@@ -23,14 +23,14 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
  * LogWindowClosed e o checkbox espelha; desmarcar chama isto aqui.
  */
 export function CloseWindow(name: string): $CancellablePromise<void> {
-    return $Call.ByID(1853142863, name);
+    return $Call.ByID(470418820, name);
 }
 
 /**
  * OpenExternal abre uma URL no navegador padrão (whitelist: repo/releases).
  */
 export function OpenExternal(url: string): $CancellablePromise<void> {
-    return $Call.ByID(3768486914, url);
+    return $Call.ByID(2721030979, url);
 }
 
 /**
@@ -38,5 +38,5 @@ export function OpenExternal(url: string): $CancellablePromise<void> {
  * para o catálogo (config, about, logs).
  */
 export function OpenWindow(name: string): $CancellablePromise<void> {
-    return $Call.ByID(3846923477, name);
+    return $Call.ByID(2321159864, name);
 }

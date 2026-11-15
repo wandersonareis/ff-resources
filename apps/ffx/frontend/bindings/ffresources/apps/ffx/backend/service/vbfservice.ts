@@ -17,14 +17,14 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as dto$0 from "../../internal/shared/dto/models.js";
+import * as dto$0 from "../../../../internal/shared/dto/models.js";
 
 /**
  * ExportVbfSelection decodifica os kinds de TEXTO da seleção e grava os
  * artefatos em mods/edits no formato pedido ("json" | "strings").
  */
 export function ExportVbfSelection(vbfPath: string, format: string, paths: string[], langs: string[]): $CancellablePromise<string[]> {
-    return $Call.ByID(293904769, vbfPath, format, paths, langs).then(($result: any) => {
+    return $Call.ByID(3068528130, vbfPath, format, paths, langs).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -34,7 +34,7 @@ export function ExportVbfSelection(vbfPath: string, format: string, paths: strin
  * os caminhos internos do .vbf sob destRoot (vazio = mods/images).
  */
 export function ExtractVbfImagesSelection(vbfPath: string, paths: string[], destRoot: string): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(831803866, vbfPath, paths, destRoot).then(($result: any) => {
+    return $Call.ByID(3987613031, vbfPath, paths, destRoot).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -44,13 +44,13 @@ export function ExtractVbfImagesSelection(vbfPath: string, paths: string[], dest
  * data/ do jogo), preservando a estrutura interna de caminhos.
  */
 export function ExtractVbfSelection(vbfPath: string, paths: string[], destRoot: string): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(2571419068, vbfPath, paths, destRoot).then(($result: any) => {
+    return $Call.ByID(1321094301, vbfPath, paths, destRoot).then(($result: any) => {
         return $$createType1($result);
     });
 }
 
 export function GetVbfImageEntry(vbfPath: string, innerPath: string): $CancellablePromise<dto$0.ImageEntry> {
-    return $Call.ByID(2280891218, vbfPath, innerPath).then(($result: any) => {
+    return $Call.ByID(483991081, vbfPath, innerPath).then(($result: any) => {
         return $$createType2($result);
     });
 }
@@ -60,13 +60,13 @@ export function GetVbfImageEntry(vbfPath: string, innerPath: string): $Cancellab
  * (rows + coluna Original). id é exigido só para macro (o chunk).
  */
 export function GetVbfTextEntry(vbfPath: string, innerPath: string, id: string): $CancellablePromise<dto$0.FileEntry> {
-    return $Call.ByID(2704912550, vbfPath, innerPath, id).then(($result: any) => {
+    return $Call.ByID(3420273807, vbfPath, innerPath, id).then(($result: any) => {
         return $$createType3($result);
     });
 }
 
 export function ImportVbfImage(vbfPath: string, innerPath: string, ddsPath: string): $CancellablePromise<void> {
-    return $Call.ByID(1423935425, vbfPath, innerPath, ddsPath);
+    return $Call.ByID(1748018686, vbfPath, innerPath, ddsPath);
 }
 
 /**
@@ -74,7 +74,7 @@ export function ImportVbfImage(vbfPath: string, innerPath: string, ddsPath: stri
  * primeiro, depois arquivos, cada um com kind/id quando o app sabe servi-lo.
  */
 export function ListVbfDir(vbfPath: string, dir: string): $CancellablePromise<dto$0.VbfNode[]> {
-    return $Call.ByID(430625986, vbfPath, dir).then(($result: any) => {
+    return $Call.ByID(4052108453, vbfPath, dir).then(($result: any) => {
         return $$createType5($result);
     });
 }
@@ -85,7 +85,7 @@ export function ListVbfDir(vbfPath: string, dir: string): $CancellablePromise<dt
  * como um grupo.
  */
 export function ListVbfMacroChunks(vbfPath: string, macroPath: string): $CancellablePromise<dto$0.VbfNode[]> {
-    return $Call.ByID(509007879, vbfPath, macroPath).then(($result: any) => {
+    return $Call.ByID(1513427868, vbfPath, macroPath).then(($result: any) => {
         return $$createType5($result);
     });
 }
@@ -96,7 +96,7 @@ export function ListVbfMacroChunks(vbfPath: string, macroPath: string): $Cancell
  * executável não configurado.
  */
 export function ListVbfRoots(): $CancellablePromise<dto$0.VbfRoot[]> {
-    return $Call.ByID(3500812932).then(($result: any) => {
+    return $Call.ByID(1854935147).then(($result: any) => {
         return $$createType7($result);
     });
 }
@@ -107,19 +107,19 @@ export function ListVbfRoots(): $CancellablePromise<dto$0.VbfRoot[]> {
  * vazio significa data/ do jogo.
  */
 export function PreviewVbfExtraction(vbfPath: string, paths: string[], destRoot: string): $CancellablePromise<dto$0.VbfExtractPreview> {
-    return $Call.ByID(1298074216, vbfPath, paths, destRoot).then(($result: any) => {
+    return $Call.ByID(3737009579, vbfPath, paths, destRoot).then(($result: any) => {
         return $$createType8($result);
     });
 }
 
 export function ReplicateVbfImage(vbfPath: string, sourcePath: string, targets: string[]): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(2094537861, vbfPath, sourcePath, targets).then(($result: any) => {
+    return $Call.ByID(3713012432, vbfPath, sourcePath, targets).then(($result: any) => {
         return $$createType1($result);
     });
 }
 
 export function SaveVbfImage(vbfPath: string, innerPath: string, format: string, destPath: string): $CancellablePromise<void> {
-    return $Call.ByID(2447460989, vbfPath, innerPath, format, destPath);
+    return $Call.ByID(1267506694, vbfPath, innerPath, format, destPath);
 }
 
 /**
@@ -127,7 +127,7 @@ export function SaveVbfImage(vbfPath: string, innerPath: string, format: string,
  * para…", começando em data/ do jogo. Devolve "" no cancelamento.
  */
 export function SelectVbfExtractDir(): $CancellablePromise<string> {
-    return $Call.ByID(1603818303);
+    return $Call.ByID(1380435234);
 }
 
 /**
@@ -138,7 +138,7 @@ export function SelectVbfExtractDir(): $CancellablePromise<string> {
  * export de imagens da árvore data/.
  */
 export function SelectVbfImageExtractDir(): $CancellablePromise<string> {
-    return $Call.ByID(2533874608);
+    return $Call.ByID(3033689815);
 }
 
 /**
@@ -147,7 +147,7 @@ export function SelectVbfImageExtractDir(): $CancellablePromise<string> {
  * direto sem diálogo.
  */
 export function VbfImageExportPath(vbfPath: string, innerPath: string, format: string): $CancellablePromise<string> {
-    return $Call.ByID(609557501, vbfPath, innerPath, format);
+    return $Call.ByID(2800392874, vbfPath, innerPath, format);
 }
 
 // Private type creation functions

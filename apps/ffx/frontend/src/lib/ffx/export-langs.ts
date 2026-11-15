@@ -1,7 +1,7 @@
 import { useSelector } from '@tanstack/react-store';
 import { createStore } from '@tanstack/store';
 import { useEffect } from 'react';
-import { ListLanguages } from '@/bindings/ffresources/apps/ffx/textservice';
+import { ListLanguages } from '@/bindings/ffresources/apps/ffx/backend/service/textservice';
 import { SOURCE_LANG } from '@/lib/ffx/save-all';
 
 /**

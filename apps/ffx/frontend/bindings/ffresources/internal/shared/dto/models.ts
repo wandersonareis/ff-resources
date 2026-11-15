@@ -1126,6 +1126,12 @@ export class Metadata {
     "id"?: string;
     "is_dir"?: boolean;
 
+    /**
+     * Files mapeia idioma -> caminho do arquivo (FF13: a unidade de texto
+     * tem um arquivo por idioma; o "_us" e o editavel).
+     */
+    "files"?: { [_ in string]?: string };
+
     /** Creates a new Metadata instance. */
     constructor($$source: Partial<Metadata> = {}) {
         if (!("key" in $$source)) {
@@ -1139,7 +1145,11 @@ export class Metadata {
      * Creates a new Metadata instance from a string or object.
      */
     static createFrom($$source: any = {}): Metadata {
+        const $$createField4_0 = $$createType20;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("files" in $$parsedSource) {
+            $$parsedSource["files"] = $$createField4_0($$parsedSource["files"]);
+        }
         return new Metadata($$parsedSource as Partial<Metadata>);
     }
 }

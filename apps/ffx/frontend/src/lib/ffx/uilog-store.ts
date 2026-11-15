@@ -2,7 +2,7 @@ import { useSelector } from '@tanstack/react-store';
 import { createStore } from '@tanstack/store';
 import { useEffect } from 'react';
 import type { Entry } from '../../../bindings/ffresources/internal/platform/uilog/models';
-import { ClearLog, History } from '../../../bindings/ffresources/apps/ffx/logservice';
+import { ClearLog, History } from '../../../bindings/ffresources/apps/ffx/backend/service/logservice';
 
 /**
  * Buffer de exibição dos logs de operação (backend/uilog) — store de MÓDULO

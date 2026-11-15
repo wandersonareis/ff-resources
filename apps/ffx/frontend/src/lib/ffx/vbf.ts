@@ -15,7 +15,7 @@ import {
   SelectVbfExtractDir,
   SelectVbfImageExtractDir,
   VbfImageExportPath,
-} from '@/bindings/ffresources/apps/ffx/vbfservice';
+} from '@/bindings/ffresources/apps/ffx/backend/service/vbfservice';
 import type { ExportFormat } from '@/lib/ffx/export-selection';
 
 /**

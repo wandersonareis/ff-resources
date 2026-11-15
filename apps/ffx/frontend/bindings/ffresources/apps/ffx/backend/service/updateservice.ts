@@ -24,7 +24,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
  * em goroutine própria — a UI não trava.
  */
 export function CheckNow(): $CancellablePromise<void> {
-    return $Call.ByID(3792226688);
+    return $Call.ByID(3618624253);
 }
 
 /**
@@ -32,7 +32,7 @@ export function CheckNow(): $CancellablePromise<void> {
  * "dev" em desenvolvimento — sem -ldflags).
  */
 export function CurrentVersion(): $CancellablePromise<string> {
-    return $Call.ByID(212359031);
+    return $Call.ByID(3329050610);
 }
 
 /**
@@ -41,5 +41,5 @@ export function CurrentVersion(): $CancellablePromise<string> {
  * versão relança. Erro se não há nada em stage.
  */
 export function Restart(): $CancellablePromise<void> {
-    return $Call.ByID(3205679179);
+    return $Call.ByID(3285128280);
 }

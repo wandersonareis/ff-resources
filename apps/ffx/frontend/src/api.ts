@@ -1,8 +1,8 @@
 // Adapter do app FFX: implementa o contrato GameApi do pacote compartilhado
 // sobre os bindings Wails gerados para este app.
-import * as app from '@/bindings/ffresources/apps/ffx/app';
-import * as image from '@/bindings/ffresources/apps/ffx/imageservice';
-import * as text from '@/bindings/ffresources/apps/ffx/textservice';
+import * as app from '@/bindings/ffresources/apps/ffx/backend/service/app';
+import * as image from '@/bindings/ffresources/apps/ffx/backend/service/imageservice';
+import * as text from '@/bindings/ffresources/apps/ffx/backend/service/textservice';
 import type { GameApi } from '@ff-resources/ui/api/GameApi';
 
 type V = Parameters<typeof text.ListTextEntries>[1];

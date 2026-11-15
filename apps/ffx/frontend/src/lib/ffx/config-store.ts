@@ -5,7 +5,7 @@ import {
   SetGameExeLocation,
   SetGameLocation,
   SetTranslateLocation,
-} from '@/bindings/ffresources/apps/ffx/configservice';
+} from '@/bindings/ffresources/apps/ffx/backend/service/configservice';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';
 import { invalidateVbfCache } from './vbf';
 

@@ -1,6 +1,6 @@
 import { useSelector } from '@tanstack/react-store';
 import { createStore } from '@tanstack/store';
-import { CloseWindow, OpenWindow } from '../../../bindings/ffresources/apps/ffx/windowservice';
+import { CloseWindow, OpenWindow } from '../../../bindings/ffresources/apps/ffx/backend/service/windowservice';
 import { isDesktop } from './env';
 import { loggedToast } from '@/lib/ffx/toast-logged';
 

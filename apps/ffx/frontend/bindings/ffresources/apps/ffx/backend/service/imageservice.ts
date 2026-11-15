@@ -13,17 +13,17 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as common$0 from "../../internal/families/ffx/profile/common/models.js";
+import * as common$0 from "../../../../internal/families/ffx/profile/common/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as dto$0 from "../../internal/shared/dto/models.js";
+import * as dto$0 from "../../../../internal/shared/dto/models.js";
 
 /**
  * DeleteImageSelection deleta as imagens selecionadas no mesmo escopo. A
  * opção withCopies inclui, uma vez cada, as cópias de payload de cada seleção.
  */
 export function DeleteImageSelection(kind: string, ids: string[], withCopies: boolean, scope: string, version: common$0.GameVersion): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(1965865570, kind, ids, withCopies, scope, version).then(($result: any) => {
+    return $Call.ByID(4144625285, kind, ids, withCopies, scope, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -34,7 +34,7 @@ export function DeleteImageSelection(kind: string, ids: string[], withCopies: bo
  * as cópias vêm EXPLICITAMENTE do diálogo — nunca é cascata implícita.
  */
 export function DeleteImages(kind: string, id: string, targets: string[], scope: string, version: common$0.GameVersion): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(1825727021, kind, id, targets, scope, version).then(($result: any) => {
+    return $Call.ByID(2488418610, kind, id, targets, scope, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -44,7 +44,7 @@ export function DeleteImages(kind: string, id: string, targets: string[], scope:
  * devolve os caminhos escritos.
  */
 export function ExtractImage(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<string[]> {
-    return $Call.ByID(3427447234, kind, id, version).then(($result: any) => {
+    return $Call.ByID(2302295973, kind, id, version).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -54,7 +54,7 @@ export function ExtractImage(kind: string, id: string, version: common$0.GameVer
  * escolhidas (o "só esta ou todas as cópias" do diálogo de extração).
  */
 export function ExtractImageGroup(kind: string, id: string, targets: string[], version: common$0.GameVersion): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(3352489397, kind, id, targets, version).then(($result: any) => {
+    return $Call.ByID(324290892, kind, id, targets, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -63,7 +63,7 @@ export function ExtractImageGroup(kind: string, id: string, targets: string[], v
  * ExtractImageSelection extrai somente as imagens explicitamente selecionadas.
  */
 export function ExtractImageSelection(kind: string, ids: string[], version: common$0.GameVersion): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(3012549236, kind, ids, version).then(($result: any) => {
+    return $Call.ByID(817458645, kind, ids, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -74,7 +74,7 @@ export function ExtractImageSelection(kind: string, ids: string[], version: comm
  * .png em disco → decode do .dds.phyre em memória.
  */
 export function GetImageEntry(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<dto$0.ImageEntry> {
-    return $Call.ByID(958646051, kind, id, version).then(($result: any) => {
+    return $Call.ByID(1897831298, kind, id, version).then(($result: any) => {
         return $$createType2($result);
     });
 }
@@ -86,7 +86,7 @@ export function GetImageEntry(kind: string, id: string, version: common$0.GameVe
  * selecionada.
  */
 export function ImageDuplicates(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<dto$0.ImageDuplicates> {
-    return $Call.ByID(4092942443, kind, id, version).then(($result: any) => {
+    return $Call.ByID(1928137526, kind, id, version).then(($result: any) => {
         return $$createType3($result);
     });
 }
@@ -97,7 +97,7 @@ export function ImageDuplicates(kind: string, id: string, version: common$0.Game
  * re-carregar).
  */
 export function ImageExists(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<boolean> {
-    return $Call.ByID(4010600193, kind, id, version);
+    return $Call.ByID(1574366048, kind, id, version);
 }
 
 /**
@@ -106,7 +106,7 @@ export function ImageExists(kind: string, id: string, version: common$0.GameVers
  * direto sem diálogo.
  */
 export function ImageExportPath(kind: string, id: string, format: string, version: common$0.GameVersion): $CancellablePromise<string> {
-    return $Call.ByID(888094280, kind, id, format, version);
+    return $Call.ByID(1559396301, kind, id, format, version);
 }
 
 /**
@@ -114,7 +114,7 @@ export function ImageExportPath(kind: string, id: string, format: string, versio
  * cópias adicionais dos ids selecionados.
  */
 export function ImageSelectionCopies(kind: string, ids: string[], version: common$0.GameVersion): $CancellablePromise<string[]> {
-    return $Call.ByID(1667132476, kind, ids, version).then(($result: any) => {
+    return $Call.ByID(1804390499, kind, ids, version).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -124,7 +124,7 @@ export function ImageSelectionCopies(kind: string, ids: string[], version: commo
  * o resultado em mods/ (a árvore data/ nunca é alterada).
  */
 export function ImportImage(kind: string, id: string, ddsPath: string, version: common$0.GameVersion): $CancellablePromise<void> {
-    return $Call.ByID(3204909734, kind, id, ddsPath, version);
+    return $Call.ByID(2814792039, kind, id, ddsPath, version);
 }
 
 /**
@@ -133,7 +133,7 @@ export function ImportImage(kind: string, id: string, ddsPath: string, version: 
  * DVD). O lote é validado antes de gravar: alvo fora do grupo é recusado.
  */
 export function ImportImageGroup(kind: string, id: string, ddsPath: string, targets: string[], version: common$0.GameVersion): $CancellablePromise<dto$0.ImageImportResult> {
-    return $Call.ByID(230525017, kind, id, ddsPath, targets, version).then(($result: any) => {
+    return $Call.ByID(2902532430, kind, id, ddsPath, targets, version).then(($result: any) => {
         return $$createType4($result);
     });
 }
@@ -144,7 +144,7 @@ export function ImportImageGroup(kind: string, id: string, ddsPath: string, targ
  * idêntica ao binário) e atualiza os artefatos de trabalho.
  */
 export function ImportImages(version: common$0.GameVersion, selection: dto$0.ImageImportSelection): $CancellablePromise<dto$0.ImageImportResult> {
-    return $Call.ByID(2367032655, version, selection).then(($result: any) => {
+    return $Call.ByID(825336444, version, selection).then(($result: any) => {
         return $$createType4($result);
     });
 }
@@ -156,7 +156,7 @@ export function ImportImages(version: common$0.GameVersion, selection: dto$0.Ima
  * primeira entrada exibida de cada grupo. Nada é gravado.
  */
 export function PreviewImportImages(version: common$0.GameVersion): $CancellablePromise<dto$0.ImageImportPreview> {
-    return $Call.ByID(2336505643, version).then(($result: any) => {
+    return $Call.ByID(774998414, version).then(($result: any) => {
         return $$createType5($result);
     });
 }
@@ -166,7 +166,7 @@ export function PreviewImportImages(version: common$0.GameVersion): $Cancellable
  * na próxima consulta) — para edição externa em hex editor.
  */
 export function RefreshImageDuplicates(kind: string, version: common$0.GameVersion): $CancellablePromise<void> {
-    return $Call.ByID(3147712346, kind, version);
+    return $Call.ByID(3910051973, kind, version);
 }
 
 /**
@@ -174,7 +174,7 @@ export function RefreshImageDuplicates(kind: string, version: common$0.GameVersi
  * — o dupe sem diálogo de arquivo: fonte é o próprio conteúdo do painel.
  */
 export function ReplicateImage(kind: string, id: string, targets: string[], version: common$0.GameVersion): $CancellablePromise<dto$0.BatchResult> {
-    return $Call.ByID(3890161600, kind, id, targets, version).then(($result: any) => {
+    return $Call.ByID(2380907603, kind, id, targets, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -184,7 +184,7 @@ export function ReplicateImage(kind: string, id: string, targets: string[], vers
  * "salvar em disco" do painel de imagem).
  */
 export function SaveImage(kind: string, id: string, format: string, destPath: string, version: common$0.GameVersion): $CancellablePromise<void> {
-    return $Call.ByID(2000813758, kind, id, format, destPath, version);
+    return $Call.ByID(3161745531, kind, id, format, destPath, version);
 }
 
 /**
@@ -193,7 +193,7 @@ export function SaveImage(kind: string, id: string, format: string, destPath: st
  * Devolve o caminho escrito; destRoot vazio usa mods/images.
  */
 export function SaveImageTo(kind: string, id: string, format: string, destRoot: string, version: common$0.GameVersion): $CancellablePromise<string> {
-    return $Call.ByID(3932212003, kind, id, format, destRoot, version);
+    return $Call.ByID(616724694, kind, id, format, destRoot, version);
 }
 
 /**
@@ -203,7 +203,7 @@ export function SaveImageTo(kind: string, id: string, format: string, destRoot: 
  * Devolve "" quando o usuário cancela.
  */
 export function SelectImageExportDir(): $CancellablePromise<string> {
-    return $Call.ByID(460440614);
+    return $Call.ByID(3660068573);
 }
 
 /**
@@ -215,7 +215,7 @@ export function SelectImageExportDir(): $CancellablePromise<string> {
  * Devolve "" quando o usuário cancela.
  */
 export function SelectImageFile(id: string, version: common$0.GameVersion): $CancellablePromise<string> {
-    return $Call.ByID(2114077367, id, version);
+    return $Call.ByID(3327941014, id, version);
 }
 
 /**
@@ -224,7 +224,7 @@ export function SelectImageFile(id: string, version: common$0.GameVersion): $Can
  * mods/images. Devolve "" quando o usuário cancela.
  */
 export function SelectImageSavePath(format: string, suggestedName: string, id: string, version: common$0.GameVersion): $CancellablePromise<string> {
-    return $Call.ByID(2512944851, format, suggestedName, id, version);
+    return $Call.ByID(1064574238, format, suggestedName, id, version);
 }
 
 // Private type creation functions

@@ -15,7 +15,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as uilog$0 from "../../internal/platform/uilog/models.js";
+import * as uilog$0 from "../../../../internal/platform/uilog/models.js";
 
 /**
  * ClearLog zera o histórico da sessão e avisa as exibições abertas
@@ -23,7 +23,7 @@ import * as uilog$0 from "../../internal/platform/uilog/models.js";
  * registro permanente da execução.
  */
 export function ClearLog(): $CancellablePromise<void> {
-    return $Call.ByID(4019205682);
+    return $Call.ByID(2772816757);
 }
 
 /**
@@ -31,7 +31,7 @@ export function ClearLog(): $CancellablePromise<void> {
  * semeadura da exibição no momento em que abre.
  */
 export function History(): $CancellablePromise<uilog$0.Entry[]> {
-    return $Call.ByID(840606593).then(($result: any) => {
+    return $Call.ByID(979179316).then(($result: any) => {
         return $$createType1($result);
     });
 }

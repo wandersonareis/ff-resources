@@ -2,7 +2,7 @@
 
 import { ArrowDownToLine, CheckCircle2, Loader2, X } from 'lucide-react';
 import { useEffect, useReducer, useState } from 'react';
-import { CheckNow, CurrentVersion, Restart } from '@/bindings/ffresources/apps/ffx/updateservice';
+import { CheckNow, CurrentVersion, Restart } from '@/bindings/ffresources/apps/ffx/backend/service/updateservice';
 import { Button } from '@/components/ui/button';
 import { parseError } from '@/lib/ffx/error-handler';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';

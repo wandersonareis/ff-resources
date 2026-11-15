@@ -10,6 +10,8 @@ import (
 	"ffresources/internal/platform/appupdater"
 	"ffresources/internal/platform/appwindows"
 
+	ffxservice "ffresources/apps/ffx/backend/service"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -44,7 +46,7 @@ func main() {
 		}
 	}()
 
-	appInstance := NewApp()
+	appInstance := ffxservice.NewApp()
 
 	// v2: wails.Run(&options.App{...}) combinava opções, janela e execução.
 	// v3 separa em application.New (app + serviços), Window.NewWithOptions
@@ -67,13 +69,13 @@ func main() {
 			Port: 9246,
 		},
 		// App (sessão/ciclo de vida) + serviços por domínio.
-		Services: appServices(appInstance),
+		Services: ffxservice.Services(appInstance),
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
 		// v2: OnBeforeClose. shouldQuit devolve true para PERMITIR a saída,
 		// o inverso do `prevent` do v2.
-		ShouldQuit: appInstance.shouldQuit,
+		ShouldQuit: func() bool { return ffxservice.ShouldQuit(appInstance) },
 		// v2: LogLevel logger.TRACE — o v3 não tem TRACE; Debug é o nível
 		// mais baixo disponível.
 		LogLevel: slog.LevelDebug,

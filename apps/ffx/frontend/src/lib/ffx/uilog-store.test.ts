@@ -22,7 +22,7 @@ const { History, ClearLog } = vi.hoisted(() => ({
   ClearLog: vi.fn(async () => undefined),
 }));
 
-vi.mock('../../../bindings/ffresources/apps/ffx/logservice', () => ({ History, ClearLog }));
+vi.mock('../../../bindings/ffresources/apps/ffx/backend/service/logservice', () => ({ History, ClearLog }));
 
 function entry(partial: Partial<Entry> = {}): Entry {
   return { time: Date.now(), level: 'info', message: 'linha', ...partial } as Entry;

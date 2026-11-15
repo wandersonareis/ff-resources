@@ -1,12 +1,13 @@
-package main
+package service
 
 import (
+	"ffresources/apps/ffx/backend/dialog"
 	"fmt"
 	"path/filepath"
 
 	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/service"
+	"ffresources/internal/shared/dto"
 )
 
 // VbfService cobre o navegador de .vbf (somente leitura).
@@ -126,7 +127,7 @@ func (s *VbfService) ExtractVbfImagesSelection(vbfPath string, paths []string, d
 // SelectVbfExtractDir abre o seletor nativo de pasta para o "Extrair
 // para…", começando em data/ do jogo. Devolve "" no cancelamento.
 func (s *VbfService) SelectVbfExtractDir() string {
-	return pickDirectory("Extrair para…",
+	return dialog.PickDirectory("Extrair para…",
 		filepath.Join(common.GameFilesRoot, common.DirData))
 }
 

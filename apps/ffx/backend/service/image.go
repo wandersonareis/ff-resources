@@ -1,12 +1,13 @@
-package main
+package service
 
 import (
+	"ffresources/apps/ffx/backend/dialog"
 	"fmt"
 	"path/filepath"
 
 	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/service"
+	"ffresources/internal/shared/dto"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -185,7 +186,7 @@ func pickImageExportDir() string {
 	// picker não abrir em pasta fallback (ImageWorkDir faz o mesmo nos
 	// pickers de arquivo).
 	_ = common.EnsurePathExists(defaultDir)
-	return pickDirectory("Escolher destino das imagens extraídas", defaultDir)
+	return dialog.PickDirectory("Escolher destino das imagens extraídas", defaultDir)
 }
 
 // SelectImageFile abre o seletor nativo para escolher um .dds a importar,
@@ -195,7 +196,7 @@ func pickImageExportDir() string {
 // de ser re-encodado para DXT, com perda e sem mips).
 // Devolve "" quando o usuário cancela.
 func (s *ImageService) SelectImageFile(id string, version common.GameVersion) string {
-	return pickFile(
+	return dialog.PickFile(
 		"Selecionar textura para importar",
 		services.ImageWorkDir(version, id),
 		application.FileFilter{DisplayName: "DDS (*.dds)", Pattern: "*.dds"},
@@ -211,7 +212,7 @@ func (s *ImageService) SelectImageSavePath(format, suggestedName, id string, ver
 	if format == "png" {
 		pattern, display = "*.png", "PNG (*.png)"
 	}
-	return pickSave("Salvar imagem", services.ImageWorkDir(version, id), suggestedName,
+	return dialog.PickSave("Salvar imagem", services.ImageWorkDir(version, id), suggestedName,
 		application.FileFilter{DisplayName: display, Pattern: pattern},
 		application.FileFilter{DisplayName: "Todos os arquivos (*.*)", Pattern: "*.*"},
 	)

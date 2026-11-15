@@ -13,13 +13,13 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as common$0 from "../../internal/families/ffx/profile/common/models.js";
+import * as common$0 from "../../../../internal/families/ffx/profile/common/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as services$0 from "../../internal/families/ffx/service/models.js";
+import * as services$0 from "../../../../internal/families/ffx/service/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as dto$0 from "../../internal/shared/dto/models.js";
+import * as dto$0 from "../../../../internal/shared/dto/models.js";
 
 /**
  * ApplyTextCollection aplica um lote de entradas editadas (DTO) de volta no
@@ -27,7 +27,7 @@ import * as dto$0 from "../../internal/shared/dto/models.js";
  * entrada aberta).
  */
 export function ApplyTextCollection(kind: string, version: common$0.GameVersion, c: dto$0.Collection): $CancellablePromise<void> {
-    return $Call.ByID(2465590149, kind, version, c);
+    return $Call.ByID(4097846082, kind, version, c);
 }
 
 /**
@@ -37,7 +37,7 @@ export function ApplyTextCollection(kind: string, version: common$0.GameVersion,
  * mods/ os binários tocados.
  */
 export function ApplyVbfTextCollection(vbfPath: string, kind: string, version: common$0.GameVersion, c: dto$0.Collection): $CancellablePromise<void> {
-    return $Call.ByID(4172511123, vbfPath, kind, version, c);
+    return $Call.ByID(1069730842, vbfPath, kind, version, c);
 }
 
 /**
@@ -45,7 +45,7 @@ export function ApplyVbfTextCollection(vbfPath: string, kind: string, version: c
  * coleções (utilitário de conferência do frontend).
  */
 export function CountChangedTexts(imported: dto$0.Collection, store: dto$0.Collection): $CancellablePromise<number> {
-    return $Call.ByID(1894029801, imported, store);
+    return $Call.ByID(1288122846, imported, store);
 }
 
 /**
@@ -57,7 +57,7 @@ export function CountChangedTexts(imported: dto$0.Collection, store: dto$0.Colle
  * estado final do modal.
  */
 export function ExportArtifactBatch(items: services$0.ExportPlanItem[], version: common$0.GameVersion, langs: string[], format: string): $CancellablePromise<string[]> {
-    return $Call.ByID(1787707150, items, version, langs, format).then(($result: any) => {
+    return $Call.ByID(2386287549, items, version, langs, format).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -67,7 +67,7 @@ export function ExportArtifactBatch(items: services$0.ExportPlanItem[], version:
  * em mods/edits. Devolve os caminhos escritos. langs nil/vazio = todos.
  */
 export function ExportEntry(kind: string, id: string, version: common$0.GameVersion, langs: string[]): $CancellablePromise<string[]> {
-    return $Call.ByID(1541815524, kind, id, version, langs).then(($result: any) => {
+    return $Call.ByID(1566613499, kind, id, version, langs).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -78,7 +78,7 @@ export function ExportEntry(kind: string, id: string, version: common$0.GameVers
  * chunk_00) ou caminho em disco. Gera models.Metadata no wailsjs.
  */
 export function GetMetadata(query: string): $CancellablePromise<dto$0.Metadata> {
-    return $Call.ByID(2036176459, query).then(($result: any) => {
+    return $Call.ByID(3283209132, query).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -89,7 +89,7 @@ export function GetMetadata(query: string): $CancellablePromise<dto$0.Metadata> 
  * (mods/edits/tag_frequency_<v>.json), quando o ranking existe.
  */
 export function GetTagCatalog(version: common$0.GameVersion): $CancellablePromise<services$0.TagCatalog> {
-    return $Call.ByID(1683401333, version).then(($result: any) => {
+    return $Call.ByID(382415666, version).then(($result: any) => {
         return $$createType2($result);
     });
 }
@@ -99,7 +99,7 @@ export function GetTagCatalog(version: common$0.GameVersion): $CancellablePromis
  * ids aceita ids ou keys (metadata.key/caminho resolvidos para id).
  */
 export function GetTextCollection(kind: string, version: common$0.GameVersion, ids: string[]): $CancellablePromise<dto$0.Collection> {
-    return $Call.ByID(2731460937, kind, version, ids).then(($result: any) => {
+    return $Call.ByID(2512842330, kind, version, ids).then(($result: any) => {
         return $$createType3($result);
     });
 }
@@ -109,7 +109,7 @@ export function GetTextCollection(kind: string, version: common$0.GameVersion, i
  * direto da memória — sem exportar para disco.
  */
 export function GetTextEntry(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<dto$0.FileEntry> {
-    return $Call.ByID(826447931, kind, id, version).then(($result: any) => {
+    return $Call.ByID(3585684130, kind, id, version).then(($result: any) => {
         return $$createType4($result);
     });
 }
@@ -119,7 +119,7 @@ export function GetTextEntry(kind: string, id: string, version: common$0.GameVer
  * DTO de volta no binário. Devolve o caminho lido.
  */
 export function ImportEntry(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<string[]> {
-    return $Call.ByID(3251706425, kind, id, version).then(($result: any) => {
+    return $Call.ByID(1272681766, kind, id, version).then(($result: any) => {
         return $$createType0($result);
     });
 }
@@ -129,7 +129,7 @@ export function ImportEntry(kind: string, id: string, version: common$0.GameVers
  * Devolve quantos textos em inglês mudaram em relação à store.
  */
 export function ImportFile(path: string, version: common$0.GameVersion): $CancellablePromise<number> {
-    return $Call.ByID(566964385, path, version);
+    return $Call.ByID(1685685272, path, version);
 }
 
 /**
@@ -138,7 +138,7 @@ export function ImportFile(path: string, version: common$0.GameVersion): $Cancel
  * agregadas no resumo.
  */
 export function ImportTranslated(version: common$0.GameVersion, kinds: string[]): $CancellablePromise<dto$0.ImportBatch> {
-    return $Call.ByID(2189922945, version, kinds).then(($result: any) => {
+    return $Call.ByID(1675116344, version, kinds).then(($result: any) => {
         return $$createType6($result);
     });
 }
@@ -148,7 +148,7 @@ export function ImportTranslated(version: common$0.GameVersion, kinds: string[])
  * (Code para arquivos, Name para exibição no picker).
  */
 export function ListLanguages(): $CancellablePromise<common$0.Language[]> {
-    return $Call.ByID(3280093965).then(($result: any) => {
+    return $Call.ByID(3186949534).then(($result: any) => {
         return $$createType8($result);
     });
 }
@@ -158,7 +158,7 @@ export function ListLanguages(): $CancellablePromise<common$0.Language[]> {
  * sidebar/tree. kind: events, objects ou macro.
  */
 export function ListTextEntries(kind: string, version: common$0.GameVersion): $CancellablePromise<services$0.EntrySummary[]> {
-    return $Call.ByID(72744971, kind, version).then(($result: any) => {
+    return $Call.ByID(585084528, kind, version).then(($result: any) => {
         return $$createType10($result);
     });
 }
@@ -168,7 +168,7 @@ export function ListTextEntries(kind: string, version: common$0.GameVersion): $C
  * de confirmação (sem aplicar nada).
  */
 export function PreviewImport(path: string, version: common$0.GameVersion): $CancellablePromise<dto$0.ImportSummary> {
-    return $Call.ByID(4130373507, path, version).then(($result: any) => {
+    return $Call.ByID(3841654048, path, version).then(($result: any) => {
         return $$createType11($result);
     });
 }
@@ -179,7 +179,7 @@ export function PreviewImport(path: string, version: common$0.GameVersion): $Can
  * que alimenta o diálogo de confirmação do Importar em lote.
  */
 export function PreviewImportTranslated(version: common$0.GameVersion, kinds: string[]): $CancellablePromise<dto$0.ImportBatch> {
-    return $Call.ByID(1973036677, version, kinds).then(($result: any) => {
+    return $Call.ByID(3989121014, version, kinds).then(($result: any) => {
         return $$createType6($result);
     });
 }
@@ -189,7 +189,7 @@ export function PreviewImportTranslated(version: common$0.GameVersion, kinds: st
  * existirem no original (o aviso destrutivo do frontend antes de salvar).
  */
 export function PreviewSavePrune(kind: string, version: common$0.GameVersion): $CancellablePromise<services$0.PrunedRowView[]> {
-    return $Call.ByID(177585297, kind, version).then(($result: any) => {
+    return $Call.ByID(1301018140, kind, version).then(($result: any) => {
         return $$createType13($result);
     });
 }
@@ -199,7 +199,7 @@ export function PreviewSavePrune(kind: string, version: common$0.GameVersion): $
  * ("Abrir até o arquivo"), resolvido mods-first como o app lê.
  */
 export function RevealEntryFile(kind: string, id: string, version: common$0.GameVersion): $CancellablePromise<void> {
-    return $Call.ByID(1889752903, kind, id, version);
+    return $Call.ByID(1384821948, kind, id, version);
 }
 
 /**
@@ -208,7 +208,7 @@ export function RevealEntryFile(kind: string, id: string, version: common$0.Game
  * das rows) e os totais da base para o "N rows em M arquivos" do modal.
  */
 export function SearchTextEntries(version: common$0.GameVersion, query: string): $CancellablePromise<services$0.TextSearchResponse> {
-    return $Call.ByID(2804091447, version, query).then(($result: any) => {
+    return $Call.ByID(3324761464, version, query).then(($result: any) => {
         return $$createType14($result);
     });
 }
@@ -218,7 +218,7 @@ export function SearchTextEntries(version: common$0.GameVersion, query: string):
  * (.json / .strings / .csv / .xlsx / .po). Devolve "" quando o usuário cancela.
  */
 export function SelectImportFile(): $CancellablePromise<string> {
-    return $Call.ByID(2853090985);
+    return $Call.ByID(1046493928);
 }
 
 /**
@@ -227,7 +227,7 @@ export function SelectImportFile(): $CancellablePromise<string> {
  * não paga a construção síncrona.
  */
 export function WarmTextSearch(version: common$0.GameVersion): $CancellablePromise<void> {
-    return $Call.ByID(2090461060, version);
+    return $Call.ByID(1398283541, version);
 }
 
 // Private type creation functions

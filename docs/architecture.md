@@ -149,6 +149,22 @@ app — só o necessário para o Wails. O resto é dividido por responsabilidade
 Os testes ficam junto do pacote que exercitam (`formats`, `service`, etc.);
 os caminhos para `bin/data` são relativos ao diretório do pacote.
 
+## Backend do FFX (`apps/ffx/backend`)
+
+O `main.go` fica na raiz do app (embeds, `application.New`, janela, menu e
+updater). O resto é dividido por responsabilidade:
+
+- **`backend/service`** — os serviços Wails por domínio: `App` (sessão e ciclo
+  de vida), `ConfigService`, `TextService`, `ImageService`, `VbfService`,
+  `LogService`, `UpdateService` e `WindowService`, mais o `Services()` que os
+  registra. Cada struct vira um módulo de bindings próprio.
+- **`backend/dialog`** — os seletores nativos (pasta, arquivo e "Salvar
+  como"), compartilhados pelos serviços.
+
+Os CODECS e o núcleo de dados do FFX continuam em `internal/families/ffx`
+(codecs, metadata service, profile): o app é a casca Wails que orquestra esse
+núcleo.
+
 ## UI do FF13
 
 A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) com:

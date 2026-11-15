@@ -1,13 +1,16 @@
-package main
+// Package service reúne os serviços Wails do app FFX: sessão/ciclo de vida,
+// configuração, texto, imagem, navegador .vbf, logs, updater e janelas. Cada
+// struct registrado em Services vira um módulo de bindings no frontend.
+package service
 
 import (
 	"context"
-	"ffresources/internal/platform/appupdater"
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/profile/interactions"
+	"ffresources/internal/families/ffx/service"
+	"ffresources/internal/platform/appupdater"
 	"ffresources/internal/shared/logging"
 	"ffresources/internal/shared/progress"
-	"ffresources/internal/families/ffx/service"
 	"fmt"
 	"log"
 	"os"
@@ -20,8 +23,8 @@ import (
 // edições não salvas e os poucos métodos que não pertencem a um domínio.
 //
 // No v2 ele era um god object com ~62 métodos bound de todos os domínios; no
-// v3 cada domínio virou um service próprio (service_config.go, service_vbf.go,
-// service_text.go, service_image.go) e só isto permanece aqui.
+// v3 cada domínio virou um service próprio (config.go, vbf.go, text.go,
+// image.go) e só isto permanece aqui.
 type App struct {
 	noticationService services.INotificationService
 
@@ -75,14 +78,14 @@ func NewApp() *App {
 	}
 }
 
-// appServices devolve o App e os serviços por domínio para registrar em
+// Services devolve o App e os serviços por domínio para registrar em
 // application.New. Cada struct registrado vira um módulo próprio de bindings
-// no frontend (bindings/ffresources/<service>).
+// no frontend (bindings/ffresources/apps/ffx/backend/service).
 //
 // É função de pacote e não método: métodos exportados de structs registrados
 // são expostos ao frontend, e registrar o app de novo a partir do JS não faz
 // sentido.
-func appServices(a *App) []application.Service {
+func Services(a *App) []application.Service {
 	return []application.Service{
 		application.NewService(a),
 		application.NewService(a.config),
@@ -93,6 +96,12 @@ func appServices(a *App) []application.Service {
 		application.NewService(&LogService{}),
 		application.NewService(&UpdateService{}),
 	}
+}
+
+// ShouldQuit expõe o gancho de ciclo de vida ao main do app (não vira
+// binding do frontend).
+func ShouldQuit(a *App) bool {
+	return a.shouldQuit()
 }
 
 // ServiceStartup substitui o OnStartup do v2: roda durante app.Run(), antes
@@ -268,67 +277,6 @@ func (a *App) ReadFileAsString(file string) string {
 	}
 	//fmt.Println(string(content))
 	return string(content)
-}
-
-// pickDirectory abre o seletor nativo de PASTA com o título e a pasta
-// inicial pedidos. Devolve "" fora do ciclo de vida do app e no cancelamento.
-//
-// O Wails v3 não tem OpenDirectoryDialog: escolher pasta é o OpenFileDialog
-// com CanChooseDirectories(true). CanChooseFiles precisa ser false EXPLÍCITO
-// porque o SetOptions do v3 liga de volta os dois desligados.
-func pickDirectory(title, defaultDirectory string) string {
-	app := application.Get()
-	if app == nil {
-		return ""
-	}
-	selection, err := app.Dialog.OpenFileWithOptions(&application.OpenFileDialogOptions{
-		Title:                title,
-		Directory:            defaultDirectory,
-		CanChooseFiles:       false,
-		CanChooseDirectories: true,
-	}).PromptForSingleSelection()
-	if err != nil {
-		return ""
-	}
-	return selection
-}
-
-// pickFile abre o seletor nativo de ARQUIVO com o título, a pasta inicial e
-// os filtros pedidos (pares DisplayName/Pattern, como no v2). Devolve "" fora
-// do ciclo de vida do app e no cancelamento.
-func pickFile(title, defaultDirectory string, filters ...application.FileFilter) string {
-	app := application.Get()
-	if app == nil {
-		return ""
-	}
-	selection, err := app.Dialog.OpenFileWithOptions(&application.OpenFileDialogOptions{
-		Title:     title,
-		Directory: defaultDirectory,
-		Filters:   filters,
-	}).PromptForSingleSelection()
-	if err != nil {
-		return ""
-	}
-	return selection
-}
-
-// pickSave abre o diálogo "Salvar como". filename é o nome sugerido;
-// devolve "" fora do ciclo de vida do app e no cancelamento.
-func pickSave(title, defaultDirectory, filename string, filters ...application.FileFilter) string {
-	app := application.Get()
-	if app == nil {
-		return ""
-	}
-	selection, err := app.Dialog.SaveFileWithOptions(&application.SaveFileDialogOptions{
-		Title:     title,
-		Directory: defaultDirectory,
-		Filename:  filename,
-		Filters:   filters,
-	}).PromptForSingleSelection()
-	if err != nil {
-		return ""
-	}
-	return selection
 }
 
 // WriteLog persiste um log enviado pelo frontend no MESMO sistema do

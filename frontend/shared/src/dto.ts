@@ -36,7 +36,7 @@ export interface Metadata {
   /** Layout do recurso (FF13: standard | mission | system). */
   layout?: string;
   /** idioma -> caminho físico (FF13: txt_XX.ztr). */
-  files?: Record<string, string>;
+  files?: Record<string, string | undefined>;
 }
 
 export interface FileEntry {

@@ -20,7 +20,7 @@ const { OpenWindow, CloseWindow, toastError } = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-vi.mock('../../../bindings/ffresources/apps/ffx/windowservice', () => ({ OpenWindow, CloseWindow }));
+vi.mock('../../../bindings/ffresources/apps/ffx/backend/service/windowservice', () => ({ OpenWindow, CloseWindow }));
 
 vi.mock('@/lib/ffx/toast-logged', () => ({
   loggedToast: Object.assign(vi.fn(), {

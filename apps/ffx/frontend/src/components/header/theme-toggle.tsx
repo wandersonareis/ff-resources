@@ -3,7 +3,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { SetTheme } from '@/bindings/ffresources/apps/ffx/configservice';
+import { SetTheme } from '@/bindings/ffresources/apps/ffx/backend/service/configservice';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
