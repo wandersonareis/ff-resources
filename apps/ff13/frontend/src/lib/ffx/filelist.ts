@@ -2,7 +2,7 @@ import {
   ListFilelistDir,
   ListFilelistRoots,
   ListFilelistZone,
-} from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+} from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 import type { FilelistNode, FilelistRoot } from './filelist-common';
 
 /**

@@ -36,7 +36,7 @@ import (
 	"sort"
 	"strings"
 
-	"ffresources/apps/ff13/parts"
+	"ffresources/apps/ff13/backend/parts"
 	"ffresources/internal/families/white/codecs/filelist"
 	"ffresources/internal/families/white/codecs/whitebin"
 )

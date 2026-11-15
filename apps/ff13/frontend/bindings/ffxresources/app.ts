@@ -6,7 +6,7 @@
 // configuração lê a MESMA instância do módulo, então a guarda do toggle de
 // mods continua funcionando.
 import { Application } from '@wailsio/runtime';
-import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 
 /** Flag de rascunho pendente (espelhada entre janelas do mesmo módulo). */
 let unsavedEdits = false;

@@ -8,9 +8,8 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
-	ffxcommon "ffresources/internal/families/ffx/profile/common"
+	ff13service "ffresources/apps/ff13/backend/service"
 	logging "ffresources/internal/shared/logging"
-	"ffresources/internal/shared/progress"
 )
 
 // Wails uses Go's `embed` package to embed the frontend files into the binary.
@@ -28,28 +27,14 @@ func init() {
 	application.RegisterEvent[string]("time")
 }
 
-// initWriteGuard aponta o GameFilesRoot da trava de escrita herdada do FFX
-// (CheckWritablePath) para a raiz de data/ do FF13. Sem isso, GameFilesRoot
-// fica no diretório do executável e o caminho do export — <raiz>/data/mods/edits/…
-// — é lido como "data\mods\…" (fora de mods/) e recusado no FINAL do batch:
-// o progresso mostra todas as unidades processadas, mas nenhum arquivo sai.
-// Com GameFilesRoot = <raiz>/data, o destino vira "mods/edits/…" e é aceito;
-// data/partN/ continua bloqueado (proteção preservada).
-func initWriteGuard() {
-	root, err := dataRoot("data")
-	if err != nil {
-		return
-	}
-	ffxcommon.SetGameFilesRoot(root)
-}
-
 // main function serves as the application's entry point. It initializes the application, creates a window,
 // and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
 // logs any error that might occur.
 func main() {
 	logging.SetAppName("ff13")
 	logging.Init()
-	initWriteGuard()
+	// Trava de escrita herdada do FFX: aponta o GameFilesRoot para data/.
+	ff13service.InitWriteGuard()
 
 	// Create a new Wails application by providing the necessary options.
 	// Variables 'Name' and 'Description' are for application metadata.
@@ -60,13 +45,7 @@ func main() {
 		Name:        "FF13 Resources Editor",
 		Description: "FINAL FANTASY XIII Trilogy Resources Editor",
 		Services: []application.Service{
-			application.NewService(&GreetService{}),
-			application.NewService(&FF13Service{
-				// Ponte de progresso: o export publica os snapshots nos
-				// eventos do wails (ProgressStart/Update/End) — sem global,
-				// sem canal de pacote.
-				progress: progress.NewEmitter(notifyWarn),
-			}),
+			application.NewService(ff13service.New()),
 			application.NewService(&WindowService{}),
 		},
 		Assets: application.AssetOptions{

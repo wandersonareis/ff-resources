@@ -2,7 +2,7 @@
 //
 // O GameApi fala (kind, version, id); o backend fala (part, ref). Este módulo
 // converte a version para a part e chama os bindings gerados pelo Wails.
-import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 
 const svc = ff13 as any;
 

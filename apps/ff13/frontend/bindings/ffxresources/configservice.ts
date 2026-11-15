@@ -5,7 +5,7 @@
 // (ConfigSnapshot/LocalConfig); os SETTERS do FFX não têm equivalente no
 // FF13 ainda, então ficam sem efeito: o painel de configuração do FF13 é
 // somente leitura e o store do frontend é otimista.
-import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 
 /** Snapshot do config (mesmo formato snake_case do DTO Go). */
 export function GetConfigSnapshot(): Promise<unknown> {

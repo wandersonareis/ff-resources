@@ -3,7 +3,7 @@
 // A UI do FFX chama TextService(kind, version, ...); o app FF13 expõe
 // FF13Service(part, ...). Este módulo traduz os dois mundos e mantém a UI
 // independente dos bindings gerados pelo Wails.
-import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+import * as ff13 from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 
 function partOf(version: unknown): string {
   const v = String(version ?? 'part1');

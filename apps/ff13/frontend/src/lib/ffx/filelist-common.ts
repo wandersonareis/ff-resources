@@ -1,7 +1,7 @@
 import type {
   FilelistNode,
   FilelistRoot,
-} from '@ff13-bindings/ffresources/apps/ff13/common/models';
+} from '@ff13-bindings/ffresources/apps/ff13/backend/common/models';
 
 /**
  * Contrato do navegador de filelist: os tipos do DTO (do backend) e as

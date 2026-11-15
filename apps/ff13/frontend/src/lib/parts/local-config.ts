@@ -1,4 +1,4 @@
-import { LocalConfig } from '@ff13-bindings/ffresources/apps/ff13/ff13service';
+import { LocalConfig } from '@ff13-bindings/ffresources/apps/ff13/backend/service/ff13service';
 
 /**
  * Config local do app (arquivo ff13.config.json): onde o jogo está instalado
@@ -20,10 +20,18 @@ let cached: LocalConfigSnapshot | null = null;
 export async function loadLocalConfig(): Promise<LocalConfigSnapshot> {
   if (cached) return cached;
   const raw = await LocalConfig();
+  const roots: Record<string, string> = {};
+  for (const [part, root] of Object.entries(raw.roots ?? {})) {
+    if (root !== undefined) roots[part] = root;
+  }
+  const binaries: Record<string, string> = {};
+  for (const [name, path] of Object.entries(raw.binaries ?? {})) {
+    if (path !== undefined) binaries[name] = path;
+  }
   cached = {
     path: raw.path ?? '',
-    roots: { ...(raw.roots ?? {}) },
-    binaries: { ...(raw.binaries ?? {}) },
+    roots,
+    binaries,
   };
   return cached;
 }
