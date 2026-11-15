@@ -66,7 +66,7 @@ tasks:
       Roda com a tag de build `e2e` — não entra no gate de unidade.
     cmds:
       - task: build:server
-      - go test -tags e2e ./backend/service -run TestTagCatalogE2E -v -count=1
+      - go test -tags e2e ../../internal/families/white/service -run TestTagCatalogE2E -v -count=1
 
   build:docker:
     summary: Builds a Docker image for server mode deployment

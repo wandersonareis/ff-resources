@@ -128,26 +128,32 @@ importador, mesmo quando ainda estão vazios. O app resolve a raiz do
 monorepo pelo `go.mod`; para rodar de outro lugar, `FF_RESOURCES_ROOT`,
 `FF_RESOURCES_DATA` e `FF_RESOURCES_MODS` sobrescrevem a raiz.
 
-## Backend do FF13 (`apps/ff13/backend`)
+## Núcleo do FF13 (`internal/families/white`)
 
-O `main.go` (e o `service_windows.go`, com o `WindowService`) fica na raiz do
-app — só o necessário para o Wails. O resto é dividido por responsabilidade:
+O app `apps/ff13` ficou como **casca Wails**: `main.go` (embeds/janela) e
+`backend/service` + `backend/dialog`. O núcleo do jogo mora em `internal`,
+espelhando o FFX:
 
-- **`backend/config`** — configuração de execução: raiz de dados/mods
-  (`bin/data`), raiz de instalação por part, snapshot do config local e
-  preferências (part ativa e `enableMods`). Não conhece formatos nem Wails.
-- **`backend/formats`** — conhecimento dos FORMATOS: unidades de texto
-  (`.ztr`/WPD), codec por idioma, leitura/gravação de texto, filelists
-  (descoberta, índice, árvore, união de zona, extração) e imagens (refs,
-  containers WPD/TRB, faces). Não conhece o serviço Wails.
-- **`backend/service`** — a ponte Wails (`FF13Service`): métodos chamados pelo
-  frontend, coleção cacheada de `data/partN`, export de artefatos, diálogos e
-  eventos. Orquestra `formats` e `config`.
-- **`backend/parts`** — particularidades de cada jogo (part1/part2/part3).
-- **`backend/common`** — DTOs compartilhados do navegador de filelist.
+- **`internal/families/white/codecs`** — codecs de formato (ZTR, WPD, filelist,
+  whitebin, imgb).
+- **`internal/families/white/profile/config`** — configuração de execução:
+  raiz de dados/mods (`bin/data`), raiz de instalação por part, snapshot do
+  config local e preferências (part ativa e `enableMods`).
+- **`internal/families/white/profile/parts`** — particularidades de cada jogo
+  (part1/part2/part3).
+- **`internal/families/white/profile/common`** — DTOs compartilhados do
+  navegador de filelist.
+- **`internal/families/white/service`** — orquestração: unidades de texto,
+  filelists (descoberta, índice, árvore, zona e extração), imagens (WPD/TRB/
+  faces), coleção cacheada de `data/partN`, export e catálogo de tags.
 
-Os testes ficam junto do pacote que exercitam (`formats`, `service`, etc.);
-os caminhos para `bin/data` são relativos ao diretório do pacote.
+No app, **`backend/service`** só registra o `FF13Service` (que EMBUTE o núcleo
+e promove os métodos de domínio para o binding), mais `Parts`, `LocalConfig`,
+os seletores de imagem e `InitWriteGuard`. **`backend/dialog`** abre os
+seletores nativos (pasta/arquivo/salvar), como no FFX.
+
+Os testes ficam junto do pacote que exercitam (no `internal`); os caminhos
+para `apps/ff13/bin/data` são relativos ao diretório do pacote.
 
 ## Backend do FFX (`apps/ffx/backend`)
 
@@ -180,7 +186,7 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   filelist: a árvore sai do índice (nada é decodificado), diretórios expandem sob
   demanda e **clicar numa folha de texto abre o editor**, com paridade com a
   seção `/data` (mesma unidade, mesmo rascunho compartilhado, save em
-  `mods/partN`). O backend manda só **dados** (o DTO `apps/ff13/backend/common`:
+  `mods/partN`). O backend manda só **dados** (o DTO `internal/families/white/profile/common`:
   `FilelistRoot`/`FilelistNode` com `kind`, `source`, `language`, `zone`,
   `mergeChain`, `unitId`, `text` e `container`); **toda a formatação de texto é
   do frontend** (`src/lib/ffx/filelist-common.ts` + `filelist-tree.ts`).
@@ -194,7 +200,7 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   antigo (erro "unidade de texto não encontrada").
 - O código do FF13 é dividido por **partN**, porque cada jogo tem as suas
   particularidades de filelist e de `/data`:
-  - backend `apps/ff13/backend/parts/{part1,part2,part3}.go`: pasta de dados
+  - backend `internal/families/white/profile/parts/{part1,part2,part3}.go`: pasta de dados
     (`white_data`/`alba_data`/`weiss_data`), diretórios de índice, game code e
     convenção do par filelist ↔ white bin;
   - frontend `src/lib/parts/{part1,part2,part3}.ts`: rótulos i18n, agrupamento
@@ -311,14 +317,14 @@ perde nada.
 
 Onde a regra vive:
 
-- **backend** `apps/ff13/backend/parts/kinds.go` — constantes dos kinds e
+- **backend** `internal/families/white/profile/parts/kinds.go` — constantes dos kinds e
   `textKindByPath`/`scenarioKindByPath`; `Part.TextKind` (a interface
   `parts.Part` ganhou o método) classifica cada unidade e `Part.Kinds`
   (`parts.Kinds`) lista os que a part serve;
 - **coleção** `DataEntry.Kind` + `white.TextUnitSummary.Kind` — o kind viaja
   até a UI junto do `Type` (que continua sendo a categoria de **conteúdo**, o
   ícone da linha; `kind` é o escopo — os dois eixos são independentes);
-- **export** `backend/service/export.go` — `ExportArtifactBatch` filtra por kind e o
+- **export** `internal/families/white/service/export.go` — `ExportArtifactBatch` filtra por kind e o
   artefato passa a se chamar `<kind>_all_localizations_<part>.<ext>`
   (`resident_all_localizations_part1.json`, `event_all_…`), então duas
   famílias nunca colidem no mesmo arquivo. O kind legado `ztr` continua

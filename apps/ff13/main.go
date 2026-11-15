@@ -46,7 +46,7 @@ func main() {
 		Description: "FINAL FANTASY XIII Trilogy Resources Editor",
 		Services: []application.Service{
 			application.NewService(ff13service.New()),
-			application.NewService(&WindowService{}),
+			application.NewService(&ff13service.WindowService{}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
