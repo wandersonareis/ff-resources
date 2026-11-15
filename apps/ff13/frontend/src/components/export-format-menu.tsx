@@ -30,7 +30,7 @@ export function ExportFormatMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-56 h-9 gap-1 px-2 text-sm">
+        <Button variant="ghost" size="sm" className="w-56 h-8 gap-1 px-2 text-xs">
           {EXPORT_FORMAT_LABELS[exportFormat]}
           <ChevronDown size={14} />
         </Button>
