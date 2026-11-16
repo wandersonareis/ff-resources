@@ -119,6 +119,7 @@ func buildDataCollection(part string) (*dataCollection, error) {
 		return nil, err
 	}
 	coll := &dataCollection{
+		entries: make([]DataEntry, 0, len(units)+len(others)),
 		units:   make(map[string]*TextUnit, len(units)),
 		content: map[string]*UnitContent{},
 	}
@@ -179,6 +180,11 @@ func (Service) ListDataEntries(part string) ([]DataEntry, error) {
 	coll, err := collectionFor(config.NormalizePart(part))
 	if err != nil {
 		return nil, err
+	}
+	if coll.entries == nil {
+		// Contrato do binding: lista vazia é [], nunca null (o frontend
+		// filtra/map direto e um null quebraria a árvore).
+		return []DataEntry{}, nil
 	}
 	return coll.entries, nil
 }

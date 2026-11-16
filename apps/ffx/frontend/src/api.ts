@@ -13,7 +13,7 @@ export const ffxApi: GameApi = {
   /* ---- texto ---- */
   getTagCatalog: (version) => text.GetTagCatalog(v(version)) as never,
   listEntries: async (kind, version) => {
-    const rows = (await text.ListTextEntries(kind, v(version))) as Array<{ id: string; key: string }>;
+    const rows = ((await text.ListTextEntries(kind, v(version))) ?? []) as Array<{ id: string; key: string }>;
     return rows.map((r) => ({ kind, id: r.id, key: r.key, type: kind, title: r.id }));
   },
   getEntry: (kind, id, version) => text.GetTextEntry(kind, id, v(version)) as never,

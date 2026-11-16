@@ -27,7 +27,7 @@ export const ff13Api: GameApi = {
     // A COLEÇÃO de data/partN: o inventário inteiro do que foi extraído. Só
     // as unidades de TEXTO viram folha — os arquivos fora do escopo ficam no
     // inventário do backend (o filelist é o lugar de buscar arquivo).
-    const entries = (await text.ListDataEntries(version)) as Array<{
+    const entries = ((await text.ListDataEntries(version)) ?? []) as Array<{
       id: string;
       label?: string;
       type?: string;

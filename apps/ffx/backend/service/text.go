@@ -80,9 +80,14 @@ func (s *TextService) ApplyVbfTextCollection(vbfPath, kind string, version commo
 // sidebar/tree. kind: events, objects ou macro.
 func (s *TextService) ListTextEntries(kind string, version common.GameVersion) ([]services.EntrySummary, error) {
 	if s.meta == nil {
-		return nil, fmt.Errorf("metadata service not initialized")
+		return []services.EntrySummary{}, fmt.Errorf("metadata service not initialized")
 	}
-	return s.meta.ListEntries(kind, version)
+	entries, err := s.meta.ListEntries(kind, version)
+	if entries == nil {
+		// Contrato do binding: vazio é [], nunca null.
+		entries = []services.EntrySummary{}
+	}
+	return entries, err
 }
 
 // SearchTextEntries busca em data/ e mods/ no idioma us. O backend mantém o
