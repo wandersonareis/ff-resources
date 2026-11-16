@@ -46,8 +46,10 @@
   --text-xs--line-height: calc(1rem - 2px);
   --text-sm: calc(0.875rem - 2px);
   --text-sm--line-height: calc(1.25rem - 2px);
-  --text-base: calc(1rem - 2px);
-  --text-base--line-height: calc(1.5rem - 2px);
+  /* Normal do app: 12px (o body também nasce em text-sm). Os textos
+     pequenos/legendas continuam em --text-xs (10px). */
+  --text-base: 12px;
+  --text-base--line-height: calc(1.25rem - 2px);
   --text-lg: calc(1.125rem - 2px);
   --text-lg--line-height: calc(1.75rem - 2px);
   --text-xl: calc(1.25rem - 2px);
