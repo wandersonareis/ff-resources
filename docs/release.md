@@ -59,8 +59,9 @@ task release:dry       # monta zips/hashes do FF13 sem publicar
 
 A script (`scripts/release.ps1`) builda os apps do lote com as versões,
 zipa cada um, monta a suite, gera `SHA256SUMS` e publica com
-`gh release create v<train>`. Use `-DryRun` para não publicar e
-`-SkipBuild` para reutilizar binários.
+`gh release create v<train>`. Use `-DryRun` para não publicar,
+`-Draft` para publicar como rascunho (não aparece no `/releases/latest` até
+publicar) e `-SkipBuild` para reutilizar binários.
 
 ## Dependência entre apps
 

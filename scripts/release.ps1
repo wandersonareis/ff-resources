@@ -29,6 +29,8 @@ param(
     [switch]$DryRun,
     # Marca o release como prerelease no GitHub.
     [switch]$Prerelease,
+    # Publica como draft (não aparece no /releases/latest até publicar).
+    [switch]$Draft,
     # Reutiliza os binários já buildados (não roda wails3 build).
     [switch]$SkipBuild
 )
@@ -40,6 +42,11 @@ $root = (Resolve-Path "$PSScriptRoot/..").Path
 # padrão). Localiza o executável uma vez; gh lê o remote sozinho.
 $gitExe = (Get-Command git -ErrorAction SilentlyContinue).Source
 if (-not $gitExe) { $gitExe = "C:\Program Files\Git\cmd\git.exe" }
+# O `gh` também exige o git no PATH (ele chama git internamente).
+$gitDir = Split-Path -Parent $gitExe
+if ($gitDir -and (($env:PATH -split ';') -notcontains $gitDir)) {
+    $env:PATH = "$gitDir;$env:PATH"
+}
 $releaseDir = Join-Path $root 'dist/release'
 $suiteDir = Join-Path $root 'dist/suite'
 $versionFile = Join-Path $root 'VERSION'
@@ -195,6 +202,7 @@ if (Test-Path -LiteralPath $notesFile) {
     $ghArgs += '--generate-notes'
 }
 if ($Prerelease) { $ghArgs += '--prerelease' }
+if ($Draft) { $ghArgs += '--draft' }
 
 Write-Host "release: publicando $tag"
 & gh @ghArgs
