@@ -1,10 +1,10 @@
 package writer
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/codecs/event"
-	"ffresources/internal/shared/artifact/json"
+	"ffresources/internal/families/ffx/profile/common"
 	"fmt"
 	"sort"
 )
@@ -30,7 +30,7 @@ func ExportEventsToJSON(ids []string) error {
 	if err != nil {
 		return err
 	}
-	path, err := json.EventsJSONPath(collection, version)
+	path, err := ffxpaths.EventsJSONPath(collection, version)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func ExportEventsToStrings(ids, langs []string) error {
 	if err != nil {
 		return err
 	}
-	path, err := json.EventsJSONPath(collection, version)
+	path, err := ffxpaths.EventsJSONPath(collection, version)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@
 // aqui resolve o caminho canônico .json; a serialização é do JSONFormatter
 // (formatter.go/shared.go) e a gravação da camada de arquivo padronizada
 // (formatters.NewWriter).
-package json
+package artifactpaths
 
 import (
 	"fmt"

@@ -1,6 +1,7 @@
 package strings_test
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"reflect"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ import (
 func sampleCollection() dto.Collection {
 	return dto.Collection{
 		"azit0000": {
-			Metadata: dto.NewEventMetadata("azit0000", common.GameVersionFFX).WithRowCount(2),
+			Metadata: ffxmetadata.NewEventMetadata("azit0000", common.GameVersionFFX).WithRowCount(2),
 			Rows: []dto.TextRow{
 				{
 					Index: 0,
@@ -31,7 +32,7 @@ func sampleCollection() dto.Collection {
 			},
 		},
 		"command": {
-			Metadata: dto.NewObjectMetadata(common.GameVersionFFX, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin").WithRowCount(2),
+			Metadata: ffxmetadata.NewObjectMetadata(common.GameVersionFFX, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin").WithRowCount(2),
 			Rows: []dto.TextRow{
 				{
 					Index: 0, Name: "name",
@@ -46,7 +47,7 @@ func sampleCollection() dto.Collection {
 			},
 		},
 		"chunk_00": {
-			Metadata: dto.NewMacroMetadata(common.GameVersionFFX, 0).WithRowCount(1),
+			Metadata: ffxmetadata.NewMacroMetadata(common.GameVersionFFX, 0).WithRowCount(1),
 			Rows: []dto.TextRow{
 				{
 					Index: 0, Name: "name",
@@ -120,14 +121,14 @@ func TestMarshalKeepsDivergentCopyLiteralAndCanonicalizesRefs(t *testing.T) {
 	const divergent = "Translation B for one copy"
 	bare := hash.Sum64Hex(original)
 	c := dto.Collection{
-		"aaa_divergent": {Metadata: dto.NewEventMetadata("aaa_divergent", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"aaa_divergent": {Metadata: ffxmetadata.NewEventMetadata("aaa_divergent", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare},
 			Text: map[string]string{"us": divergent}, Divergent: true,
 		}}},
-		"mmm_definition": {Metadata: dto.NewEventMetadata("mmm_definition", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"mmm_definition": {Metadata: ffxmetadata.NewEventMetadata("mmm_definition", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare}, Text: map[string]string{"us": definition},
 		}}},
-		"zzz_reference": {Metadata: dto.NewEventMetadata("zzz_reference", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"zzz_reference": {Metadata: ffxmetadata.NewEventMetadata("zzz_reference", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare}, Text: map[string]string{"us": original},
 		}}},
 	}
@@ -233,7 +234,7 @@ func TestEscapesRoundTrip(t *testing.T) {
 	tricky := "a=b\\c║d\nnewline here and  leading kept"
 	c := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": tricky}), Text: map[string]string{"us": tricky}},
 			},
@@ -258,7 +259,7 @@ func TestEscapesRoundTrip(t *testing.T) {
 func TestEmptyCellsSkipped(t *testing.T) {
 	c := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": "Hi"}), Text: map[string]string{"us": "Hi", "sp": ""}},
 			},
@@ -390,7 +391,7 @@ func TestStringsFormatPUARoundTrip(t *testing.T) {
 	text := decoded + spaceDecoded
 	collection := dto.Collection{
 		"test0000": {
-			Metadata: dto.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(1),
+			Metadata: ffxmetadata.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(1),
 			Rows: []dto.TextRow{{
 				Index: 0,
 				Hash:  hash.Texts(map[string]string{"us": text}),
@@ -430,7 +431,7 @@ func TestMarshalV2SourceTargetAsLines(t *testing.T) {
 	target := "Tradução║target = x\ny"
 	collection := dto.Collection{
 		"test0000": {
-			Metadata: dto.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(1),
+			Metadata: ffxmetadata.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(1),
 			Rows: []dto.TextRow{{
 				Index:  0,
 				Hash:   hash.Texts(map[string]string{"us": text}),
@@ -502,7 +503,7 @@ func TestV2SourceTargetRoundTrip(t *testing.T) {
 	target := "Tradução║target = x\ny"
 	collection := dto.Collection{
 		"test0000": {
-			Metadata: dto.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(2),
+			Metadata: ffxmetadata.NewEventMetadata("test0000", common.GameVersionFFX).WithRowCount(2),
 			Rows: []dto.TextRow{
 				{
 					Index:  0,
@@ -562,7 +563,7 @@ func TestV2SourceTargetRoundTrip(t *testing.T) {
 func TestV2LanguageOrderAlphabeticalTargetLast(t *testing.T) {
 	collection := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
 			Rows: []dto.TextRow{{
 				Index: 0,
 				Hash: hash.Texts(map[string]string{
@@ -605,7 +606,7 @@ func TestV2LanguageOrderAlphabeticalTargetLast(t *testing.T) {
 func TestV2TargetLineRules(t *testing.T) {
 	collection := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(3),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(3),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": "Hello"}), Text: map[string]string{"us": "Hello"}, Source: "Hello", Target: "Ola"},
 				{Index: 1, Hash: hash.Texts(map[string]string{"us": "Same"}), Text: map[string]string{"us": "Same"}, Source: "Same", Target: "Same"},
@@ -641,7 +642,7 @@ func TestV2TargetLineRules(t *testing.T) {
 func TestV2LangsFilter(t *testing.T) {
 	collection := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX).WithRowCount(1),
 			Rows: []dto.TextRow{{
 				Index:  0,
 				Hash:   hash.Texts(map[string]string{"us": "Hello", "sp": "Hola"}),

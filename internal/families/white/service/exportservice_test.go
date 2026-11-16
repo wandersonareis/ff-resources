@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	ffxcommon "ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/white/codecs/wpd"
 	fmtstrings "ffresources/internal/shared/artifact/strings"
 	"ffresources/internal/shared/hash"
@@ -497,40 +496,13 @@ func countUnescapedSep(s string) int {
 }
 
 // TestExportWritesIntoDataModsEdits reproduz o layout real do app: o
-// executável fica na raiz e os dados em <raiz>/data, com as mods em
-// <raiz>/data/mods. Nesse layout, a trava CheckWritablePath (GameFilesRoot
-// = <raiz>, o padrão herdado do FFX) recusa "data\mods\edits\…" e o export
-// falha NO FINAL — progresso cheio, zero arquivos. O startup chama
-// InitWriteGuard (GameFilesRoot vira <raiz>/data) e o destino passa a ser
-// "mods/edits/…": aceito, e data/partN/ continua bloqueado.
+// executável fica na raiz e os dados em <raiz>/data/mods. O export deve
+// gravar o artefato em <raiz>/data/mods/edits.
 func TestExportWritesIntoDataModsEdits(t *testing.T) {
 	root := t.TempDir()
 	data := filepath.Join(root, "data")
 	t.Setenv("FF_RESOURCES_DATA", data)
 	t.Setenv("FF_RESOURCES_MODS", filepath.Join(data, "mods"))
-
-	prev := ffxcommon.GameFilesRoot
-	t.Cleanup(func() { ffxcommon.GameFilesRoot = prev })
-
-	// Estado "antes do fix": GameFilesRoot = <raiz> (dir do executável).
-	ffxcommon.GameFilesRoot = root
-	target := filepath.Join(data, "mods", "edits", "text_all_localizations_part1.json")
-	if err := ffxcommon.CheckWritablePath(target); err == nil {
-		t.Fatal("sem InitWriteGuard, CheckWritablePath deveria recusar data/mods/edits")
-	}
-
-	// O startup do app: GameFilesRoot vira <raiz>/data.
-	InitWriteGuard()
-	if ffxcommon.GameFilesRoot != filepath.Clean(data) {
-		t.Fatalf("GameFilesRoot: %q, quer %q", ffxcommon.GameFilesRoot, data)
-	}
-	if err := ffxcommon.CheckWritablePath(target); err != nil {
-		t.Fatalf("após InitWriteGuard, mods/edits deve ser gravável: %v", err)
-	}
-	// A proteção continua: data/partN/ segue somente leitura.
-	if err := ffxcommon.CheckWritablePath(filepath.Join(data, "part1", "x.ztr")); err == nil {
-		t.Fatal("data/partN/ deveria continuar bloqueado")
-	}
 
 	ids := []string{"id1"}
 	writeFile(t, filepath.Join(data, "part1", "txtres", "txtres_us.ztr"),
@@ -564,10 +536,6 @@ func TestExportRealDataSmoke(t *testing.T) {
 	}
 	t.Setenv("FF_RESOURCES_DATA", data)
 	t.Setenv("FF_RESOURCES_MODS", filepath.Join(data, "mods"))
-
-	prev := ffxcommon.GameFilesRoot
-	t.Cleanup(func() { ffxcommon.GameFilesRoot = prev })
-	InitWriteGuard()
 
 	var svc Service
 	units, err := svc.ListTextUnits("part1")

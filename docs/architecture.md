@@ -153,9 +153,9 @@ espelhando o FFX:
   o White implementa).
 
 No app, **`backend/service`** só registra o `FF13Service` (que EMBUTE o núcleo
-e promove os métodos de domínio para o binding), mais `Parts`, `LocalConfig`,
-os seletores de imagem e `InitWriteGuard`. **`backend/dialog`** abre os
-seletores nativos (pasta/arquivo/salvar), como no FFX.
+e promove os métodos de domínio para o binding), mais `Parts`, `LocalConfig`
+e os seletores de imagem. **`backend/dialog`** abre os seletores nativos
+(pasta/arquivo/salvar), como no FFX.
 
 Os testes ficam junto do pacote que exercitam (no `internal`); os caminhos
 para `apps/ff13/bin/data` são relativos ao diretório do pacote.
@@ -174,7 +174,28 @@ updater). O resto é dividido por responsabilidade:
 
 Os CODECS e o núcleo de dados do FFX continuam em `internal/families/ffx`
 (codecs, metadata service, profile): o app é a casca Wails que orquestra esse
-núcleo.
+núcleo. O `profile/metadata` monta as chaves canônicas dos artefatos (event/
+objects/help/macro/image) e o `artifactpaths` resolve os caminhos `edits/` —
+ambos exclusivos do FFX.
+
+## Serialização compartilhada (DTO + Options)
+
+`internal/shared` é **neutro**: não importa família nenhuma. Os apps/famílias
+entregam o `dto.Collection` pronto e um `formatters.Options` por chamada:
+
+- **idiomas** (`SourceLang`, `TargetLang`, `Languages`): cada família fornece
+  o seu catálogo; o shared não conhece `us`/`br`/nenhum jogo;
+- **identidade** (`Identity`): `Index` (FFX: `Index+Name`, ordem importa) ou
+  `Key` (FF13: `TextRow.Key`/`Name`, permite paralelizar);
+- **dedup** (`DisableDedup`, default ligado): o colapso de texto repetido em
+  `$hash` vale para todos; a preferência do appmenu/CLI/futuro seletor entra
+  pelo orquestrador e `DedupEnabled()` devolve `false` quando desligado.
+- `CheckWrite`: a família injeta a própria trava de escrita (o FFX passa
+  `common.CheckWritablePath`; o White não precisa).
+
+Campos exclusivos de um jogo (`Character`/`Kind`, `Metadata.Files`,
+`ImageEntry.AssetPath/DDSData/...`, `Vbf*`) ficam **opcionais no DTO único**;
+os serializadores só os copiam quando existem.
 
 ## UI do FF13
 

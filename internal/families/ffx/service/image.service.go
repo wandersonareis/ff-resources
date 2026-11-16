@@ -2,15 +2,16 @@ package services
 
 import (
 	"encoding/base64"
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/ddsphyre"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/platform/uilog"
+	"ffresources/internal/shared/dto"
 )
 
 // imageModsPath devolve o caminho ABSOLUTO do container em mods/
@@ -70,7 +71,7 @@ func (s *MetadataService) getImage(kind, id string, version common.GameVersion, 
 		return dto.ImageEntry{}, err
 	}
 	entry := dto.ImageEntry{
-		Metadata:       dto.NewImageMetadata(id, version),
+		Metadata:       ffxmetadata.NewImageMetadata(id, version),
 		Source:         r.Source,
 		Format:         r.Format,
 		Width:          r.Width,
@@ -125,7 +126,7 @@ func duplicatesFor(id string, version common.GameVersion) (dto.ImageDuplicates, 
 	for _, c := range copies {
 		out.Duplicates = append(out.Duplicates, dto.ImageDuplicate{
 			ID:        c.ID,
-			Key:       dto.NewImageMetadata(c.ID, version).Key,
+			Key:       ffxmetadata.NewImageMetadata(c.ID, version).Key,
 			Modded:    c.InMods,
 			Identical: c.Identical,
 		})

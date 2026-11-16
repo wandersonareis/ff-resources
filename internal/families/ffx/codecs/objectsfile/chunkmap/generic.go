@@ -1,14 +1,15 @@
 package chunkmap
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"path/filepath"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
 	ffxencoding "ffresources/internal/families/ffx/codecs/encoding"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/objectsfile"
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 )
 
@@ -33,7 +34,7 @@ func HasChunkmapSchema(version common.GameVersion, patternPath string) bool {
 func BuildCollectionFromChunks(version common.GameVersion, patternPath string, rows []dto.TextRow) (dto.Collection, error) {
 	key := strings.TrimSuffix(filepath.Base(patternPath), filepath.Ext(patternPath))
 	entry := dto.FileEntry{
-		Metadata: dto.NewObjectMetadata(
+		Metadata: ffxmetadata.NewObjectMetadata(
 			version,
 			filepath.ToSlash(filepath.Dir(patternPath)),
 			filepath.Base(patternPath),

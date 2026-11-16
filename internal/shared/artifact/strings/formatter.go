@@ -8,8 +8,8 @@
 package strings
 
 import (
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/artifact"
+	"ffresources/internal/shared/dto"
 )
 
 // StringsFormatter formata a Collection textual para o formato Strings.
@@ -38,10 +38,20 @@ func (StringsFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, 
 	return MarshalLangs(c, langs)
 }
 
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func (StringsFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return MarshalOptions(c, opts)
+}
+
 // Unmarshal parseia o texto de volta para a Collection (DTO),
-// com rows ordenados por Index para reconstrução posicional do binário.
+// com rows ordenados conforme a identidade do documento.
 func (StringsFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 	return Unmarshal(data)
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func (StringsFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return unmarshalOptions(data, opts)
 }
 
 // StringsNoDedupFormatter serializa SEM o dedup de conteúdo: todo texto
@@ -67,10 +77,21 @@ func (StringsNoDedupFormatter) MarshalLangs(c dto.Collection, langs []string) ([
 	return MarshalNoDedupLangs(c, langs)
 }
 
+// MarshalOptions serializa SEM dedup, com o perfil neutro.
+func (StringsNoDedupFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	opts.DisableDedup = true
+	return MarshalOptions(c, opts)
+}
+
 // Unmarshal parseia o texto de volta para a Collection (DTO) — o mesmo
 // parse do StringsFormatter (as refs "$hash" saem expandidas).
 func (StringsNoDedupFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 	return Unmarshal(data)
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func (StringsNoDedupFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return unmarshalOptions(data, opts)
 }
 
 func init() {

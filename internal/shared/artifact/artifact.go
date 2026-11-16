@@ -1,23 +1,24 @@
 // Artifact Writer/Reader: a camada de ARQUIVO dos formatos, padronizada
 // sobre a interface Formatter (byte-level). O construtor recebe os
-// parâmetros (formatter, collection, caminho, idiomas) e devolve uma
+// parâmetros (formatter, collection, caminho, opções) e devolve uma
 // instância PRONTA; o chamador decide QUANDO gravar/lêr e como lidar com
 // os erros — Write/Read não recebem nada.
 //
 // A gravação/leitura é a mesma para TODOS os formatos (json, strings,
 // csv, xlsx e variantes no-dedup): o byte-level é do Formatter recebido,
 // tipicamente vindo do registry (Get). Naming continua decisão do
-// chamador — os helpers *JSONPath resolvem o caminho canônico e SwapExt
-// troca a extensão para o formato pedido.
+// chamador — os helpers de caminho vivem na família (ffx/artifactpaths) e
+// SwapExt troca a extensão para o formato pedido.
 package formatters
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/dto"
+	logging "ffresources/internal/shared/logging"
 )
 
 // Writer é o artefato pronto para gravar: serializa a Collection no
@@ -34,16 +35,57 @@ type Reader interface {
 	Read() (dto.Collection, error)
 }
 
-// NewWriter constrói o gravador do artefato: recebe o formatter (registry),
-// a Collection pronta, o caminho de saída e os idiomas (nil/vazio = todos).
-func NewWriter(f Formatter, c dto.Collection, path string, langs []string) Writer {
-	return &artifactWriter{f: f, c: c, path: path, langs: langs}
+// OptionsMarshaler é implementado pelos formatters que entendem as opções
+// neutras (idiomas, identidade, dedup).
+type OptionsMarshaler interface {
+	MarshalOptions(c dto.Collection, opts Options) ([]byte, error)
 }
 
-// NewReader constrói o leitor do artefato: recebe o formatter (registry) e
-// o caminho do arquivo a parsear.
-func NewReader(f Formatter, path string) Reader {
-	return &artifactReader{f: f, path: path}
+// OptionsUnmarshaler é o equivalente na leitura.
+type OptionsUnmarshaler interface {
+	UnmarshalOptions(data []byte, opts Options) (dto.Collection, error)
+}
+
+// NewWriter constrói o gravador do artefato. O 4º argumento aceita Options
+// (perfil completo) ou []string (filtro de idiomas, contrato legado).
+func NewWriter(f Formatter, c dto.Collection, path string, optsOrLangs any) Writer {
+	return &artifactWriter{f: f, c: c, path: path, opts: optionsOf(optsOrLangs)}
+}
+
+// NewWriterLangs mantém o contrato antigo (só filtro de idiomas).
+func NewWriterLangs(f Formatter, c dto.Collection, path string, langs []string) Writer {
+	opts := DefaultOptions()
+	opts.Languages = langs
+	return NewWriter(f, c, path, opts)
+}
+
+// NewReader constrói o leitor do artefato. O 3º argumento é opcional e aceita
+// Options (perfil completo; default neutro).
+func NewReader(f Formatter, path string, optsAny ...any) Reader {
+	opts := DefaultOptions()
+	if len(optsAny) > 0 {
+		opts = optionsOf(optsAny[0])
+	}
+	return &artifactReader{f: f, path: path, opts: opts}
+}
+
+// NewReaderDefault mantém o contrato antigo (sem opções).
+func NewReaderDefault(f Formatter, path string) Reader {
+	return NewReader(f, path, DefaultOptions())
+}
+
+// optionsOf normaliza o argumento legado/perfil.
+func optionsOf(v any) Options {
+	switch t := v.(type) {
+	case Options:
+		return t
+	case []string:
+		opts := DefaultOptions()
+		opts.Languages = t
+		return opts
+	default:
+		return DefaultOptions()
+	}
 }
 
 // SwapExt troca a extensão do caminho pela do formatter — o naming
@@ -55,25 +97,39 @@ func SwapExt(f Formatter, path string) string {
 
 // artifactWriter é a implementação única de Writer para todos os formatos.
 type artifactWriter struct {
-	f     Formatter
-	c     dto.Collection
-	path  string
-	langs []string
+	f    Formatter
+	c    dto.Collection
+	path string
+	opts Options
 }
 
-// Write serializa (MarshalLangs com o filtro de idiomas) e grava no disco.
+// Write serializa (respeitando as opções) e grava no disco.
 func (w *artifactWriter) Write() (string, error) {
 	if len(w.c) == 0 {
 		return "", fmt.Errorf("no text data to export")
 	}
-	raw, err := w.f.MarshalLangs(w.c, w.langs)
+	var raw []byte
+	var err error
+	if om, ok := w.f.(OptionsMarshaler); ok {
+		raw, err = om.MarshalOptions(w.c, w.opts)
+	} else {
+		raw, err = w.f.MarshalLangs(w.c, w.opts.Languages)
+	}
 	if err != nil {
 		return "", err
 	}
-	if err := common.WriteBytesToFile(w.path, raw); err != nil {
+	if w.opts.CheckWrite != nil {
+		if err := w.opts.CheckWrite(w.path); err != nil {
+			return "", fmt.Errorf("error writing %s file %s: %w", w.f.Extension(), w.path, err)
+		}
+	}
+	if err := os.MkdirAll(filepath.Dir(w.path), 0o755); err != nil {
+		return "", fmt.Errorf("error creating directory for %s: %w", w.path, err)
+	}
+	if err := os.WriteFile(w.path, raw, 0o644); err != nil {
 		return "", fmt.Errorf("error writing %s file %s: %w", w.f.Extension(), w.path, err)
 	}
-	common.LogVerbose("Exported %s artifact: %s", w.f.Extension(), w.path)
+	logging.Verbose("Exported %s artifact: %s", w.f.Extension(), w.path)
 	return w.path, nil
 }
 
@@ -81,15 +137,21 @@ func (w *artifactWriter) Write() (string, error) {
 type artifactReader struct {
 	f    Formatter
 	path string
+	opts Options
 }
 
-// Read lê o arquivo e parseia (Unmarshal) de volta para a Collection.
+// Read lê o arquivo e parseia de volta para a Collection.
 func (r *artifactReader) Read() (dto.Collection, error) {
-	raw, err := common.ReadFile(r.path)
+	raw, err := os.ReadFile(r.path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load %s file %s: %w", r.f.Extension(), r.path, err)
 	}
-	c, err := r.f.Unmarshal(raw)
+	var c dto.Collection
+	if ou, ok := r.f.(OptionsUnmarshaler); ok {
+		c, err = ou.UnmarshalOptions(raw, r.opts)
+	} else {
+		c, err = r.f.Unmarshal(raw)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to load %s file %s: %w", r.f.Extension(), r.path, err)
 	}

@@ -299,6 +299,7 @@ func exportEntryRows(part string, unit *TextUnit) (dto.FileEntry, error) {
 		}
 		rows = append(rows, dto.TextRow{
 			Index:  i,
+			Key:    key,
 			Name:   key,
 			Text:   texts,
 			Hash:   hash.Texts(texts),
@@ -317,6 +318,19 @@ func exportEntryRows(part string, unit *TextUnit) (dto.FileEntry, error) {
 	}, nil
 }
 
+// artifactOptions devolve o perfil de serialização do White: identidade por
+// chave (o ID do ZTR), ordem não semântica, fonte e alvo "us" e dedup ligado.
+func artifactOptions(langs []string) formatters.Options {
+	return formatters.Options{
+		SourceLang:         "us",
+		TargetLang:         "br",
+		TargetLanguageName: "pt-BR",
+		Languages:          langs,
+		Identity:           dto.IdentityKey,
+		Ordered:            false,
+	}
+}
+
 // writeArtifact grava a Collection no caminho canônico do escopo, com a
 // extensão do formato pedido.
 func writeArtifact(part, kind string, ids []string, c dto.Collection, format string, langs []string) (string, error) {
@@ -328,7 +342,7 @@ func writeArtifact(part, kind string, ids []string, c dto.Collection, format str
 	if err != nil {
 		return "", err
 	}
-	return formatters.NewWriter(f, c, formatters.SwapExt(f, path), langs).Write()
+	return formatters.NewWriter(f, c, formatters.SwapExt(f, path), artifactOptions(langs)).Write()
 }
 
 // exportArtifactPath resolve o caminho do artefato: a pasta edits/ fica na

@@ -23,22 +23,22 @@ package services
 // de 64 MiB do decode em memória (vídeos/executáveis saem inteiros).
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/ddsphyre"
 	"ffresources/internal/families/ffx/codecs/helpfile"
 	"ffresources/internal/families/ffx/codecs/vbf"
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/platform/uilog"
 	"ffresources/internal/shared/artifact"
-	jsonfmt "ffresources/internal/shared/artifact/json"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/logging"
 	"ffresources/internal/shared/progress"
-	"ffresources/internal/platform/uilog"
 )
 
 // vbfDefaultExtractRoot é o destino de "Extrair binário": a árvore data/
@@ -604,7 +604,7 @@ func writeVbfExport(kind string, version common.GameVersion, ids []string, c dto
 		return nil, fmt.Errorf("formatter %s não registrado", format)
 	}
 	write := func(col dto.Collection, jsonPath string) (string, error) {
-		return formatters.NewWriter(f, col, formatters.SwapExt(f, jsonPath), langs).Write()
+		return formatters.NewWriter(f, col, formatters.SwapExt(f, jsonPath), common.ArtifactOptions(langs)).Write()
 	}
 
 	switch kind {
@@ -620,7 +620,7 @@ func writeVbfExport(kind string, version common.GameVersion, ids []string, c dto
 		// intra-arquivo = self-contained).
 		var paths []string
 		for _, key := range c.SortedKeys() {
-			jp, perr := jsonfmt.ObjectsJSONPath(key, version)
+			jp, perr := ffxpaths.ObjectsJSONPath(key, version)
 			if perr != nil {
 				return nil, perr
 			}
@@ -639,7 +639,7 @@ func writeVbfExport(kind string, version common.GameVersion, ids []string, c dto
 		written, werr := write(c, p)
 		return []string{written}, werr
 	case KindHelp:
-		p, err := jsonfmt.HelpJSONPath(version, "")
+		p, err := ffxpaths.HelpJSONPath(version, "")
 		if err != nil {
 			return nil, err
 		}

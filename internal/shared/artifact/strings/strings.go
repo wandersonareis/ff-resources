@@ -56,7 +56,7 @@ import (
 	"strconv"
 	stdstrings "strings"
 
-	"ffresources/internal/families/ffx/profile/common"
+	formatters "ffresources/internal/shared/artifact"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 )
@@ -68,13 +68,9 @@ const extensionStrings = ".strings"
 // o parser escolhe a gramática: ausente = 1 (legado), 2 = par por linha.
 const formatVersion = 2
 
-// sourceLang/targetLang são os códigos do par CAT no formato v2 — declarados
+// opts.Source()/opts.Target() são os códigos do par CAT no formato v2 — declarados
 // no header de cada bloco e usados pelo parser para saber qual linha é o
 // pristine (fonte) e qual é a tradução (alvo).
-var (
-	sourceLang = common.DefaultLocalization
-	targetLang = common.DefaultTargetLocalization
-)
 
 // keyValueSep liga a chave ao hash de identidade (U+2566).
 const keyValueSep = "║"
@@ -82,7 +78,12 @@ const keyValueSep = "║"
 // Marshal organiza a Collection pronta no formato Strings (todos os idiomas).
 // Recebe apenas DTO pronto; não toca no domínio nem muta a entrada.
 func Marshal(c dto.Collection) ([]byte, error) {
-	return MarshalLangs(c, nil)
+	return MarshalOptions(c, formatters.DefaultOptions())
+}
+
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return marshalOptions(c, opts)
 }
 
 // MarshalNoDedup serializa SEM o dedup de conteúdo: todo texto sai literal,
@@ -91,13 +92,18 @@ func Marshal(c dto.Collection) ([]byte, error) {
 // volta ao texto completo. O campo de identidade (hash da row) continua
 // presente, como no Marshal.
 func MarshalNoDedup(c dto.Collection) ([]byte, error) {
-	return marshalLangsOpt(c, nil, false)
+	opts := formatters.DefaultOptions()
+	opts.DisableDedup = true
+	return marshalOptions(c, opts)
 }
 
 // MarshalNoDedupLangs é MarshalNoDedup com o filtro de idiomas
 // (nil/vazio = todos).
 func MarshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalLangsOpt(c, langs, false)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	opts.DisableDedup = true
+	return marshalOptions(c, opts)
 }
 
 // MarshalLangs organiza a Collection pronta no formato Strings contendo
@@ -105,14 +111,15 @@ func MarshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
 // não-vazio MAIS a linha do idioma alvo quando há tradução, com chaves e
 // rows ordenadas (saída determinística).
 func MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalLangsOpt(c, langs, true)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return marshalOptions(c, opts)
 }
 
 // marshalLangsOpt é o motor único do Marshal/MarshalNoDedup: dedup=false
 // desliga só o colapso do TEXTO repetido em ref "$hash" — o hash de
 // identidade da linha permanece em qualquer modo. A saída é sempre v2.
-func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, error) {
-	filter := langSet(langs)
+func marshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
 	var out stdstrings.Builder
 	seen := make(map[string]string) // hashHex bare -> texto (só idioma fonte)
 	for _, k := range c.SortedKeys() {
@@ -126,17 +133,16 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 		out.WriteString(" version=")
 		out.WriteString(strconv.Itoa(formatVersion))
 		out.WriteString(" source=")
-		out.WriteString(sourceLang)
+		out.WriteString(opts.Source())
 		out.WriteString(" target=")
-		out.WriteString(targetLang)
+		out.WriteString(opts.Target())
 		out.WriteString("*/\n")
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
+		rows := opts.SortedRows(entry.Rows)
 		id := lineID(entry.Metadata, k)
 		for _, row := range rows {
-			sourceAllowed := filter == nil || filter[sourceLang]
-			source := row.Text[sourceLang]
+			name := formatters.RowIdentityName(row, opts)
+			sourceAllowed := opts.Includes(opts.Source())
+			source := row.Text[opts.Source()]
 			if source == "" {
 				source = row.Source
 			}
@@ -144,14 +150,14 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 			// Linhas dos idiomas de jogo em ORDEM ALFABÉTICA: o próprio
 			// idioma fonte entra na posição dele (o texto pode vir de
 			// row.Source quando o mapa Text não o traz).
-			langs := rowLangs(row, filter)
+			langs := rowLangs(row, opts)
 			if sourceAllowed && source != "" {
-				langs = append(langs, sourceLang)
+				langs = append(langs, opts.Source())
 				sort.Strings(langs)
 			}
 
 			for _, lang := range langs {
-				if lang == sourceLang {
+				if lang == opts.Source() {
 					// Linha do idioma FONTE: o pristine de data/ no próprio
 					// valor — é o "source" do par. Só esta linha colapsa em
 					// ref "$hash" (dedup de conteúdo do pristine).
@@ -159,7 +165,7 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 					if h == "" {
 						h = hash.Sum64Hex(source)
 					}
-					writeLine(&out, id, row, lang, hash.Prefix(h), dedupValue(dedup, seen, h, source, row))
+					writeLine(&out, id, name, row, lang, hash.Prefix(h), dedupValue(opts.DedupEnabled(), seen, h, source, row))
 					continue
 				}
 				text := row.Text[lang]
@@ -170,7 +176,7 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 				if h == "" {
 					h = hash.Sum64Hex(text)
 				}
-				writeLine(&out, id, row, lang, hash.Prefix(h), escapeValue(text))
+				writeLine(&out, id, name, row, lang, hash.Prefix(h), escapeValue(text))
 			}
 
 			// Linha do idioma ALVO: a tradução de mods/ — o único texto que
@@ -180,7 +186,7 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 			// fonte, a tradução não é exportada.
 			if sourceAllowed && row.Target != "" {
 				th := hash.Sum64Hex(row.Target)
-				writeLine(&out, id, row, targetLang, hash.Prefix(th), escapeValue(row.Target))
+				writeLine(&out, id, name, row, opts.Target(), hash.Prefix(th), escapeValue(row.Target))
 			}
 		}
 	}
@@ -191,11 +197,11 @@ func marshalLangsOpt(c dto.Collection, langs []string, dedup bool) ([]byte, erro
 // <id>[:<name>]:<index>:<lang>║$<hash> = <valor>
 // O valor vem pronto (escapado, com ou sem ref) — quem decide o escape é o
 // chamador.
-func writeLine(out *stdstrings.Builder, id string, row dto.TextRow, lang, hashPrefix, value string) {
+func writeLine(out *stdstrings.Builder, id, name string, row dto.TextRow, lang, hashPrefix, value string) {
 	out.WriteString(id)
-	if row.Name != "" {
+	if name != "" {
 		out.WriteString(":")
-		out.WriteString(row.Name)
+		out.WriteString(name)
 	}
 	out.WriteString(":")
 	out.WriteString(strconv.Itoa(row.Index))
@@ -251,13 +257,13 @@ func langSet(langs []string) map[string]bool {
 // filtrados. O idioma fonte NÃO entra: o chamador o insere na posição
 // alfabética dele e escreve a linha do alvo por último. A tradução do alvo
 // não é um idioma de jogo e por isso não vive no mapa Text.
-func rowLangs(row dto.TextRow, filter map[string]bool) []string {
+func rowLangs(row dto.TextRow, opts formatters.Options) []string {
 	langs := make([]string, 0, len(row.Text))
 	for lang, text := range row.Text {
-		if lang == sourceLang || text == "" {
+		if lang == opts.Source() || text == "" {
 			continue
 		}
-		if filter != nil && !filter[lang] {
+		if !opts.Includes(lang) {
 			continue
 		}
 		langs = append(langs, lang)

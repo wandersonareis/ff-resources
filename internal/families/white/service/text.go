@@ -93,6 +93,7 @@ func (Service) GetTextEntry(part, id, lang string) (dto.FileEntry, error) {
 		}
 		row := dto.TextRow{
 			Index:    i,
+			Key:      key,
 			Name:     key,
 			Text:     map[string]string{"us": text},
 			Original: map[string]string{"us": origText},

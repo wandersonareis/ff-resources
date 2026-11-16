@@ -207,21 +207,15 @@ export class ImageDuplicate {
  * lista de alvos.
  */
 export class ImageDuplicates {
-    "duplicates": ImageDuplicate[];
+    "duplicates"?: ImageDuplicate[];
 
     /**
      * DupPayload é o tamanho do payload em bytes (desperdício do grupo).
      */
-    "dupPayload": number;
+    "dupPayload"?: number;
 
     /** Creates a new ImageDuplicates instance. */
     constructor($$source: Partial<ImageDuplicates> = {}) {
-        if (!("duplicates" in $$source)) {
-            this["duplicates"] = [];
-        }
-        if (!("dupPayload" in $$source)) {
-            this["dupPayload"] = 0;
-        }
 
         Object.assign(this, $$source);
     }
@@ -294,7 +288,7 @@ export class ImageEntry {
      * DDSData é o DDS da fonte escolhida (data:application/octet-stream);
      * vazio quando a fonte é um .png em disco.
      */
-    "ddsData": string;
+    "ddsData"?: string;
 
     /**
      * DDSPath/PNGPath apontam para as cópias já extraídas ("" = nenhuma).
@@ -312,13 +306,13 @@ export class ImageEntry {
      * (as cópias da otimização do DVD, pareadas em data/ e sempre dentro
      * da mesma versão). Vazio = imagem única.
      */
-    "duplicates": ImageDuplicate[];
+    "duplicates"?: ImageDuplicate[];
 
     /**
      * DupPayload é o tamanho do payload em bytes: o frontend mostra o
      * desperdício do grupo como payload × (nº de cópias).
      */
-    "dupPayload": number;
+    "dupPayload"?: number;
 
     /** Creates a new ImageEntry instance. */
     constructor($$source: Partial<ImageEntry> = {}) {
@@ -349,17 +343,8 @@ export class ImageEntry {
         if (!("flipped" in $$source)) {
             this["flipped"] = false;
         }
-        if (!("ddsData" in $$source)) {
-            this["ddsData"] = "";
-        }
         if (!("modded" in $$source)) {
             this["modded"] = false;
-        }
-        if (!("duplicates" in $$source)) {
-            this["duplicates"] = [];
-        }
-        if (!("dupPayload" in $$source)) {
-            this["dupPayload"] = 0;
         }
 
         Object.assign(this, $$source);
@@ -383,39 +368,39 @@ export class ImageEntry {
 }
 
 /**
- * ImageImportPreview é o resumo devolvido pelo preview do import de
- * imagens traduzidas — uma entrada por .dds.phyre encontrado na raiz.
+ * ImageImportPreview ├® o resumo devolvido pelo preview do import de
+ * imagens traduzidas ÔÇö uma entrada por .dds.phyre encontrado na raiz.
  */
 export class ImageImportPreview {
     /**
-     * Root é a varredura (ex.: "C:/.../mods/translated/images").
+     * Root ├® a varredura (ex.: "C:/.../mods/translated/images").
      */
     "root": string;
 
     /**
-     * Entries são TODAS as imagens candidatas (uma por .dds.phyre encontrado).
+     * Entries s├úo TODAS as imagens candidatas (uma por .dds.phyre encontrado).
      */
     "entries": ImageImportPreviewEntry[];
 
     /**
-     * Max é o total de candidatos.
+     * Max ├® o total de candidatos.
      */
     "max": number;
 
     /**
-     * NewCount quantos diferem do que já está em mods/ (nascem marcados).
+     * NewCount quantos diferem do que j├í est├í em mods/ (nascem marcados).
      */
     "new_count": number;
 
     /**
-     * IdenticalCount quantos são IGUAIS ao binário em mods/ (nascem
-     * desmarcados, com cor distinta — marcar regrava o binário).
+     * IdenticalCount quantos s├úo IGUAIS ao bin├írio em mods/ (nascem
+     * desmarcados, com cor distinta ÔÇö marcar regrava o bin├írio).
      */
     "identical_count": number;
 
     /**
-     * Errors agrega as falhas de validação por textura (formato DX,
-     * dimensões, mipmaps, IO, formato inválido) — estas não importam.
+     * Errors agrega as falhas de valida├º├úo por textura (formato DX,
+     * dimens├Áes, mipmaps, IO, formato inv├ílido) ÔÇö estas n├úo importam.
      */
     "errors": string[];
 
@@ -461,36 +446,36 @@ export class ImageImportPreview {
 }
 
 /**
- * ImageImportPreviewCopy descreve uma cópia AUSENTE na pasta traduzida
+ * ImageImportPreviewCopy descreve uma c├│pia AUSENTE na pasta traduzida
  * para o collapse do modal: mesmo payload original, mas sem arquivo
- * traduzido — o import pode propagar os bytes da imagem para ela.
+ * traduzido ÔÇö o import pode propagar os bytes da imagem para ela.
  */
 export class ImageImportPreviewCopy {
     /**
-     * ID é o id da cópia (caminho sem sufixo .dds.phyre).
+     * ID ├® o id da c├│pia (caminho sem sufixo .dds.phyre).
      */
     "id": string;
 
     /**
-     * DisplayPath é o caminho relativo à raiz traduzida, COM extensão
+     * DisplayPath ├® o caminho relativo ├á raiz traduzida, COM extens├úo
      * (ex.: "gamedata/ps3data/events/evt_01.dds.phyre").
      */
     "display_path": string;
 
     /**
-     * InMods indica que a cópia tem substituição em mods/.
+     * InMods indica que a c├│pia tem substitui├º├úo em mods/.
      */
     "in_mods": boolean;
 
     /**
-     * Identical indica que o payload efetivo (o que o jogo carrega) é o
-     * mesmo da imagem — cópia ainda sincronizada.
+     * Identical indica que o payload efetivo (o que o jogo carrega) ├® o
+     * mesmo da imagem ÔÇö c├│pia ainda sincronizada.
      */
     "identical": boolean;
 
     /**
-     * Selected é o estado do checkbox no modal. Default: acompanha a
-     * imagem (marcado quando a imagem é nova).
+     * Selected ├® o estado do checkbox no modal. Default: acompanha a
+     * imagem (marcado quando a imagem ├® nova).
      */
     "selected": boolean;
 
@@ -526,7 +511,7 @@ export class ImageImportPreviewCopy {
 
 /**
  * ImageImportPreviewEntry descreve uma imagem candidata ao import vinda de
- * mods/translated/images, com detalhes para o modal de confirmação.
+ * mods/translated/images, com detalhes para o modal de confirma├º├úo.
  */
 export class ImageImportPreviewEntry {
     /**
@@ -535,47 +520,47 @@ export class ImageImportPreviewEntry {
     "id": string;
 
     /**
-     * DisplayPath é o caminho relativo à raiz traduzida
-     * (mods/translated/images), COM extensão — semelhante ao caminho
+     * DisplayPath ├® o caminho relativo ├á raiz traduzida
+     * (mods/translated/images), COM extens├úo ÔÇö semelhante ao caminho
      * interno do .vbf e sem o prefixo absoluto, que alongaria o modal
      * (ex.: "gamedata/ps3data/event/obj/bl/bltz0201/tex_us/d3d11/461728_256_1.dds.phyre").
      */
     "display_path": string;
 
     /**
-     * Differs indica se o .dds.phyre difere do que já está em mods/.
-     * False = igual ao binário (hoje pulada): vem desmarcada e com cor de
-     * texto distinta no modal — marcar força a regravação do binário.
+     * Differs indica se o .dds.phyre difere do que j├í est├í em mods/.
+     * False = igual ao bin├írio (hoje pulada): vem desmarcada e com cor de
+     * texto distinta no modal ÔÇö marcar for├ºa a regrava├º├úo do bin├írio.
      */
     "differs": boolean;
 
     /**
-     * CopyCount é o número de OUTRAS cópias de mesmo payload original (do
-     * índice de duplicatas). 0 = imagem única.
+     * CopyCount ├® o n├║mero de OUTRAS c├│pias de mesmo payload original (do
+     * ├¡ndice de duplicatas). 0 = imagem ├║nica.
      */
     "copy_count": number;
 
     /**
-     * CopyMissingCount quantas cópias do grupo original estão AUSENTES na
+     * CopyMissingCount quantas c├│pias do grupo original est├úo AUSENTES na
      * pasta traduzida (info diz N, pasta tem M, faltam N-M).
      */
     "copy_missing_count": number;
 
     /**
-     * Copies são as cópias AUSENTES na pasta traduzida — o conteúdo do
-     * collapse. Só vem preenchido na PRIMEIRA entrada exibida do grupo.
+     * Copies s├úo as c├│pias AUSENTES na pasta traduzida ÔÇö o conte├║do do
+     * collapse. S├│ vem preenchido na PRIMEIRA entrada exibida do grupo.
      */
     "copies"?: ImageImportPreviewCopy[];
 
     /**
-     * ValidationError erro de validação que impede o import (formato DX,
-     * dimensões, mipmaps, IO, formato inválido). Vazio = sem erro.
+     * ValidationError erro de valida├º├úo que impede o import (formato DX,
+     * dimens├Áes, mipmaps, IO, formato inv├ílido). Vazio = sem erro.
      */
     "validation_error"?: string;
 
     /**
-     * Selected é o estado do checkbox da imagem (estado do modal): só as
-     * novas e válidas nascem marcadas.
+     * Selected ├® o estado do checkbox da imagem (estado do modal): s├│ as
+     * novas e v├ílidas nascem marcadas.
      */
     "selected": boolean;
 
@@ -658,8 +643,8 @@ export class ImageImportResult {
 }
 
 /**
- * ImageImportSelection é a seleção do modal: só o que está aqui é
- * aplicado — nunca a pasta traduzida inteira.
+ * ImageImportSelection ├® a sele├º├úo do modal: s├│ o que est├í aqui ├®
+ * aplicado ÔÇö nunca a pasta traduzida inteira.
  */
 export class ImageImportSelection {
     "entries": ImageImportSelectionEntry[];
@@ -687,9 +672,9 @@ export class ImageImportSelection {
 }
 
 /**
- * ImageImportSelectionEntry é a decisão do modal para UMA imagem da
- * seleção: gravar (ou regravar) o container dela e/ou propagar os bytes
- * para as cópias marcadas.
+ * ImageImportSelectionEntry ├® a decis├úo do modal para UMA imagem da
+ * sele├º├úo: gravar (ou regravar) o container dela e/ou propagar os bytes
+ * para as c├│pias marcadas.
  */
 export class ImageImportSelectionEntry {
     /**
@@ -698,12 +683,12 @@ export class ImageImportSelectionEntry {
     "id": string;
 
     /**
-     * Image grava o container da própria imagem. Falso = só as cópias.
+     * Image grava o container da pr├│pria imagem. Falso = s├│ as c├│pias.
      */
     "image": boolean;
 
     /**
-     * Copies são os ids das cópias a receber os mesmos bytes.
+     * Copies s├úo os ids das c├│pias a receber os mesmos bytes.
      */
     "copies"?: string[];
 
@@ -1115,10 +1100,7 @@ export class ImportUsage {
  * 	           macro = chunk_NN
  * 	is_dir   - omitido quando arquivo; true quando diretório
  * 
- * Todos os demais campos do formato antigo (version, dir_pattern,
- * file_name, shortened, mid_path, event_file_path, localization_pattern,
- * file_info, chunk_index) são derivados de key (+id) via ParseKey/
- * ExpandLegacy e nunca serializados (quebra total do formato antigo).
+ * O formato da key é responsabilidade da família (ver ffx/profile/metadata).
  */
 export class Metadata {
     "key": string;
@@ -1252,6 +1234,14 @@ export class TextRow {
     "index": number;
 
     /**
+     * Key é a identidade ESTÁVEL da row quando o jogo usa chave/conteúdo
+     * (FF13: o ID do ZTR). Vazio nos jogos posicionais (FFX), onde a
+     * identidade é Index+Name. Serializadores escolhem a estratégia pelo
+     * dto.Identity do documento.
+     */
+    "key"?: string;
+
+    /**
      * Character/Kind são o dono de cada nome de w_name.bin, resolvido pelos
      * model_ids do próprio chunk (schema/ffx/wname.go): personagem dono do
      * nome e tipo do equipamento ("weapon"/"shield"). São APENAS referência
@@ -1313,18 +1303,18 @@ export class TextRow {
      * Creates a new TextRow instance from a string or object.
      */
     static createFrom($$source: any = {}): TextRow {
-        const $$createField4_0 = $$createType20;
         const $$createField5_0 = $$createType20;
         const $$createField6_0 = $$createType20;
+        const $$createField7_0 = $$createType20;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("hash" in $$parsedSource) {
-            $$parsedSource["hash"] = $$createField4_0($$parsedSource["hash"]);
+            $$parsedSource["hash"] = $$createField5_0($$parsedSource["hash"]);
         }
         if ("text" in $$parsedSource) {
-            $$parsedSource["text"] = $$createField5_0($$parsedSource["text"]);
+            $$parsedSource["text"] = $$createField6_0($$parsedSource["text"]);
         }
         if ("original" in $$parsedSource) {
-            $$parsedSource["original"] = $$createField6_0($$parsedSource["original"]);
+            $$parsedSource["original"] = $$createField7_0($$parsedSource["original"]);
         }
         return new TextRow($$parsedSource as Partial<TextRow>);
     }

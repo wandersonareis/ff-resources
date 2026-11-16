@@ -4,12 +4,13 @@
 package builders
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"sort"
 
+	"ffresources/internal/families/ffx/codecs/helpfile"
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/dto"
-	"ffresources/internal/families/ffx/codecs/helpfile"
 	"ffresources/internal/shared/hash"
 	"ffresources/internal/shared/progress"
 )
@@ -101,7 +102,7 @@ func BuildHelpEntryDTOFrom(name string, version common.GameVersion, panel *helpf
 func buildHelpEntry(name string, version common.GameVersion, panel *helpfile.HelpKeyedStringFile, langs []string) (dto.FileEntry, bool) {
 	segments := panel.LocalizedStrings()
 	entry := dto.FileEntry{
-		Metadata: dto.NewHelpMetadata(name, "help/"+helpfile.HelpEntryDir(name), version),
+		Metadata: ffxmetadata.NewHelpMetadata(name, "help/"+helpfile.HelpEntryDir(name), version),
 		Rows:     make([]dto.TextRow, 0, len(segments)),
 	}
 	for i, seg := range segments {

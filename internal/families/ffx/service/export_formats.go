@@ -5,6 +5,7 @@
 package services
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"ffresources/internal/platform/uilog"
 	"ffresources/internal/shared/artifact"
 	_ "ffresources/internal/shared/artifact/csv"
-	jsonfmt "ffresources/internal/shared/artifact/json"
 	_ "ffresources/internal/shared/artifact/po"
 	_ "ffresources/internal/shared/artifact/strings"
 	_ "ffresources/internal/shared/artifact/xlsx"
@@ -222,7 +222,7 @@ func (s *MetadataService) exportKind(r progress.Reporter, kind, format string, v
 		return nil, fmt.Errorf("formatter %s não registrado", format)
 	}
 	write := func(col dto.Collection, jsonPath string) (string, error) {
-		return formatters.NewWriter(f, col, formatters.SwapExt(f, jsonPath), langs).Write()
+		return formatters.NewWriter(f, col, formatters.SwapExt(f, jsonPath), common.ArtifactOptions(langs)).Write()
 	}
 
 	switch kind {
@@ -251,7 +251,7 @@ func (s *MetadataService) exportKind(r progress.Reporter, kind, format string, v
 		}
 		return []string{p}, werr
 	case KindHelp:
-		path, perr := jsonfmt.HelpJSONPath(version, prefix)
+		path, perr := ffxpaths.HelpJSONPath(version, prefix)
 		if perr != nil {
 			return nil, perr
 		}
@@ -288,7 +288,7 @@ func (s *MetadataService) exportKind(r progress.Reporter, kind, format string, v
 		// Um arquivo por entrada (mesmo nome do JSON por entrada; dedup
 		// intra-arquivo = self-contained).
 		for _, key := range c.SortedKeys() {
-			jp, perr := jsonfmt.ObjectsJSONPath(key, version)
+			jp, perr := ffxpaths.ObjectsJSONPath(key, version)
 			if perr != nil {
 				return nil, perr
 			}

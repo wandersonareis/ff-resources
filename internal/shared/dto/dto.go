@@ -58,6 +58,11 @@ import (
 // apply/export. Divergent é o inverso: apply-only, ignorado em display/export.
 type TextRow struct {
 	Index int `json:"index"`
+	// Key é a identidade ESTÁVEL da row quando o jogo usa chave/conteúdo
+	// (FF13: o ID do ZTR). Vazio nos jogos posicionais (FFX), onde a
+	// identidade é Index+Name. Serializadores escolhem a estratégia pelo
+	// dto.Identity do documento.
+	Key string `json:"key,omitempty"`
 	// Character/Kind são o dono de cada nome de w_name.bin, resolvido pelos
 	// model_ids do próprio chunk (schema/ffx/wname.go): personagem dono do
 	// nome e tipo do equipamento ("weapon"/"shield"). São APENAS referência
@@ -110,10 +115,49 @@ type RefLink struct {
 	SourceName  string            `json:"sourceName,omitempty"`
 }
 
-// RowKey devolve a chave estável da row (index:name) — a mesma que o
-// frontend usa para rascunho e que o map Refs usa para achar a anotação.
-func RowKey(r TextRow) string {
+// Identity define como a row é identificada na serialização/importação.
+//   - Index: identidade posicional (FFX) — Index+Name.
+//   - Key:   identidade por chave (FF13) — Key (fallback Name).
+type Identity string
+
+const (
+	IdentityIndex Identity = "index"
+	IdentityKey   Identity = "key"
+)
+
+// KeyFor devolve a identidade estável da row conforme o modo.
+func (r TextRow) KeyFor(identity Identity) string {
+	if identity == IdentityKey {
+		if r.Key != "" {
+			return r.Key
+		}
+		return r.Name
+	}
 	return fmt.Sprintf("%d:%s", r.Index, r.Name)
+}
+
+// RowKey devolve a chave estável no modo posicional (index:name) — o modo do
+// FFX, mantido para os fluxos de exibição/rascunho.
+func RowKey(r TextRow) string {
+	return r.KeyFor(IdentityIndex)
+}
+
+// SortRowsBy ordena as rows conforme a identidade do documento: posicional
+// (Index) ou por chave (Key/Name). A ordenação é estável.
+func SortRowsBy(rows []TextRow, identity Identity) {
+	if identity == IdentityKey {
+		sort.SliceStable(rows, func(a, b int) bool {
+			ka, kb := rows[a].KeyFor(IdentityKey), rows[b].KeyFor(IdentityKey)
+			if ka != kb {
+				return ka < kb
+			}
+			return rows[a].Index < rows[b].Index
+		})
+		return
+	}
+	sort.SliceStable(rows, func(a, b int) bool {
+		return rows[a].Index < rows[b].Index
+	})
 }
 
 // FileEntry é um arquivo sem extensão como chave da Collection:
@@ -142,9 +186,7 @@ func (c Collection) SortedKeys() []string {
 }
 
 // SortRows ordena as rows por Index de forma estável, necessário para a
-// reconstrução posicional do binário.
+// reconstrução posicional do binário (modo FFX).
 func SortRows(rows []TextRow) {
-	sort.SliceStable(rows, func(a, b int) bool {
-		return rows[a].Index < rows[b].Index
-	})
+	SortRowsBy(rows, IdentityIndex)
 }

@@ -1,14 +1,15 @@
 package builders
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
+	"ffresources/internal/families/ffx/codecs/macrodic"
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/dto"
-	"ffresources/internal/families/ffx/codecs/macrodic"
 	"ffresources/internal/shared/hash"
 	"ffresources/internal/shared/progress"
 )
@@ -127,7 +128,7 @@ func BuildMacroDTOFromContainers(version common.GameVersion, containers map[stri
 		r.Step(MacroChunkKey(chunk))
 		key := MacroChunkKey(chunk)
 		entry := dto.FileEntry{
-			Metadata: dto.NewMacroMetadata(version, chunk),
+			Metadata: ffxmetadata.NewMacroMetadata(version, chunk),
 			Rows:     []dto.TextRow{},
 		}
 		out[key] = entry

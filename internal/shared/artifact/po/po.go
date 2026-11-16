@@ -28,10 +28,10 @@ import (
 	"strconv"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/artifact"
+	formatters "ffresources/internal/shared/artifact"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
+	logging "ffresources/internal/shared/logging"
 )
 
 // extensionPO é a extensão produzida pelo formatter PO.
@@ -78,39 +78,49 @@ func (POFormatter) Extension() string {
 // Marshal serializa a Collection completa (todos os idiomas como
 // referência).
 func (f POFormatter) Marshal(c dto.Collection) ([]byte, error) {
-	return f.marshal(c, nil)
+	return f.MarshalOptions(c, formatters.DefaultOptions())
+}
+
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func (f POFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return f.marshal(c, opts)
 }
 
 // MarshalLangs serializa a Collection com as REFERÊNCIAS apenas nos idiomas
 // pedidos (nil/vazio = todos os idiomas suportados além do `us`).
 func (f POFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return f.marshal(c, langs)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return f.MarshalOptions(c, opts)
 }
 
 // Unmarshal parseia o PO de volta para a Collection (DTO), com rows ordenadas
 // por Index para a reconstrução posicional do binário.
 func (f POFormatter) Unmarshal(data []byte) (dto.Collection, error) {
-	return unmarshal(data)
+	return f.UnmarshalOptions(data, formatters.DefaultOptions())
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func (f POFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return unmarshalOptions(data, opts)
 }
 
 // marshal é o motor único da escrita: cabeçalho PO + uma entrada por row,
 // na ordem das entradas (SortedKeys) e das rows (Index).
-func (f POFormatter) marshal(c dto.Collection, langs []string) ([]byte, error) {
-	refs := referenceLanguages(c, langs)
+func (f POFormatter) marshal(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	refs := referenceLanguages(c, opts)
 	blocks := make([]string, 0)
 	for _, id := range c.SortedKeys() {
 		entry := c[id]
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
+		rows := opts.SortedRows(entry.Rows)
 		for _, row := range rows {
-			if block := writeEntry(entry, id, row, refs); block != "" {
+			if block := writeEntry(entry, id, row, refs, opts); block != "" {
 				blocks = append(blocks, block)
 			}
 		}
 	}
 	var b strings.Builder
-	writeHeader(&b)
+	writeHeader(&b, opts)
 	for _, block := range blocks {
 		b.WriteString("\n") // linha em branco entre as entradas
 		b.WriteString(block)
@@ -121,7 +131,7 @@ func (f POFormatter) marshal(c dto.Collection, langs []string) ([]byte, error) {
 // writeHeader grava o cabeçalho PO: a entrada msgid ""/msgstr "" que as
 // ferramentas CAT leem como metadados do arquivo (o idioma alvo é o PT-BR —
 // a tradução vive no slot `us` do binário, como em todo o app).
-func writeHeader(b *strings.Builder) {
+func writeHeader(b *strings.Builder, opts formatters.Options) {
 	b.WriteString("msgid \"\"\n")
 	b.WriteString("msgstr \"\"\n")
 	for _, field := range []string{
@@ -129,7 +139,7 @@ func writeHeader(b *strings.Builder) {
 		"MIME-Version: 1.0",
 		"Content-Type: text/plain; charset=UTF-8",
 		"Content-Transfer-Encoding: 8bit",
-		"Language: " + common.TranslationLanguage,
+		"Language: " + opts.TargetLanguage(),
 	} {
 		b.WriteString("\"" + escapePO(field) + "\\n\"\n")
 	}
@@ -139,10 +149,10 @@ func writeHeader(b *strings.Builder) {
 // dos outros idiomas, referência de arquivo, contexto e o par msgid/msgstr.
 // "" quando a row não tem nem original nem tradução (não vira entrada:
 // msgid/msgstr vazios são ruído no PO).
-func writeEntry(entry dto.FileEntry, id string, row dto.TextRow, refs []string) string {
+func writeEntry(entry dto.FileEntry, id string, row dto.TextRow, refs []string, opts formatters.Options) string {
 	source := row.Source
 	if source == "" {
-		source = row.Text[common.DefaultLocalization]
+		source = row.Text[opts.Source()]
 	}
 	target := row.Target
 	if source == "" && target == "" {
@@ -156,14 +166,14 @@ func writeEntry(entry dto.FileEntry, id string, row dto.TextRow, refs []string) 
 		Name:  entryID,
 		Index: &index,
 		Field: row.Name,
-		Lang:  common.DefaultLocalization,
-		Hash:  hash.Prefix(row.Hash[common.DefaultLocalization]),
+		Lang:  opts.Source(),
+		Hash:  hash.Prefix(row.Hash[opts.Source()]),
 	}
 	payload, err := json.Marshal(meta)
 	if err != nil {
 		// json.Marshal de uma struct simples não falha — mas o artefato não
 		// pode perder o canal de metadados por causa disso.
-		common.LogWarning("po: serializando metadados: %v", err)
+		logging.Warn("po: serializando metadados: %v", err)
 	}
 
 	var b strings.Builder
@@ -207,12 +217,13 @@ func contextOf(id string, row dto.TextRow) string {
 // códigos que não existem no catálogo do FFX (gr, ck, uk, ru) e o PO não pode
 // depender de uma lista fixa de outro jogo. langs nil/vazio = todos os
 // idiomas presentes; com filtro, só os pedidos que também existem no DTO.
-func referenceLanguages(c dto.Collection, langs []string) []string {
+func referenceLanguages(c dto.Collection, opts formatters.Options) []string {
+	langs := opts.Languages
 	filter := len(langs) > 0
 	wanted := make(map[string]bool, len(langs))
 	for _, lang := range langs {
 		lang = strings.TrimSpace(lang)
-		if lang != "" && lang != common.DefaultLocalization {
+		if lang != "" && lang != opts.Source() {
 			wanted[lang] = true
 		}
 	}
@@ -221,7 +232,7 @@ func referenceLanguages(c dto.Collection, langs []string) []string {
 	for _, id := range c.SortedKeys() {
 		for _, row := range c[id].Rows {
 			for lang := range row.Text {
-				if lang == common.DefaultLocalization || lang == "" {
+				if lang == opts.Source() || lang == "" {
 					continue
 				}
 				if filter && !wanted[lang] {
@@ -458,6 +469,11 @@ func skipPOValue(lines []string, i int) int {
 // proposital: o tradutor sempre vê o contexto, e o import não depende de um
 // único canal.
 func unmarshal(data []byte) (dto.Collection, error) {
+	return unmarshalOptions(data, formatters.DefaultOptions())
+}
+
+// unmarshalOptions é o parse com o perfil neutro.
+func unmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
 	entries, err := parsePO(string(data))
 	if err != nil {
 		return nil, err
@@ -471,7 +487,7 @@ func unmarshal(data []byte) (dto.Collection, error) {
 		if e.msgctxt == "" && e.msgid == "" {
 			continue // cabeçalho do PO
 		}
-		row, id, key, ok := e.toRow()
+		row, id, key, ok := e.toRow(opts)
 		if !ok {
 			continue
 		}
@@ -484,7 +500,7 @@ func unmarshal(data []byte) (dto.Collection, error) {
 	}
 
 	for id, entry := range collection {
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		entry.Metadata = entry.Metadata.WithRowCount(len(entry.Rows))
 		collection[id] = entry
 	}
@@ -493,7 +509,7 @@ func unmarshal(data []byte) (dto.Collection, error) {
 
 // toRow monta a row da entrada: coordenada (Index, Name), hash de
 // referência, source (msgid) e target (msgstr).
-func (e *poEntry) toRow() (dto.TextRow, string, string, bool) {
+func (e *poEntry) toRow(opts formatters.Options) (dto.TextRow, string, string, bool) {
 	meta, hasMeta := e.metadata()
 
 	// msgctxt: "<entrada>|<índice>[|<campo>]".
@@ -528,7 +544,7 @@ func (e *poEntry) toRow() (dto.TextRow, string, string, bool) {
 		id = stemOf(key)
 	}
 	if id == "" || key == "" {
-		common.LogWarning("po: entrada sem arquivo/identificação — ignorada (msgctxt %q)", e.msgctxt)
+		logging.Warn("po: entrada sem arquivo/identificação — ignorada (msgctxt %q)", e.msgctxt)
 		return dto.TextRow{}, "", "", false
 	}
 
@@ -560,13 +576,13 @@ func (e *poEntry) toRow() (dto.TextRow, string, string, bool) {
 		Text:   map[string]string{},
 	}
 	if row.Source != "" {
-		row.Text[common.DefaultLocalization] = row.Source
+		row.Text[opts.Source()] = row.Source
 	}
 	if hashHex != "" {
-		row.Hash = map[string]string{common.DefaultLocalization: hashHex}
+		row.Hash = map[string]string{opts.Source(): hashHex}
 	}
 	for lang, text := range e.referenceTexts() {
-		if lang == common.DefaultLocalization || text == "" {
+		if lang == opts.Source() || text == "" {
 			continue
 		}
 		row.Text[lang] = text
@@ -576,7 +592,7 @@ func (e *poEntry) toRow() (dto.TextRow, string, string, bool) {
 	// artefato não bate com ele, o msgid foi editado fora do app.
 	if hashHex != "" && row.Source != "" {
 		if got := hash.Sum64Hex(row.Source); got != hashHex {
-			common.LogWarning("po: msgid alterado no artefato (%s: hash %s != %s)",
+			logging.Warn("po: msgid alterado no artefato (%s: hash %s != %s)",
 				id, hashHex, got)
 		}
 	}
@@ -592,7 +608,7 @@ func (e *poEntry) metadata() (importMeta, bool) {
 		raw := strings.TrimSpace(strings.TrimPrefix(comment, metaPrefix))
 		var meta importMeta
 		if err := json.Unmarshal([]byte(raw), &meta); err != nil {
-			common.LogWarning("po: metadados inválidos (%v) — usando msgctxt/referência", err)
+			logging.Warn("po: metadados inválidos (%v) — usando msgctxt/referência", err)
 			return importMeta{}, false
 		}
 		return meta, true

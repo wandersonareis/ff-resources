@@ -1,6 +1,8 @@
 package services
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,9 +12,6 @@ import (
 	"sync/atomic"
 
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/families/ffx/codecs/reader"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/ddsphyre"
 	"ffresources/internal/families/ffx/codecs/event"
 	"ffresources/internal/families/ffx/codecs/eventtable"
@@ -21,12 +20,15 @@ import (
 	"ffresources/internal/families/ffx/codecs/macrodic"
 	"ffresources/internal/families/ffx/codecs/objectsfile"
 	"ffresources/internal/families/ffx/codecs/objectsfile/chunkmap"
+	"ffresources/internal/families/ffx/codecs/reader"
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/platform/uilog"
 	"ffresources/internal/shared/artifact"
 	jsonfmt "ffresources/internal/shared/artifact/json"
 	_ "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/logging"
 	"ffresources/internal/shared/progress"
-	"ffresources/internal/platform/uilog"
 )
 
 // Kinds lógicos servidos ao frontend: textos e imagens (.dds.phyre).
@@ -366,7 +368,7 @@ func (s *MetadataService) resolveID(id string) (string, string, bool, error) {
 		return common.VersionPathName(cur) + "/menu/macrodic.dcp", id, false, nil
 	}
 	if helpfile.IsHelpEntry(id) {
-		return dto.NewHelpMetadata(id, "help/"+helpfile.HelpEntryDir(id), cur).Key, id, false, nil
+		return ffxmetadata.NewHelpMetadata(id, "help/"+helpfile.HelpEntryDir(id), cur).Key, id, false, nil
 	}
 	if key, ok := objectKeyForID(cur, id); ok {
 		return key, id, false, nil
@@ -377,7 +379,7 @@ func (s *MetadataService) resolveID(id string) (string, string, bool, error) {
 	if len(id) < 2 {
 		return "", "", false, fmt.Errorf("unknown id: %s", id)
 	}
-	return dto.NewEventMetadata(id, cur).Key, id, false, nil
+	return ffxmetadata.NewEventMetadata(id, cur).Key, id, false, nil
 }
 
 // resolvePath trata caminho em disco: deriva key + id + is_dir.
@@ -515,11 +517,11 @@ func (s *MetadataService) ExportEntry(kind string, version common.GameVersion, i
 		return paths, fmt.Errorf("formatter strings não registrado")
 	}
 	writePair := func(col dto.Collection, jsonPath string) error {
-		jp, werr := formatters.NewWriter(jsonF, col, jsonPath, langs).Write()
+		jp, werr := formatters.NewWriter(jsonF, col, jsonPath, common.ArtifactOptions(langs)).Write()
 		if werr != nil {
 			return werr
 		}
-		sp, werr := formatters.NewWriter(stringsF, col, formatters.SwapExt(stringsF, jsonPath), langs).Write()
+		sp, werr := formatters.NewWriter(stringsF, col, formatters.SwapExt(stringsF, jsonPath), common.ArtifactOptions(langs)).Write()
 		if werr != nil {
 			return werr
 		}
@@ -547,7 +549,7 @@ func (s *MetadataService) ExportEntry(kind string, version common.GameVersion, i
 			return paths, err
 		}
 	case KindHelp:
-		path, perr := jsonfmt.HelpJSONPath(version, "")
+		path, perr := ffxpaths.HelpJSONPath(version, "")
 		if perr != nil {
 			return nil, perr
 		}
@@ -558,7 +560,7 @@ func (s *MetadataService) ExportEntry(kind string, version common.GameVersion, i
 		// Um arquivo por entrada (mesmo nome do JSON por entrada; dedup
 		// intra-arquivo = self-contained).
 		for _, key := range c.SortedKeys() {
-			jp, perr := jsonfmt.ObjectsJSONPath(key, version)
+			jp, perr := ffxpaths.ObjectsJSONPath(key, version)
 			if perr != nil {
 				return nil, perr
 			}
@@ -602,7 +604,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		if err != nil {
 			return nil, err
 		}
-		path, err := jsonfmt.EventsJSONPath(c, version)
+		path, err := ffxpaths.EventsJSONPath(c, version)
 		if err != nil {
 			return nil, err
 		}
@@ -618,7 +620,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		return []string{path}, nil
 
 	case KindObjects:
-		path, err := jsonfmt.ObjectsJSONPath(id, version)
+		path, err := ffxpaths.ObjectsJSONPath(id, version)
 		if err != nil {
 			return nil, err
 		}
@@ -638,7 +640,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		return []string{path}, nil
 
 	case KindMacro:
-		path, err := jsonfmt.DefaultMacroJSONPath(version)
+		path, err := ffxpaths.DefaultMacroJSONPath(version)
 		if err != nil {
 			return nil, err
 		}
@@ -654,7 +656,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		return []string{path}, nil
 
 	case KindLockit:
-		path, err := jsonfmt.ObjectsJSONPath(id, version)
+		path, err := ffxpaths.ObjectsJSONPath(id, version)
 		if err != nil {
 			return nil, err
 		}
@@ -678,7 +680,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		if !helpfile.IsHelpEntry(id) {
 			return nil, fmt.Errorf("painel de ajuda desconhecido: %s", id)
 		}
-		path, err := jsonfmt.HelpJSONPath(version, "")
+		path, err := ffxpaths.HelpJSONPath(version, "")
 		if err != nil {
 			return nil, err
 		}
@@ -694,7 +696,7 @@ func (s *MetadataService) ImportEntry(kind string, version common.GameVersion, i
 		return []string{path}, nil
 
 	case KindBattleText, KindCloud, KindTutorial, KindMenuMain:
-		path, err := jsonfmt.ObjectsJSONPath(id, version)
+		path, err := ffxpaths.ObjectsJSONPath(id, version)
 		if err != nil {
 			return nil, err
 		}
@@ -1030,7 +1032,7 @@ func (s *MetadataService) ListEntries(kind string, version common.GameVersion) (
 		sort.Strings(ids)
 		out := make([]EntrySummary, 0, len(ids))
 		for _, id := range ids {
-			out = append(out, EntrySummary{ID: id, Key: dto.NewEventMetadata(id, version).Key})
+			out = append(out, EntrySummary{ID: id, Key: ffxmetadata.NewEventMetadata(id, version).Key})
 		}
 
 		// Inventário de arquivos em paralelo (stat por arquivo) + varredura
@@ -1139,7 +1141,7 @@ func (s *MetadataService) ListEntries(kind string, version common.GameVersion) (
 			kept = append(kept, id)
 			out = append(out, EntrySummary{
 				ID:  id,
-				Key: dto.NewImageMetadata(id, version).Key,
+				Key: ffxmetadata.NewImageMetadata(id, version).Key,
 			})
 		}
 		if !fallback {
@@ -1174,7 +1176,7 @@ func (s *MetadataService) ListEntries(kind string, version common.GameVersion) (
 			}
 			out = append(out, EntrySummary{
 				ID:  entry.Name,
-				Key: dto.NewHelpMetadata(entry.Name, "help/"+entry.Dir, version).Key,
+				Key: ffxmetadata.NewHelpMetadata(entry.Name, "help/"+entry.Dir, version).Key,
 			})
 		}
 		names := make([]string, 0, len(helpfile.HelpEntries))

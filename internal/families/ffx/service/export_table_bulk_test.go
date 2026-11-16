@@ -1,6 +1,7 @@
 package services
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -8,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/eventtable"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/artifact"
 	jsonfmt "ffresources/internal/shared/artifact/json"
 	pofmt "ffresources/internal/shared/artifact/po"
 	strfmt "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/shared/dto"
 	"ffresources/testdata/ffx/tempdir"
 )
 
@@ -121,7 +122,7 @@ func TestTableBulkPathScopes(t *testing.T) {
 		"menumain", "menumain_btl", // menumain
 		"tutorial", "tuto0000", // tutorial
 	} {
-		perEntry, err := jsonfmt.ObjectsJSONPath(id, common.GameVersionFFX)
+		perEntry, err := ffxpaths.ObjectsJSONPath(id, common.GameVersionFFX)
 		if err != nil {
 			t.Fatalf("%s: artefato por-entrada: %v", id, err)
 		}
@@ -242,7 +243,7 @@ func TestExportTableKindsBulkSingleFile(t *testing.T) {
 	if len(cpaths) != 1 || filepath.Base(cpaths[0]) != "cloudsave_all_localizations_ffx.json" {
 		t.Fatalf("bulk cloud: %v", cpaths)
 	}
-	perCloud, err := jsonfmt.ObjectsJSONPath("cloud", common.GameVersionFFX)
+	perCloud, err := ffxpaths.ObjectsJSONPath("cloud", common.GameVersionFFX)
 	if err != nil {
 		t.Fatalf("artefato por-entrada de cloud: %v", err)
 	}

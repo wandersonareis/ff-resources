@@ -6,12 +6,13 @@
 package builders
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"sort"
 
+	"ffresources/internal/families/ffx/codecs/event"
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/dto"
-	"ffresources/internal/families/ffx/codecs/event"
 	"ffresources/internal/shared/hash"
 	"ffresources/internal/shared/progress"
 )
@@ -110,7 +111,7 @@ func BuildEventEntryDTOFrom(id string, version common.GameVersion, strings []*ev
 // DTO. O Index é a posição física no binário (reconstrução posicional).
 func buildEventEntry(id string, version common.GameVersion, strings []*event.LocalizedFieldStringObject, langs []string) (dto.FileEntry, bool) {
 	entry := dto.FileEntry{
-		Metadata: dto.NewEventMetadata(id, version),
+		Metadata: ffxmetadata.NewEventMetadata(id, version),
 		Rows:     make([]dto.TextRow, 0, len(strings)),
 	}
 	for i, str := range strings {

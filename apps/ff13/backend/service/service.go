@@ -30,9 +30,3 @@ func (FF13Service) Parts() []white.PartInfo { return white.FF13Service{}.ListPar
 // LocalConfig devolve o caminho da config local (raízes dos jogos e binários):
 // é de onde a interface tira o caminho de instalação.
 func (FF13Service) LocalConfig() config.ConfigSnapshot { return config.Snapshot() }
-
-// InitWriteGuard aponta o GameFilesRoot da trava de escrita herdada do FFX
-// (CheckWritablePath) para a raiz de data/ do FF13.
-func InitWriteGuard() {
-	whiteservice.InitWriteGuard()
-}

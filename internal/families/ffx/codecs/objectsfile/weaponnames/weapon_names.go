@@ -25,17 +25,18 @@
 package weaponnames
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"path/filepath"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/objectsfile"
 	"ffresources/internal/families/ffx/codecs/objectsfile/chunkmap"
 	"ffresources/internal/families/ffx/codecs/objectsfile/schema/ffx"
-	"ffresources/internal/shared/hash"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/profile/models"
+	"ffresources/internal/shared/dto"
+	"ffresources/internal/shared/hash"
 )
 
 // Pattern é o pattern path do binário de nomes de equipamentos (FFX only).
@@ -288,7 +289,7 @@ func Apply(file *chunkmap.File[ffx.WeaponName], rows []dto.TextRow) error {
 func Collection(version common.GameVersion, rows []dto.TextRow) (dto.Collection, error) {
 	key := strings.TrimSuffix(filepath.Base(Pattern), filepath.Ext(Pattern))
 	entry := dto.FileEntry{
-		Metadata: dto.NewObjectMetadata(
+		Metadata: ffxmetadata.NewObjectMetadata(
 			version,
 			filepath.ToSlash(filepath.Dir(Pattern)),
 			filepath.Base(Pattern),

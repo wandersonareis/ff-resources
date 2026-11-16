@@ -1,14 +1,14 @@
 // JSONFormatter e JSONNoDedupFormatter são os ÚNICOS formatters JSON do
 // pacote: os bytes são idênticos para todo kind (o motor vive em
 // shared.go) — kind só diferencia o NOME do artefato, que é decisão do
-// chamador (helpers EventsJSONPath/ObjectsJSONPath/MacroJSONPath/
-// HelpJSONPath). Ambos se registram no registry (formatters.Register)
-// pelas chaves "json" e "json-no-dedup".
+// chamador (helpers de caminho vivem em ffx/artifactpaths). Ambos se
+// registram no registry (formatters.Register) pelas chaves "json" e
+// "json-no-dedup".
 package json
 
 import (
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/artifact"
+	"ffresources/internal/shared/dto"
 )
 
 // JSONFormatter serializa/deserializa a Collection no formato JSON de
@@ -33,10 +33,20 @@ func (JSONFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, err
 	return marshalCollectionLangs(c, langs)
 }
 
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func (JSONFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return marshalCollectionOpts(c, opts)
+}
+
 // Unmarshal parseia o JSON de volta para a Collection (DTO), com rows
-// ordenados por Index para reconstrução posicional do binário.
+// ordenados conforme a identidade do documento.
 func (JSONFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 	return unmarshalCollection(data)
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func (JSONFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return unmarshalCollectionOpts(data, opts)
 }
 
 // JSONNoDedupFormatter serializa SEM o dedup de conteúdo: todo texto do
@@ -61,10 +71,21 @@ func (JSONNoDedupFormatter) MarshalLangs(c dto.Collection, langs []string) ([]by
 	return MarshalNoDedupLangs(c, langs)
 }
 
+// MarshalOptions serializa SEM dedup, com o perfil neutro.
+func (JSONNoDedupFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	opts.DisableDedup = true
+	return marshalCollectionOpts(c, opts)
+}
+
 // Unmarshal parseia o JSON de volta para a Collection (DTO) — o mesmo
 // parse do JSONFormatter (as refs "$hash" saem expandidas).
 func (JSONNoDedupFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 	return unmarshalCollection(data)
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func (JSONNoDedupFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return unmarshalCollectionOpts(data, opts)
 }
 
 func init() {

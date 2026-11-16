@@ -6,9 +6,10 @@ import (
 	"strconv"
 	stdstrings "strings"
 
-	"ffresources/internal/families/ffx/profile/common"
+	formatters "ffresources/internal/shared/artifact"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
+	logging "ffresources/internal/shared/logging"
 )
 
 // parsedLine é uma linha de conteúdo decomposta.
@@ -53,6 +54,12 @@ type headerInfo struct {
 // linha própria para o idioma alvo — ela vira row.Target, o ÚNICO texto
 // que o import aplica (a linha do idioma fonte é referência pristine).
 func Unmarshal(data []byte) (dto.Collection, error) {
+	return unmarshalOptions(data, formatters.DefaultOptions())
+}
+
+// unmarshalOptions parseia respeitando o idioma fonte, a identidade e os
+// prefixos reservados do documento.
+func unmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
 	entries := make(map[string]*dto.FileEntry)
 	rows := make(map[string]map[string]*dto.TextRow) // entryID -> "index\x00name" -> row
 	type pendingRef struct {
@@ -86,7 +93,7 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 			expectedRows[h.key] = h.rowCount
 			continue
 		}
-		pl, err := parseLine(line, lineno)
+		pl, err := parseLine(line, lineno, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -98,10 +105,14 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 		} else if entry.Metadata.Key == "" && blockKey != "" {
 			entry.Metadata.Key = blockKey
 		}
-		rkey := strconv.Itoa(pl.index) + "\x00" + pl.name
+		rkey := rowIdentityKey(pl, opts)
 		row := rows[pl.id][rkey]
 		if row == nil {
-			entry.Rows = append(entry.Rows, dto.TextRow{Index: pl.index, Name: pl.name})
+			newRow := dto.TextRow{Index: pl.index, Name: pl.name}
+			if opts.IdentityOf() == dto.IdentityKey {
+				newRow.Key = pl.name
+			}
+			entry.Rows = append(entry.Rows, newRow)
 			row = &entry.Rows[len(entry.Rows)-1]
 			rows[pl.id][rkey] = row
 		}
@@ -127,7 +138,7 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 		// v1: o par source/target vive como CAMPOS na linha do idioma
 		// default (e vale inclusive para refs — o valor pode ser "$hash" e
 		// a tradução continuar explícita no target).
-		if block.version < formatVersion && pl.lang == common.DefaultLocalization {
+		if block.version < formatVersion && pl.lang == opts.Source() {
 			row.Source = pl.source
 			row.Target = pl.target
 		}
@@ -135,7 +146,7 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 		// o source); no v1 é a do idioma default, onde o par vivia — é nela
 		// que o dedup/divergente do pristine se apoia.
 		isSourceLine := block.version >= formatVersion && pl.lang == block.source
-		isPairLine := isSourceLine || (block.version < formatVersion && pl.lang == common.DefaultLocalization)
+		isPairLine := isSourceLine || (block.version < formatVersion && pl.lang == opts.Source())
 		if pl.ref {
 			refs = append(refs, pendingRef{
 				entryID: pl.id, rkey: rkey, lang: pl.lang, hash: pl.hash, source: isSourceLine,
@@ -144,7 +155,7 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 		}
 		if pl.hash != "" {
 			if got := hash.Sum64Hex(pl.value); got != pl.hash {
-				common.LogVerbose("strings hash mismatch for %s[%d] lang %s: file %s vs text %s",
+				logging.Verbose("strings hash mismatch for %s[%d] lang %s: file %s vs text %s",
 					pl.id, pl.index, pl.lang, pl.hash, got)
 			}
 			if pl.value != "" {
@@ -174,7 +185,7 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 		}
 		v, ok := table[r.hash]
 		if !ok {
-			common.LogVerbose("strings orphan dedup reference $%s kept as-is", r.hash)
+			logging.Verbose("strings orphan dedup reference $%s kept as-is", r.hash)
 			v = hash.Prefix(r.hash)
 		}
 		if r.target {
@@ -188,10 +199,10 @@ func Unmarshal(data []byte) (dto.Collection, error) {
 	}
 	out := make(dto.Collection, len(entries))
 	for id, entry := range entries {
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		entry.Metadata = entry.Metadata.WithRowCount(len(entry.Rows))
 		if want, ok := expectedRows[entry.Metadata.Key]; ok && len(entry.Rows) != want {
-			common.LogVerbose("strings row_count mismatch for %s: header %d vs %d rows",
+			logging.Verbose("strings row_count mismatch for %s: header %d vs %d rows",
 				entry.Metadata.Key, want, len(entry.Rows))
 		}
 		out[id] = *entry
@@ -284,7 +295,7 @@ func parseHeader(line string) (h headerInfo, ok bool, err error) {
 // `<valor>║source = <esc>` e `<valor>║target = <esc>` (o escapeValue
 // garante que ║ literal não existe no texto), inclusive em linha de ref
 // "$hash". No v2 não há campos: o par são linhas próprias.
-func parseLine(line string, lineno int) (parsedLine, error) {
+func parseLine(line string, lineno int, opts formatters.Options) (parsedLine, error) {
 	fail := func(format string, args ...any) (parsedLine, error) {
 		return parsedLine{}, fmt.Errorf("strings line %d: %s", lineno, fmt.Sprintf(format, args...))
 	}
@@ -328,7 +339,7 @@ func parseLine(line string, lineno int) (parsedLine, error) {
 		// primeiro campo da chave ela é erro de formato: sem isto, seria
 		// absorvida como prefixo futuro e a linha parsearia ERRADO em
 		// silêncio (id="ffx", name=<id>).
-		if _, verr := common.ParseGameVersionStrict(left[0]); verr == nil {
+		if isReservedKeyPrefix(left[0], opts) {
 			return fail("unexpected version prefix in key %q", keyPart)
 		}
 	}
@@ -401,4 +412,25 @@ func indexUnescaped(s, marker string) int {
 		from = idx + len(marker)
 	}
 	return -1
+}
+
+// rowIdentityKey devolve a chave de agrupamento da linha conforme a identidade.
+func rowIdentityKey(pl parsedLine, opts formatters.Options) string {
+	if opts.IdentityOf() == dto.IdentityKey {
+		if pl.name != "" {
+			return pl.name
+		}
+		return strconv.Itoa(pl.index)
+	}
+	return strconv.Itoa(pl.index) + "\x00" + pl.name
+}
+
+// isReservedKeyPrefix diz se o prefixo não pode abrir a chave da row.
+func isReservedKeyPrefix(prefix string, opts formatters.Options) bool {
+	for _, reserved := range opts.ReservedKeyPrefixes {
+		if stdstrings.EqualFold(prefix, reserved) {
+			return true
+		}
+	}
+	return false
 }

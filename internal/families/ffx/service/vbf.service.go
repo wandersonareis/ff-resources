@@ -21,6 +21,7 @@ package services
 // quaisquer que sejam retorno ou pânico.
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"fmt"
 	"io/fs"
 	"os"
@@ -30,8 +31,6 @@ import (
 	"sync"
 
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/ddsphyre"
 	"ffresources/internal/families/ffx/codecs/event"
 	"ffresources/internal/families/ffx/codecs/eventtable"
@@ -40,9 +39,11 @@ import (
 	"ffresources/internal/families/ffx/codecs/objectsfile"
 	"ffresources/internal/families/ffx/codecs/objectsfile/chunkmap"
 	"ffresources/internal/families/ffx/codecs/vbf"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/profile/interactions"
-	"ffresources/internal/shared/logging"
 	"ffresources/internal/platform/uilog"
+	"ffresources/internal/shared/dto"
+	"ffresources/internal/shared/logging"
 )
 
 // ---------------------------------------------------------------------------
@@ -1006,7 +1007,7 @@ func vbfImageDuplicatesFor(vbfPath, innerPath string, target vbfTarget, raw, eff
 		_, modded := ddsphyre.Exists(target.Version, candidate.id)
 		duplicates = append(duplicates, dto.ImageDuplicate{
 			ID:        candidate.id,
-			Key:       dto.NewImageMetadata(candidate.id, target.Version).Key,
+			Key:       ffxmetadata.NewImageMetadata(candidate.id, target.Version).Key,
 			VbfPath:   candidate.path,
 			Modded:    modded,
 			Identical: candidate.effectiveHash == effectiveHash,

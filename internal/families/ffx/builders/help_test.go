@@ -2,19 +2,19 @@ package builders_test
 
 import (
 	"bytes"
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"ffresources/testdata/ffx/tempdir"
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/helpfile"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/artifact"
-	"ffresources/internal/shared/hash"
-	jsonfmt "ffresources/internal/shared/artifact/json"
 	_ "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/shared/dto"
+	"ffresources/internal/shared/hash"
+	"ffresources/testdata/ffx/tempdir"
 )
 
 // Copia a árvore help/ dos fixtures para um GameFilesRoot temporário: o e2e
@@ -232,7 +232,7 @@ func TestHelpArtifactRoundTripUnchanged(t *testing.T) {
 		t.Fatalf("build: %v", err)
 	}
 
-	jp, err := jsonfmt.HelpJSONPath(common.GameVersionFFX, "")
+	jp, err := ffxpaths.HelpJSONPath(common.GameVersionFFX, "")
 	if err != nil {
 		t.Fatalf("json path: %v", err)
 	}

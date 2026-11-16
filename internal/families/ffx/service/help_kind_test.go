@@ -1,14 +1,15 @@
 package services
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"ffresources/internal/families/ffx/codecs/helpfile"
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/dto"
-	"ffresources/internal/families/ffx/codecs/helpfile"
 	"ffresources/internal/shared/hash"
 	"ffresources/testdata/ffx/tempdir"
 )
@@ -50,7 +51,7 @@ func TestKindFromKeyHelp(t *testing.T) {
 func TestDetectImportKindHelpVersionGuard(t *testing.T) {
 	imported := dto.Collection{
 		"now_help": dto.FileEntry{
-			Metadata: dto.NewHelpMetadata("now_help", "help/now_help", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewHelpMetadata("now_help", "help/now_help", common.GameVersionFFX),
 		},
 	}
 	kind, err := detectImportKind(common.GameVersionFFX, imported)

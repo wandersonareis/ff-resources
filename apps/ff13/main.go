@@ -33,8 +33,6 @@ func init() {
 func main() {
 	logging.SetAppName("ff13")
 	logging.Init()
-	// Trava de escrita herdada do FFX: aponta o GameFilesRoot para data/.
-	ff13service.InitWriteGuard()
 
 	// Create a new Wails application by providing the necessary options.
 	// Variables 'Name' and 'Description' are for application metadata.

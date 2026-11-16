@@ -2,25 +2,26 @@ package json_test
 
 import (
 	encodingjson "encoding/json"
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"strings"
 	"testing"
 
 	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/shared/artifact/json"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
-	"ffresources/internal/shared/artifact/json"
 )
 
 func sampleCollection() dto.Collection {
 	return dto.Collection{
 		"ev002": {
-			Metadata: dto.NewEventMetadata("ev002", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev002", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": "Hi"}), Text: map[string]string{"us": "Hi"}},
 			},
 		},
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{
 					Index: 0,
@@ -85,7 +86,7 @@ func TestJSONEventsFormatterShapesOutput(t *testing.T) {
 func TestJSONEventsFormatterSortsRows(t *testing.T) {
 	c := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 2, Text: map[string]string{"us": "C"}},
 				{Index: 0, Text: map[string]string{"us": "A"}},
@@ -117,7 +118,7 @@ func TestJSONObjectFormatterRoundTrip(t *testing.T) {
 	version := common.GameVersionFFX
 	c := dto.Collection{
 		"command": {
-			Metadata: dto.NewObjectMetadata(version, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin"),
+			Metadata: ffxmetadata.NewObjectMetadata(version, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin"),
 			Rows: []dto.TextRow{
 				{
 					Index: 0,
@@ -170,7 +171,7 @@ func TestJSONObjectFormatterWeaponNameMetadata(t *testing.T) {
 	version := common.GameVersionFFX
 	c := dto.Collection{
 		"w_name": {
-			Metadata: dto.NewObjectMetadata(version, "battle/kernel", "w_name.bin", "ffx/battle/kernel/w_name.bin"),
+			Metadata: ffxmetadata.NewObjectMetadata(version, "battle/kernel", "w_name.bin", "ffx/battle/kernel/w_name.bin"),
 			Rows: []dto.TextRow{
 				{
 					Index:     12,
@@ -228,7 +229,7 @@ func TestJSONPreservesLayoutFieldOrder(t *testing.T) {
 	}
 	c := dto.Collection{
 		"command": {
-			Metadata: dto.NewObjectMetadata(version, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin"),
+			Metadata: ffxmetadata.NewObjectMetadata(version, "battle/kernel", "command.bin", "ffx/battle/kernel/command.bin"),
 			Rows:     rows,
 		},
 	}
@@ -258,7 +259,7 @@ func TestJSONMacroFormatterRoundTrip(t *testing.T) {
 	}
 	c := dto.Collection{
 		"chunk_00": {
-			Metadata: dto.NewMacroMetadata(common.GameVersionFFX, 0),
+			Metadata: ffxmetadata.NewMacroMetadata(common.GameVersionFFX, 0),
 			Rows: []dto.TextRow{
 				{
 					Index: 0,
@@ -310,7 +311,7 @@ func TestMetadataOmitsEmptyFields(t *testing.T) {
 	// Macro carrega id=chunk_NN; row_count omitido quando zero.
 	macroRaw, err := json.JSONFormatter{}.Marshal(dto.Collection{
 		"chunk_00": {
-			Metadata: dto.NewMacroMetadata(common.GameVersionFFX, 0),
+			Metadata: ffxmetadata.NewMacroMetadata(common.GameVersionFFX, 0),
 			Rows:     []dto.TextRow{{Index: 0, Name: "name", Text: map[string]string{"us": "Hi"}}},
 		},
 	})
@@ -347,7 +348,7 @@ func dedupCollection() dto.Collection {
 	long := "{PC:04:WAKKA}{\n}{PC:01:YUNA}! Onde você está?!"
 	return dto.Collection{
 		"boss_fight": {
-			Metadata: dto.NewEventMetadata("boss_fight", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("boss_fight", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": long}), Text: map[string]string{"us": long}},
 				{Index: 7, Hash: hash.Texts(map[string]string{"us": long}), Text: map[string]string{"us": long}},
@@ -413,14 +414,14 @@ func TestMarshalKeepsDivergentCopyLiteralAndCanonicalizesRefs(t *testing.T) {
 	const divergent = "Translation B for one copy"
 	bare := hash.Sum64Hex(original)
 	c := dto.Collection{
-		"aaa_divergent": {Metadata: dto.NewEventMetadata("aaa_divergent", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"aaa_divergent": {Metadata: ffxmetadata.NewEventMetadata("aaa_divergent", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare},
 			Text: map[string]string{"us": divergent}, Divergent: true,
 		}}},
-		"mmm_definition": {Metadata: dto.NewEventMetadata("mmm_definition", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"mmm_definition": {Metadata: ffxmetadata.NewEventMetadata("mmm_definition", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare}, Text: map[string]string{"us": definition},
 		}}},
-		"zzz_reference": {Metadata: dto.NewEventMetadata("zzz_reference", common.GameVersionFFX), Rows: []dto.TextRow{{
+		"zzz_reference": {Metadata: ffxmetadata.NewEventMetadata("zzz_reference", common.GameVersionFFX), Rows: []dto.TextRow{{
 			Index: 0, Hash: map[string]string{"us": bare}, Text: map[string]string{"us": original},
 		}}},
 	}
@@ -482,7 +483,7 @@ func TestMarshalSkipsShortCJKTexts(t *testing.T) {
 	}
 	c := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 0, Hash: hash.Texts(map[string]string{"us": text}), Text: map[string]string{"us": text}},
 				{Index: 1, Hash: hash.Texts(map[string]string{"us": text}), Text: map[string]string{"us": text}},
@@ -578,7 +579,7 @@ func TestMarshalUnmarshalIdentity(t *testing.T) {
 func TestMarshalNoEscapeKeepsAmpersand(t *testing.T) {
 	c := dto.Collection{
 		"ev001": {
-			Metadata: dto.NewEventMetadata("ev001", common.GameVersionFFX),
+			Metadata: ffxmetadata.NewEventMetadata("ev001", common.GameVersionFFX),
 			Rows: []dto.TextRow{
 				{Index: 0, Text: map[string]string{"us": "Tom & Jerry <test>"}},
 			},

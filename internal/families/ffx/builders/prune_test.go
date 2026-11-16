@@ -1,6 +1,7 @@
 package builders_test
 
 import (
+	ffxmetadata "ffresources/internal/families/ffx/profile/metadata"
 	"testing"
 
 	"ffresources/internal/families/ffx/builders"
@@ -11,7 +12,7 @@ import (
 // entryWith monta uma FileEntry com as rows dadas (Index/Name/Text us).
 func entryWith(rows ...dto.TextRow) dto.FileEntry {
 	return dto.FileEntry{
-		Metadata: dto.NewMacroMetadata(common.GameVersionFFX2, 7).WithRowCount(len(rows)),
+		Metadata: ffxmetadata.NewMacroMetadata(common.GameVersionFFX2, 7).WithRowCount(len(rows)),
 		Rows:     rows,
 	}
 }

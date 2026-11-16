@@ -1,13 +1,13 @@
 package services
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"ffresources/internal/families/ffx/profile/common"
-	jsonfmt "ffresources/internal/shared/artifact/json"
 
 	"ffresources/testdata/ffx/tempdir"
 )
@@ -96,7 +96,7 @@ func TestTreeBulkPrefixAllBulkPaths(t *testing.T) {
 		t.Fatalf("macro: %s", mc)
 	}
 
-	hp, err := jsonfmt.HelpJSONPath(common.GameVersionFFX, treeBulkPrefix)
+	hp, err := ffxpaths.HelpJSONPath(common.GameVersionFFX, treeBulkPrefix)
 	if err != nil {
 		t.Fatalf("help: %v", err)
 	}

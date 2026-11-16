@@ -1,14 +1,14 @@
 package writer
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/macrodic"
-	"ffresources/internal/shared/artifact"
-	"ffresources/internal/shared/artifact/json"
-	_ "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/profile/interactions"
+	"ffresources/internal/shared/artifact"
+	_ "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/shared/dto"
 	"fmt"
 	"path/filepath"
 )
@@ -22,7 +22,7 @@ func writeArtifact(format string, c dto.Collection, jsonPath string, langs []str
 	if !ok {
 		return "", fmt.Errorf("formatter %s não registrado", format)
 	}
-	return formatters.NewWriter(f, c, formatters.SwapExt(f, jsonPath), langs).Write()
+	return formatters.NewWriter(f, c, formatters.SwapExt(f, jsonPath), common.ArtifactOptions(langs)).Write()
 }
 
 // readArtifactFile lê o arquivo no formato pedido (registry) de volta
@@ -51,7 +51,7 @@ func ExportMacroDictionaryToJSON() {
 		}
 	}
 
-	path, err := json.MacroJSONPath(version)
+	path, err := ffxpaths.MacroJSONPath(version)
 	if err != nil {
 		common.LogError("Error resolving macro dictionary path: %v\n", err)
 		return
@@ -77,7 +77,7 @@ func ExportMacroDictionaryToStrings(langs []string) {
 		return
 	}
 
-	path, err := json.MacroJSONPath(version)
+	path, err := ffxpaths.MacroJSONPath(version)
 	if err != nil {
 		common.LogError("Error resolving macro dictionary path: %v\n", err)
 		return

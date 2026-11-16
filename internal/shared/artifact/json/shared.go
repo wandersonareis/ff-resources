@@ -12,9 +12,10 @@ import (
 	"encoding/json"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
+	formatters "ffresources/internal/shared/artifact"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
+	logging "ffresources/internal/shared/logging"
 )
 
 // extensionJSON é a extensão produzida pelos formatters JSON.
@@ -41,7 +42,12 @@ func marshalNoEscape(v any) ([]byte, error) {
 // marshalCollection serializa a Collection com chaves e rows ordenadas
 // (saída determinística), com todos os idiomas. Recebe apenas DTO pronto.
 func marshalCollection(c dto.Collection) ([]byte, error) {
-	return marshalCollectionLangs(c, nil)
+	return marshalCollectionOpts(c, formatters.DefaultOptions())
+}
+
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return marshalCollectionOpts(c, opts)
 }
 
 // MarshalNoDedup serializa SEM o dedup de conteúdo: todo texto do idioma
@@ -50,13 +56,18 @@ func marshalCollection(c dto.Collection) ([]byte, error) {
 // volta ao texto completo. O hash de identidade das rows continua no
 // artefato, como no marshal com dedup.
 func MarshalNoDedup(c dto.Collection) ([]byte, error) {
-	return marshalCollectionOpt(c, nil, false)
+	opts := formatters.DefaultOptions()
+	opts.DisableDedup = true
+	return marshalCollectionOpts(c, opts)
 }
 
 // MarshalNoDedupLangs é MarshalNoDedup com o filtro de idiomas
 // (nil/vazio = todos).
 func MarshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalCollectionOpt(c, langs, false)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	opts.DisableDedup = true
+	return marshalCollectionOpts(c, opts)
 }
 
 // marshalCollectionLangs serializa a Collection contendo só os idiomas
@@ -66,21 +77,23 @@ func MarshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
 // repetidos (hash.IsDedupEligible: > MinDedupRunes runes) viram referência
 // `$hash` — mesma regra do DedupHelpDTO do builders. O DTO de entrada nunca é mutado.
 func marshalCollectionLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalCollectionOpt(c, langs, true)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return marshalCollectionOpts(c, opts)
 }
 
 // marshalCollectionOpt é o motor único do marshal: dedup=false desliga só o
 // colapso do TEXTO repetido em ref "$hash" — o hash de identidade da row
 // (com prefixo `$`) permanece em qualquer modo.
-func marshalCollectionOpt(c dto.Collection, langs []string, dedup bool) ([]byte, error) {
-	filter := langSet(langs)
+func marshalCollectionOpts(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	filter := langSet(opts.Languages)
 	seen := make(map[string]string) // hashHex bare -> texto (só default lang)
 	ordered := make(map[string]dto.FileEntry, len(c))
 	for _, k := range c.SortedKeys() {
 		entry := c[k]
 		rows := make([]dto.TextRow, 0, len(entry.Rows))
 		for _, row := range entry.Rows {
-			r := dto.TextRow{Index: row.Index, Character: row.Character, Kind: row.Kind, Name: row.Name}
+			r := dto.TextRow{Index: row.Index, Key: row.Key, Character: row.Character, Kind: row.Kind, Name: row.Name}
 			if row.Hash != nil {
 				r.Hash = make(map[string]string, len(row.Hash))
 				for lang, h := range row.Hash {
@@ -102,10 +115,10 @@ func marshalCollectionOpt(c dto.Collection, langs []string, dedup bool) ([]byte,
 			// Copy Source and Target fields
 			r.Source = row.Source
 			r.Target = row.Target
-			if t := r.Text[common.DefaultLocalization]; !row.Divergent && dedup && hash.IsDedupEligible(t) {
-				if h, _ := hash.Strip(r.Hash[common.DefaultLocalization]); h != "" {
+			if t := r.Text[opts.Source()]; opts.DedupEnabled() && !row.Divergent && hash.IsDedupEligible(t) {
+				if h, _ := hash.Strip(r.Hash[opts.Source()]); h != "" {
 					if _, ok := seen[h]; ok {
-						r.Text[common.DefaultLocalization] = hash.Prefix(h)
+						r.Text[opts.Source()] = hash.Prefix(h)
 					} else {
 						seen[h] = t
 					}
@@ -113,7 +126,7 @@ func marshalCollectionOpt(c dto.Collection, langs []string, dedup bool) ([]byte,
 			}
 			rows = append(rows, r)
 		}
-		dto.SortRows(rows)
+		dto.SortRowsBy(rows, opts.IdentityOf())
 		entry.Rows = rows
 		ordered[k] = entry
 	}
@@ -145,6 +158,11 @@ func langSet(langs []string) map[string]bool {
 // da cópia); a definição canônica continua sendo a primeira literal.
 // `$` órfão (fora da tabela = JSON danificado) é mantido + LogVerbose.
 func unmarshalCollection(data []byte) (dto.Collection, error) {
+	return unmarshalCollectionOpts(data, formatters.DefaultOptions())
+}
+
+// UnmarshalOptions parseia respeitando o idioma fonte e a identidade.
+func unmarshalCollectionOpts(data []byte, opts formatters.Options) (dto.Collection, error) {
 	var c dto.Collection
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -152,19 +170,19 @@ func unmarshalCollection(data []byte) (dto.Collection, error) {
 	table := make(map[string]string)
 	for _, k := range c.SortedKeys() {
 		entry := c[k]
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		for i := range entry.Rows {
 			row := &entry.Rows[i]
 			for lang, h := range row.Hash {
 				bare, _ := hash.Strip(h)
 				row.Hash[lang] = bare
 			}
-			t := row.Text[common.DefaultLocalization]
+			t := row.Text[opts.Source()]
 			ref, isRef := hash.Strip(t)
-			if isRef && ref == row.Hash[common.DefaultLocalization] {
+			if isRef && ref == row.Hash[opts.Source()] {
 				continue // referência: resolve na segunda passada
 			}
-			if own := row.Hash[common.DefaultLocalization]; own != "" && t != "" {
+			if own := row.Hash[opts.Source()]; own != "" && t != "" {
 				if canonical, exists := table[own]; !exists {
 					table[own] = t
 				} else if canonical != t {
@@ -182,21 +200,21 @@ func unmarshalCollection(data []byte) (dto.Collection, error) {
 		entry := c[k]
 		for i := range entry.Rows {
 			row := &entry.Rows[i]
-			t := row.Text[common.DefaultLocalization]
+			t := row.Text[opts.Source()]
 			ref, isRef := hash.Strip(t)
-			if !isRef || ref != row.Hash[common.DefaultLocalization] {
+			if !isRef || ref != row.Hash[opts.Source()] {
 				continue
 			}
 			if v, ok := table[ref]; ok {
-				row.Text[common.DefaultLocalization] = v
+				row.Text[opts.Source()] = v
 			} else {
-				common.LogVerbose("orphan dedup reference %q kept as-is", t)
+				logging.Verbose("orphan dedup reference %q kept as-is", t)
 			}
 		}
 		c[k] = entry
 	}
 	for k, entry := range c {
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		c[k] = entry
 	}
 	return c, nil

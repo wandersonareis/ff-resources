@@ -9,9 +9,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/artifact"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 
 	"github.com/xuri/excelize/v2"
@@ -130,13 +129,19 @@ func (w *xlsxWidths) observe(col int, text string) {
 
 // Marshal organiza a Collection pronta no formato XLSX (todos os idiomas).
 func (XLSXFormatter) Marshal(c dto.Collection) ([]byte, error) {
-	return (XLSXFormatter{}).MarshalLangs(c, nil)
+	return (XLSXFormatter{}).MarshalOptions(c, formatters.DefaultOptions())
 }
 
 // MarshalLangs organiza a Collection pronta no formato XLSX contendo
 // só os idiomas pedidos (nil/vazio = todos).
 func (XLSXFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	filter := langSet(langs)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return (XLSXFormatter{}).MarshalOptions(c, opts)
+}
+
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func (XLSXFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
 
 	f := excelize.NewFile()
 	sheet := "Sheet1"
@@ -217,16 +222,14 @@ func (XLSXFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, err
 	rowIdx := 2
 	for _, k := range c.SortedKeys() {
 		entry := c[k]
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
+		rows := opts.SortedRows(entry.Rows)
 
 		key, id := entryColumns(entry, k)
 
 		for _, row := range rows {
-			for _, lang := range rowLangs(row, filter) {
+			for _, lang := range rowLangs(row, opts) {
 				text := row.Text[lang]
-				if text == "" && !formatters.HasSourceTarget(row, lang) {
+				if text == "" && !formatters.HasSourceTarget(row, lang, opts) {
 					continue
 				}
 				h := row.Hash[lang]
@@ -237,7 +240,7 @@ func (XLSXFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, err
 
 				// Dedup: no idioma default, textos repetidos viram ref "$hash"
 				value := text
-				if lang == common.DefaultLocalization && !row.Divergent && hash.IsDedupEligible(text) {
+				if opts.DedupEnabled() && lang == opts.Source() && !row.Divergent && hash.IsDedupEligible(text) {
 					if _, dup := seen[h]; dup {
 						value = ph
 					} else {
@@ -250,11 +253,11 @@ func (XLSXFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, err
 					divergent = "true"
 				}
 
-				source, target := formatters.SourceTarget(row, lang)
+				source, target := formatters.SourceTarget(row, lang, opts)
 
 				f.SetCellValue(sheet, fmt.Sprintf("A%d", rowIdx), key)
 				f.SetCellValue(sheet, fmt.Sprintf("B%d", rowIdx), id)
-				f.SetCellValue(sheet, fmt.Sprintf("C%d", rowIdx), row.Name)
+				f.SetCellValue(sheet, fmt.Sprintf("C%d", rowIdx), formatters.RowIdentityName(row, opts))
 				f.SetCellValue(sheet, fmt.Sprintf("D%d", rowIdx), row.Index)
 				f.SetCellValue(sheet, fmt.Sprintf("E%d", rowIdx), lang)
 				f.SetCellValue(sheet, fmt.Sprintf("F%d", rowIdx), ph)
@@ -268,7 +271,7 @@ func (XLSXFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, err
 				// "true"/"false".
 				widths.observe(colKey, key)
 				widths.observe(colID, id)
-				widths.observe(colName, row.Name)
+				widths.observe(colName, formatters.RowIdentityName(row, opts))
 				widths.observe(colIndex, strconv.Itoa(row.Index))
 				widths.observe(colLang, lang)
 				widths.observe(colHash, ph)
@@ -351,29 +354,29 @@ func langSet(langs []string) map[string]bool {
 }
 
 // rowLangs devolve os idiomas da row com texto, ordenados e filtrados.
-func rowLangs(row dto.TextRow, filter map[string]bool) []string {
+func rowLangs(row dto.TextRow, opts formatters.Options) []string {
 	langs := make([]string, 0, len(row.Text))
 	for lang, text := range row.Text {
 		if text == "" {
 			continue
 		}
-		if filter != nil && !filter[lang] {
+		if !opts.Includes(lang) {
 			continue
 		}
 		langs = append(langs, lang)
 	}
 	// A linha de `us` entra também quando só há source/target: o target é o
 	// que o import aplica, mesmo sem texto no original.
-	if formatters.HasSourceTarget(row, common.DefaultLocalization) && (filter == nil || filter[common.DefaultLocalization]) {
+	if formatters.HasSourceTarget(row, opts.Source(), opts) && opts.Includes(opts.Source()) {
 		hasUS := false
 		for _, l := range langs {
-			if l == common.DefaultLocalization {
+			if l == opts.Source() {
 				hasUS = true
 				break
 			}
 		}
 		if !hasUS {
-			langs = append(langs, common.DefaultLocalization)
+			langs = append(langs, opts.Source())
 		}
 	}
 	sort.Strings(langs)
@@ -411,6 +414,11 @@ func protectMetadataColumns(f *excelize.File, sheet string) error {
 
 // Unmarshal parseia o XLSX de volta para a Collection (DTO).
 func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
+	return (XLSXFormatter{}).UnmarshalOptions(data, formatters.DefaultOptions())
+}
+
+// UnmarshalOptions parseia respeitando a identidade e o idioma fonte.
+func (XLSXFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
 	f, err := excelize.OpenReader(strings.NewReader(string(data)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLSX: %w", err)
@@ -455,7 +463,7 @@ func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		text := rec[colText]
 		divergent := rec[colDivergent] == "true"
 
-		if lang == common.DefaultLocalization && !divergent && text != "" && !hash.IsRef(text) {
+		if lang == opts.Source() && !divergent && text != "" && !hash.IsRef(text) {
 			if _, exists := table[hashHex]; !exists {
 				table[hashHex] = text
 			}
@@ -519,7 +527,7 @@ func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		hashMap := make(map[string]string)
 		textMap := make(map[string]string)
 		for _, r := range entry.Rows {
-			if r.Index == index && r.Name == name {
+			if formatters.RowMatches(r, index, name, opts) {
 				hashMap = r.Hash
 				textMap = r.Text
 				break
@@ -534,8 +542,13 @@ func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		hashMap[lang] = hashHex
 		textMap[lang] = text
 
+		keyValue := ""
+		if opts.IdentityOf() == dto.IdentityKey {
+			keyValue = name
+		}
 		row := dto.TextRow{
 			Index:     index,
+			Key:       keyValue,
 			Name:      name,
 			Hash:      hashMap,
 			Text:      textMap,
@@ -551,12 +564,12 @@ func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		// Remove row existente se houver
 		newRows := make([]dto.TextRow, 0, len(entry.Rows)+1)
 		for _, r := range entry.Rows {
-			if !(r.Index == index && r.Name == name) {
+			if !formatters.RowMatches(r, index, name, opts) {
 				newRows = append(newRows, r)
 			}
 		}
 		newRows = append(newRows, row)
-		dto.SortRows(newRows)
+		dto.SortRowsBy(newRows, opts.IdentityOf())
 
 		entry.Rows = newRows
 		// Chave do mapa = id (como no JSON/DTO); a key completa vive na
@@ -566,7 +579,7 @@ func (XLSXFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 
 	// Ordena rows finais
 	for k, entry := range c {
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		c[k] = entry
 	}
 
@@ -586,148 +599,24 @@ func (XLSXFormatterNoDedup) Extension() string {
 }
 
 func (XLSXFormatterNoDedup) Marshal(c dto.Collection) ([]byte, error) {
-	return marshalNoDedup(c)
+	return (XLSXFormatterNoDedup{}).MarshalOptions(c, formatters.DefaultOptions())
 }
 
 func (XLSXFormatterNoDedup) MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalNoDedupLangs(c, langs)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return (XLSXFormatterNoDedup{}).MarshalOptions(c, opts)
+}
+
+func (XLSXFormatterNoDedup) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	opts.DisableDedup = true
+	return (XLSXFormatter{}).MarshalOptions(c, opts)
 }
 
 func (XLSXFormatterNoDedup) Unmarshal(data []byte) (dto.Collection, error) {
 	return NewXLSXFormatter().Unmarshal(data)
 }
 
-func marshalNoDedup(c dto.Collection) ([]byte, error) {
-	return marshalNoDedupLangs(c, nil)
-}
-
-func marshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
-	filter := langSet(langs)
-	f := excelize.NewFile()
-	sheet := "Sheet1"
-	f.SetSheetName(f.GetSheetName(0), sheet)
-
-	headerStyle, _ := f.NewStyle(&excelize.Style{
-		Font:      &excelize.Font{Bold: true},
-		Fill:      excelize.Fill{Type: "pattern", Color: []string{"#E0E0E0"}, Pattern: 1},
-		Alignment: &excelize.Alignment{Horizontal: "center"},
-	})
-
-	for i, h := range xlsxHeader {
-		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(sheet, cell, h)
-		f.SetCellStyle(sheet, cell, cell, headerStyle)
-	}
-
-	// Mesma régua de larguras do MarshalLangs: base 10 + maior texto
-	// observado (runes), teto 80 — aplicada no final. Mesmas duas
-	// colunas editáveis também: text (WrapText + destravada) e divergent
-	// (só destravada).
-	widths := newXlsxWidths()
-	// Text column style: WrapText + unlocked
-	textStyle, _ := f.NewStyle(&excelize.Style{
-		Alignment:  &excelize.Alignment{WrapText: true, Vertical: "top"},
-		Protection: &excelize.Protection{Locked: false},
-	})
-	// Source column style: editable with blue background
-	sourceStyle, _ := f.NewStyle(&excelize.Style{
-		Alignment:  &excelize.Alignment{WrapText: true, Vertical: "top"},
-		Protection: &excelize.Protection{Locked: false},
-		Fill:       excelize.Fill{Type: "pattern", Color: []string{"#0ea5e9"}, Pattern: 1},
-	})
-	// Target column style: editable, no special background
-	targetStyle, _ := f.NewStyle(&excelize.Style{
-		Alignment:  &excelize.Alignment{WrapText: true, Vertical: "top"},
-		Protection: &excelize.Protection{Locked: false},
-	})
-	// Divergent column style: unlocked, no WrapText
-	divergentStyle, _ := f.NewStyle(&excelize.Style{
-		Protection: &excelize.Protection{Locked: false},
-	})
-
-	rowIdx := 2
-	for _, k := range c.SortedKeys() {
-		entry := c[k]
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
-		key, id := entryColumns(entry, k)
-		for _, row := range rows {
-			for _, lang := range rowLangs(row, filter) {
-				text := row.Text[lang]
-				if text == "" && !formatters.HasSourceTarget(row, lang) {
-					continue
-				}
-				h := row.Hash[lang]
-				if h == "" {
-					h = hash.Sum64Hex(text)
-				}
-				ph := hash.Prefix(h) // hash no formato de artefato: "$"+hex
-				source, target := formatters.SourceTarget(row, lang)
-				divergent := "false"
-				if row.Divergent {
-					divergent = "true"
-				}
-				f.SetCellValue(sheet, fmt.Sprintf("A%d", rowIdx), key)
-				f.SetCellValue(sheet, fmt.Sprintf("B%d", rowIdx), id)
-				f.SetCellValue(sheet, fmt.Sprintf("C%d", rowIdx), row.Name)
-				f.SetCellValue(sheet, fmt.Sprintf("D%d", rowIdx), row.Index)
-				f.SetCellValue(sheet, fmt.Sprintf("E%d", rowIdx), lang)
-				f.SetCellValue(sheet, fmt.Sprintf("F%d", rowIdx), ph)
-				f.SetCellValue(sheet, fmt.Sprintf("G%d", rowIdx), text)
-				f.SetCellValue(sheet, fmt.Sprintf("H%d", rowIdx), source)
-				f.SetCellValue(sheet, fmt.Sprintf("I%d", rowIdx), target)
-				f.SetCellValue(sheet, fmt.Sprintf("J%d", rowIdx), divergent)
-
-				// Mesma régua do MarshalLangs: todas observam o conteúdo.
-				widths.observe(colKey, key)
-				widths.observe(colID, id)
-				widths.observe(colName, row.Name)
-				widths.observe(colIndex, strconv.Itoa(row.Index))
-				widths.observe(colLang, lang)
-				widths.observe(colHash, ph)
-				widths.observe(colText, text)
-				widths.observe(colSource, source)
-				widths.observe(colTarget, target)
-				widths.observe(colDivergent, divergent)
-				rowIdx++
-			}
-		}
-	}
-
-	for i, w := range widths.current {
-		col, _ := excelize.ColumnNumberToName(i + 1)
-		f.SetColWidth(sheet, col, col, float64(w))
-	}
-	if rowIdx > 2 {
-		f.SetCellStyle(sheet, "G2", fmt.Sprintf("G%d", rowIdx-1), textStyle)
-		// Source column (H) with blue background
-		f.SetCellStyle(sheet, "H2", fmt.Sprintf("H%d", rowIdx-1), sourceStyle)
-		// Target column (I) editable, no special background
-		f.SetCellStyle(sheet, "I2", fmt.Sprintf("I%d", rowIdx-1), targetStyle)
-		// Divergent column (J) editable, no WrapText
-		f.SetCellStyle(sheet, "J2", fmt.Sprintf("J%d", rowIdx-1), divergentStyle)
-	}
-
-	if rowIdx > 2 {
-		endCell, _ := excelize.CoordinatesToCellName(len(xlsxHeader), rowIdx-1)
-		f.AutoFilter(sheet, "A1:"+endCell, []excelize.AutoFilterOptions{})
-		f.SetPanes(sheet, &excelize.Panes{
-			Freeze:      true,
-			YSplit:      1,
-			TopLeftCell: "A2",
-		})
-	}
-
-	// Mesma proteção do MarshalLangs: metadata travada, text/divergent
-	// editáveis.
-	if err := protectMetadataColumns(f, sheet); err != nil {
-		return nil, err
-	}
-
-	buf, err := f.WriteToBuffer()
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+func (XLSXFormatterNoDedup) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return NewXLSXFormatter().UnmarshalOptions(data, opts)
 }

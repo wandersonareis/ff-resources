@@ -1,7 +1,5 @@
 package dto
 
-import "ffresources/internal/families/ffx/profile/common"
-
 // ImageEntry é a textura .dds.phyre servida ao frontend para exibição.
 //
 // A imagem chega pronta em base64 (data URL) — o navegador renderiza direto
@@ -98,16 +96,6 @@ type ImageDuplicates struct {
 	Duplicates []ImageDuplicate `json:"duplicates"`
 	// DupPayload é o tamanho do payload em bytes (desperdício do grupo).
 	DupPayload int64 `json:"dupPayload"`
-}
-
-// NewImageMetadata monta a metadata canônica de uma textura: a key segue o
-// padrão dos demais kinds (<versão>/<relPath>), o id é o caminho relativo
-// da árvore sem o sufixo .dds.phyre.
-func NewImageMetadata(id string, version common.GameVersion) Metadata {
-	return Metadata{
-		Key: common.VersionPathName(version) + "/" + id + ".dds.phyre",
-		ID:  id,
-	}
 }
 
 // ImageImportPreviewCopy descreve uma cópia AUSENTE na pasta traduzida

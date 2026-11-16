@@ -5,11 +5,11 @@
 package services
 
 import (
+	ffxpaths "ffresources/internal/families/ffx/artifactpaths"
 	"fmt"
 	"path/filepath"
 
 	"ffresources/internal/families/ffx/profile/common"
-	jsonfmt "ffresources/internal/shared/artifact/json"
 )
 
 // treeBulkPrefix prefixa o base do artefato bulk gerado pela SELEÇÃO
@@ -104,7 +104,7 @@ func tableBulkPath(kind string, version common.GameVersion, prefix string) (stri
 //   - 1 chunk           → macro_chunk_NN_all_localizations
 //   - subconjunto       → macro_sel_<n>_<chunk1>_all_localizations
 func macroExportPath(version common.GameVersion, ids []string, prefix string) (string, error) {
-	canonical, err := jsonfmt.MacroJSONPath(version)
+	canonical, err := ffxpaths.MacroJSONPath(version)
 	if err != nil {
 		return "", err
 	}

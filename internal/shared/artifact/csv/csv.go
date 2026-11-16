@@ -10,9 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/artifact"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 )
 
@@ -78,15 +77,23 @@ const (
 // Marshal organiza a Collection pronta no formato CSV (todos os idiomas).
 // Recebe apenas DTO pronto; não toca no domínio nem muta a entrada.
 func (CSVFormatter) Marshal(c dto.Collection) ([]byte, error) {
-	return (CSVFormatter{}).MarshalLangs(c, nil)
+	return (CSVFormatter{}).MarshalOptions(c, formatters.DefaultOptions())
 }
 
-// MarshalLangs organiza a Collection pronta no formato CSV contendo
-// só os idiomas pedidos (nil/vazio = todos). Uma linha por (row, idioma)
-// não-vazio, com chaves e rows ordenadas (saída determinística).
+// MarshalLangs organiza a Collection pronta contendo só os idiomas pedidos
+// (nil/vazio = todos).
 func (CSVFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	filter := langSet(langs)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return (CSVFormatter{}).MarshalOptions(c, opts)
+}
 
+// MarshalOptions serializa com o perfil neutro (idiomas, identidade, dedup).
+func (CSVFormatter) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return marshalOptions(c, opts, opts.DedupEnabled())
+}
+
+func marshalOptions(c dto.Collection, opts formatters.Options, dedup bool) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 	writer.Comma = ','
@@ -97,20 +104,18 @@ func (CSVFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, erro
 		return nil, err
 	}
 
-	seen := make(map[string]string) // hashHex bare -> texto (só default lang)
+	seen := make(map[string]string) // hashHex bare -> texto (só idioma fonte)
 
 	for _, k := range c.SortedKeys() {
 		entry := c[k]
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
+		rows := opts.SortedRows(entry.Rows)
 
 		key, id := entryColumns(entry, k)
 
 		for _, row := range rows {
-			for _, lang := range rowLangs(row, filter) {
+			for _, lang := range rowLangs(row, opts) {
 				text := row.Text[lang]
-				if text == "" && !formatters.HasSourceTarget(row, lang) {
+				if text == "" && !formatters.HasSourceTarget(row, lang, opts) {
 					continue
 				}
 				h := row.Hash[lang]
@@ -118,9 +123,9 @@ func (CSVFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, erro
 					h = hash.Sum64Hex(text)
 				}
 
-				// Dedup: no idioma default, textos repetidos viram ref "$hash"
+				// Dedup: no idioma fonte, textos repetidos viram ref "$hash"
 				value := text
-				if lang == common.DefaultLocalization && !row.Divergent && hash.IsDedupEligible(text) {
+				if dedup && lang == opts.Source() && !row.Divergent && hash.IsDedupEligible(text) {
 					if _, dup := seen[h]; dup {
 						value = hash.Prefix(h)
 					} else {
@@ -133,11 +138,11 @@ func (CSVFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, erro
 					divergent = "true"
 				}
 
-				source, target := formatters.SourceTarget(row, lang)
+				source, target := formatters.SourceTarget(row, lang, opts)
 				record := []string{
 					key,
 					id,
-					row.Name,
+					rowIdentityName(row, opts),
 					fmt.Sprintf("%d", row.Index),
 					lang,
 					hash.Prefix(h),
@@ -160,55 +165,64 @@ func (CSVFormatter) MarshalLangs(c dto.Collection, langs []string) ([]byte, erro
 	return buf.Bytes(), nil
 }
 
-// langSet normaliza o filtro de idiomas (nil = todos).
-func langSet(langs []string) map[string]bool {
-	if len(langs) == 0 {
-		return nil
-	}
-	set := make(map[string]bool, len(langs))
-	for _, l := range langs {
-		if l = strings.TrimSpace(l); l != "" {
-			set[l] = true
+// rowIdentityName devolve o valor da coluna "name" conforme a identidade:
+// chave estável (Key) ou qualificador de segmento (Name).
+func rowIdentityName(row dto.TextRow, opts formatters.Options) string {
+	if opts.IdentityOf() == dto.IdentityKey {
+		if row.Key != "" {
+			return row.Key
 		}
 	}
-	return set
+	return row.Name
+}
+
+// rowMatches diz se a row existente é a mesma (Index+Name ou Key).
+func rowMatches(r dto.TextRow, index int, name string, opts formatters.Options) bool {
+	if opts.IdentityOf() == dto.IdentityKey {
+		return r.KeyFor(dto.IdentityKey) == name || r.Name == name
+	}
+	return r.Index == index && r.Name == name
 }
 
 // rowLangs devolve os idiomas da row com texto, ordenados e filtrados.
-// A linha de `us` entra também quando só há source/target (row sem texto no
-// original mas com tradução em mods) — o target precisa chegar ao import.
-func rowLangs(row dto.TextRow, filter map[string]bool) []string {
+// A linha do idioma fonte entra também quando só há source/target (row sem
+// texto no original mas com tradução em mods) — o target precisa chegar ao
+// import.
+func rowLangs(row dto.TextRow, opts formatters.Options) []string {
 	langs := make([]string, 0, len(row.Text))
 	for lang, text := range row.Text {
 		if text == "" {
 			continue
 		}
-		if filter != nil && !filter[lang] {
+		if !opts.Includes(lang) {
 			continue
 		}
 		langs = append(langs, lang)
 	}
-	if formatters.HasSourceTarget(row, common.DefaultLocalization) {
-		if filter == nil || filter[common.DefaultLocalization] {
-			hasUS := false
-			for _, l := range langs {
-				if l == common.DefaultLocalization {
-					hasUS = true
-					break
-				}
+	if formatters.HasSourceTarget(row, opts.Source(), opts) && opts.Includes(opts.Source()) {
+		hasSource := false
+		for _, l := range langs {
+			if l == opts.Source() {
+				hasSource = true
+				break
 			}
-			if !hasUS {
-				langs = append(langs, common.DefaultLocalization)
-			}
+		}
+		if !hasSource {
+			langs = append(langs, opts.Source())
 		}
 	}
 	sort.Strings(langs)
 	return langs
 }
 
-// Unmarshal parseia o CSV de volta para a Collection (DTO),
-// com rows ordenados por Index para reconstrução posicional do binário.
+// Unmarshal parseia o CSV de volta para a Collection (DTO), no modo
+// posicional padrão.
 func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
+	return (CSVFormatter{}).UnmarshalOptions(data, formatters.DefaultOptions())
+}
+
+// UnmarshalOptions parseia respeitando a identidade e o idioma fonte.
+func (CSVFormatter) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
 	reader := csv.NewReader(bytes.NewReader(data))
 	reader.Comma = ','
 	reader.LazyQuotes = true // mais tolerante
@@ -233,7 +247,7 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 	}
 
 	c := make(dto.Collection)
-	table := make(map[string]string) // hashHex bare -> texto canonical (default lang)
+	table := make(map[string]string) // hashHex bare -> texto canonical (idioma fonte)
 
 	// Primeira passada: coleta definições canônicas
 	for _, rec := range records[1:] {
@@ -245,8 +259,8 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		text := rec[colText]
 		divergent := rec[colDivergent] == "true"
 
-		// Só registra canônica no idioma default e não-divergent
-		if lang == common.DefaultLocalization && !divergent && text != "" && !hash.IsRef(text) {
+		// Só registra canônica no idioma fonte e não-divergent
+		if lang == opts.Source() && !divergent && text != "" && !hash.IsRef(text) {
 			if canonical, exists := table[hashHex]; !exists {
 				table[hashHex] = text
 			} else if canonical != text {
@@ -316,7 +330,7 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 			// Procurar row existente para preservar outros hashes
 			found := false
 			for _, r := range entry.Rows {
-				if r.Index == index && r.Name == name {
+				if rowMatches(r, index, name, opts) {
 					hashMap = r.Hash
 					found = true
 					break
@@ -333,7 +347,7 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 		textMap := make(map[string]string)
 		if entry.Rows != nil {
 			for _, r := range entry.Rows {
-				if r.Index == index && r.Name == name {
+				if rowMatches(r, index, name, opts) {
 					textMap = r.Text
 					break
 				}
@@ -352,21 +366,24 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 			Divergent: divergent,
 			Character: "",
 			Kind:      "",
-			// A projeção source/target só existe na linha do idioma default
+			// A projeção source/target só existe na linha do idioma fonte
 			// (é lá que a tradução vive); o import lê apenas o target.
 			Source: source,
 			Target: target,
+		}
+		if opts.IdentityOf() == dto.IdentityKey {
+			row.Key = name
 		}
 
 		// Remove row existente se houver
 		newRows := make([]dto.TextRow, 0, len(entry.Rows)+1)
 		for _, r := range entry.Rows {
-			if !(r.Index == index && r.Name == name) {
+			if !rowMatches(r, index, name, opts) {
 				newRows = append(newRows, r)
 			}
 		}
 		newRows = append(newRows, row)
-		dto.SortRows(newRows)
+		dto.SortRowsBy(newRows, opts.IdentityOf())
 
 		entry.Rows = newRows
 		// Chave do mapa = id (como no JSON/DTO); a key completa vive na
@@ -376,7 +393,7 @@ func (CSVFormatter) Unmarshal(data []byte) (dto.Collection, error) {
 
 	// Ordena rows finais
 	for k, entry := range c {
-		dto.SortRows(entry.Rows)
+		dto.SortRowsBy(entry.Rows, opts.IdentityOf())
 		c[k] = entry
 	}
 
@@ -407,62 +424,25 @@ func (CSVFormatterNoDedup) Extension() string {
 }
 
 func (CSVFormatterNoDedup) Marshal(c dto.Collection) ([]byte, error) {
-	return marshalNoDedup(c)
+	return marshalOptions(c, formatters.DefaultOptions(), false)
 }
 
 func (CSVFormatterNoDedup) MarshalLangs(c dto.Collection, langs []string) ([]byte, error) {
-	return marshalNoDedupLangs(c, langs)
+	opts := formatters.DefaultOptions()
+	opts.Languages = langs
+	return marshalOptions(c, opts, false)
+}
+
+func (CSVFormatterNoDedup) MarshalOptions(c dto.Collection, opts formatters.Options) ([]byte, error) {
+	return marshalOptions(c, opts, false)
 }
 
 func (CSVFormatterNoDedup) Unmarshal(data []byte) (dto.Collection, error) {
 	return NewCSVFormatter().Unmarshal(data)
 }
 
-func marshalNoDedup(c dto.Collection) ([]byte, error) {
-	return marshalNoDedupLangs(c, nil)
-}
-
-func marshalNoDedupLangs(c dto.Collection, langs []string) ([]byte, error) {
-	filter := langSet(langs)
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-	writer.Comma = ','
-	if err := writer.Write(csvHeader); err != nil {
-		return nil, err
-	}
-	for _, k := range c.SortedKeys() {
-		entry := c[k]
-		rows := make([]dto.TextRow, len(entry.Rows))
-		copy(rows, entry.Rows)
-		dto.SortRows(rows)
-		key, id := entryColumns(entry, k)
-		for _, row := range rows {
-			for _, lang := range rowLangs(row, filter) {
-				text := row.Text[lang]
-				if text == "" && !formatters.HasSourceTarget(row, lang) {
-					continue
-				}
-				h := row.Hash[lang]
-				if h == "" {
-					h = hash.Sum64Hex(text)
-				}
-				divergent := "false"
-				if row.Divergent {
-					divergent = "true"
-				}
-				source, target := formatters.SourceTarget(row, lang)
-				record := []string{key, id, row.Name, fmt.Sprintf("%d", row.Index), lang, hash.Prefix(h), text, source, target, divergent}
-				if err := writer.Write(record); err != nil {
-					return nil, err
-				}
-			}
-		}
-	}
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+func (CSVFormatterNoDedup) UnmarshalOptions(data []byte, opts formatters.Options) (dto.Collection, error) {
+	return NewCSVFormatter().UnmarshalOptions(data, opts)
 }
 
 // entryColumns devolve a coluna key (metadata.key completa) e a coluna id

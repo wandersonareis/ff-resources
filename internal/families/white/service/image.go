@@ -86,14 +86,15 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 				return dto.ImageEntry{}, perr
 			}
 			return dto.ImageEntry{
-				Metadata: imageSourceLabel(part, r),
-				Source:   "imgb",
-				Format:   info.Format,
-				Width:    info.Width,
-				Height:   info.Height,
-				PNGData:  ImageDataURL("image/png", png),
-				Flipped:  false,
-				Modded:   imageInMods(part, f.Rel),
+				Metadata:  imageSourceLabel(part, r),
+				AssetPath: r.Path,
+				Source:    "imgb",
+				Format:    info.Format,
+				Width:     info.Width,
+				Height:    info.Height,
+				PNGData:   ImageDataURL("image/png", png),
+				Flipped:   false,
+				Modded:    imageInMods(part, f.Rel),
 			}, nil
 		}
 		ext := strings.ToLower(filepath.Ext(r.Path))
@@ -105,14 +106,15 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 			}
 			info, _ := imagery.InfoDDS(raw)
 			return dto.ImageEntry{
-				Metadata: imageSourceLabel(part, r),
-				Source:   "dds",
-				Format:   info.Format,
-				Width:    info.Width,
-				Height:   info.Height,
-				PNGData:  ImageDataURL("image/png", png),
-				Flipped:  false,
-				Modded:   imageInMods(part, f.Rel),
+				Metadata:  imageSourceLabel(part, r),
+				AssetPath: r.Path,
+				Source:    "dds",
+				Format:    info.Format,
+				Width:     info.Width,
+				Height:    info.Height,
+				PNGData:   ImageDataURL("image/png", png),
+				Flipped:   false,
+				Modded:    imageInMods(part, f.Rel),
 			}, nil
 		case ".png":
 			cfg, _, derr := image.DecodeConfig(bytes.NewReader(raw))
@@ -120,14 +122,15 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 				cfg.Width, cfg.Height = 0, 0
 			}
 			return dto.ImageEntry{
-				Metadata: imageSourceLabel(part, r),
-				Source:   "png",
-				Format:   "PNG",
-				Width:    uint32(cfg.Width),
-				Height:   uint32(cfg.Height),
-				PNGData:  ImageDataURL("image/png", raw),
-				Flipped:  false,
-				Modded:   imageInMods(part, f.Rel),
+				Metadata:  imageSourceLabel(part, r),
+				AssetPath: r.Path,
+				Source:    "png",
+				Format:    "PNG",
+				Width:     uint32(cfg.Width),
+				Height:    uint32(cfg.Height),
+				PNGData:   ImageDataURL("image/png", raw),
+				Flipped:   false,
+				Modded:    imageInMods(part, f.Rel),
 			}, nil
 		}
 		return dto.ImageEntry{}, fmt.Errorf("imagem: extensão não suportada (%s)", ext)
@@ -147,6 +150,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 	}
 	return dto.ImageEntry{
 		Metadata:       imageSourceLabel(part, r),
+		AssetPath:      r.Path,
 		Source:         "imgb",
 		Format:         info.Format,
 		Width:          info.Width,
@@ -156,7 +160,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 		PNGData:        ImageDataURL("image/png", png),
 		Flipped:        false,
 		Modded:         imageInMods(part, table.Rel),
-		Duplicates:     []dto.ImageDuplicate{},
+		Duplicates:     nil,
 	}, nil
 }
 
