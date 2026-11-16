@@ -12,12 +12,12 @@ import { useWailsEvent } from '@/lib/ffx/use-wails-event';
  *
  * Tema ao vivo: cada janela é uma webview com o PRÓPRIO next-themes (lê o
  * localStorage da mesma origem na carga — abre no tema certo), e o evento
- * ffx:theme (o mesmo que a janela do updater escuta) sincroniza as trocas
+ * app:theme (o mesmo que a janela do updater escuta) sincroniza as trocas
  * feitas na principal enquanto esta está aberta.
  */
 export function LogWindowContent() {
   const { setTheme } = useTheme();
-  useWailsEvent('ffx:theme', (theme) => {
+  useWailsEvent('app:theme', (theme) => {
     if (theme === 'dark' || theme === 'light') setTheme(theme);
   });
 

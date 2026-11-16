@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="__FFX_THEME__">
+<html lang="pt-BR" data-theme="__APP_THEME__">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -38,7 +38,7 @@
           "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 /* Tema decidido pelo app (data-theme), não pelo SO: o Go renderiza o valor
-   atual do config.json no token __FFX_THEME__ antes de a janela abrir.
+   atual do config.json no token __APP_THEME__ antes de a janela abrir.
    :not([data-theme="light"]) cobre também o token ainda não substituído —
    aí o fallback é dark, igual ao default do Providers do frontend. */
 :root:not([data-theme="light"]) {
@@ -701,10 +701,10 @@ body {
   Events.On("wails:updater:error",             function (e) { onError(e && (e.data != null ? e.data : e)); });
 
   // Tema ao vivo: quando o usuário alterna o tema no main, o Go emite
-  // ffx:theme e aqui só troca o atributo data-theme — o CSS inteiro é
+  // app:theme e aqui só troca o atributo data-theme — o CSS inteiro é
   // dirigido por ele (restyle instantâneo, sem reload e sem framework).
   // O tema inicial já vem renderizado no HTML pelo Go na abertura.
-  Events.On("ffx:theme", function (e) {
+  Events.On("app:theme", function (e) {
     var t = e && (e.data != null ? e.data : e);
     if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
   });

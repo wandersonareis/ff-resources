@@ -19,6 +19,14 @@
 import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
 
 /**
+ * AppVersion devolve a versão exibida do app (semver própria), que pode ser
+ * diferente do release train.
+ */
+export function AppVersion(): $CancellablePromise<string> {
+    return $Call.ByID(3005166044);
+}
+
+/**
  * CheckNow abre a janela de atualização e roda o fluxo completo (check →
  * download → verificação → stage). Bloqueia até o fim, mas o binding JS roda
  * em goroutine própria — a UI não trava.
@@ -28,8 +36,9 @@ export function CheckNow(): $CancellablePromise<void> {
 }
 
 /**
- * CurrentVersion devolve a versão em execução ("2.1.1" em build de release,
- * "dev" em desenvolvimento — sem -ldflags).
+ * CurrentVersion devolve a versão do RELEASE TRAIN em execução ("2.5.0" em
+ * build de release, "dev" em desenvolvimento — sem -ldflags). É o número que
+ * o updater compara com a tag do GitHub.
  */
 export function CurrentVersion(): $CancellablePromise<string> {
     return $Call.ByID(3329050610);

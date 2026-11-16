@@ -13,11 +13,12 @@ import (
 // com o que o updater trabalha no desktop.
 var errNoGUI = errors.New("atualização automática indisponível no modo servidor")
 
-// Init, no modo servidor, só registra a versão: configurar o updater não
+// Init, no modo servidor, só registra as versões: configurar o updater não
 // teria efeito (o check abriria uma janela que não existe) e o startup check
 // ficaria falhando a cada abertura.
-func Init(_ *application.App, version string) error {
+func Init(_ *application.App, version, appVersion string, _ Config) error {
 	setCurrent(version)
+	setAppVersion(appVersion)
 	return nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 
 	ff13service "ffresources/apps/ff13/backend/service"
+	"ffresources/internal/platform/appupdater"
 	logging "ffresources/internal/shared/logging"
 )
 
@@ -19,6 +20,15 @@ import (
 
 //go:embed all:frontend/out
 var assets embed.FS
+
+// currentVersion é a versão do RELEASE TRAIN (tag do GitHub), injetada por
+// -ldflags "-X main.currentVersion=<VERSION>". "dev" desliga o check de
+// startup do updater.
+var currentVersion = "dev"
+
+// appVersion é a versão exibida do app (semver própria), injetada por
+// -ldflags "-X main.appVersion=<apps/ff13/VERSION>".
+var appVersion = "dev"
 
 func init() {
 	// Register a custom event whose associated data type is string.
@@ -45,6 +55,7 @@ func main() {
 		Services: []application.Service{
 			application.NewService(ff13service.New()),
 			application.NewService(&ff13service.WindowService{}),
+			application.NewService(&ff13service.UpdateService{}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -53,6 +64,15 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	// Auto-update: releases do repo do monorepo; o asset deste app é pulse-*.
+	if err := appupdater.Init(app, currentVersion, appVersion, appupdater.Config{
+		Repository:  "wandersonareis/ff-resources",
+		AssetPrefix: "pulse",
+		WindowTitle: "Atualização — FINAL FANTASY XIII Trilogy",
+	}); err != nil {
+		log.Fatalf("updater: %v", err)
+	}
 
 	// Create a new window with the necessary options.
 	// 'Title' is the title of the window.
@@ -85,6 +105,9 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}()
+
+	// Check silencioso de atualização (~5s depois).
+	appupdater.StartupCheck(app)
 
 	// Run the application. This blocks until the application has been exited.
 	err := app.Run()

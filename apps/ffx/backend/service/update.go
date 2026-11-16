@@ -29,8 +29,15 @@ func (u *UpdateService) Restart() error {
 	return appupdater.Restart()
 }
 
-// CurrentVersion devolve a versão em execução ("2.1.1" em build de release,
-// "dev" em desenvolvimento — sem -ldflags).
+// CurrentVersion devolve a versão do RELEASE TRAIN em execução ("2.5.0" em
+// build de release, "dev" em desenvolvimento — sem -ldflags). É o número que
+// o updater compara com a tag do GitHub.
 func (u *UpdateService) CurrentVersion() string {
 	return appupdater.CurrentVersion()
+}
+
+// AppVersion devolve a versão exibida do app (semver própria), que pode ser
+// diferente do release train.
+func (u *UpdateService) AppVersion() string {
+	return appupdater.AppVersion()
 }

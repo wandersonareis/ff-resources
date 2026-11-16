@@ -12,10 +12,9 @@
 //	appupdater_stub.go     //go:build server   — no-ops e erro claro
 //	version.go             (sem tag)           — estado compartilhado
 //
-// Origem das releases: github.com/wandersonareis/FFX_Resources, assets no
-// formato "spira-<versão>-portable-<goos>-<goarch>.zip" com um único entry
-// de topo (spira.exe) + sidecar SHA256SUMS — ambos publicados pela task
-// `wails3 task release`.
+// Origem das releases: o repositório do monorepo (configurado por app em
+// appupdater.Init), com um zip por app ("spira-..."/"pulse-...") e o sidecar
+// SHA256SUMS por release.
 package appupdater
 
 import (
@@ -26,20 +25,19 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/updater"
 )
 
-// repository é a origem das releases (owner/repo no GitHub).
-const repository = "wandersonareis/FFX_Resources"
-
-// checksumAsset é o sidecar SHA-256 publicado junto de cada release. Sem ele
-// o updater instala sem verificar integridade — publicar release sem
-// SHA256SUMS derruba o check com "checksum asset" ausente.
+// checksumAsset é o sidecar SHA-256 padrão publicado junto de cada release.
 const checksumAsset = "SHA256SUMS"
 
 var (
 	stateMu sync.RWMutex
 
-	// current é a versão em execução, gravada por Init (que recebe o
-	// currentVersion do main, injetado por -ldflags no build de release).
+	// current é a versão do RELEASE TRAIN em execução, gravada por Init e
+	// injetada por -ldflags. É a versão que o updater compara com a tag.
 	current string
+
+	// appVersion é a versão EXIBIDA do app (semver própria), também injetada
+	// por ldflags. Pode ficar estagnada enquanto o train avança.
+	appVersion string
 
 	// ready é a versão já baixada e em stage, esperando o restart.
 	ready string
@@ -50,12 +48,22 @@ var (
 	theme string
 )
 
-// CurrentVersion devolve a versão em execução: "2.1.1" em build de release
-// e "dev" em desenvolvimento (sem -ldflags). "" antes do Init.
+// CurrentVersion devolve a versão do release train em execução: "2.5.0" em
+// build de release e "dev" em desenvolvimento. É a versão que o updater
+// compara com a tag do GitHub.
 func CurrentVersion() string {
 	stateMu.RLock()
 	defer stateMu.RUnlock()
 	return current
+}
+
+// AppVersion devolve a versão exibida do app (semver própria). Pode ser
+// diferente do release train: o app foi buildado num train 2.5.0 com versão
+// 1.4.0, por exemplo.
+func AppVersion() string {
+	stateMu.RLock()
+	defer stateMu.RUnlock()
+	return appVersion
 }
 
 // setCurrent grava a versão em execução (chamado pelos dois Init).
@@ -63,6 +71,13 @@ func setCurrent(v string) {
 	stateMu.Lock()
 	defer stateMu.Unlock()
 	current = v
+}
+
+// setAppVersion grava a versão exibida do app (chamado pelos dois Init).
+func setAppVersion(v string) {
+	stateMu.Lock()
+	defer stateMu.Unlock()
+	appVersion = v
 }
 
 // setReadyVersion registra o alvo da atualização em stage (evento

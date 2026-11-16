@@ -67,7 +67,7 @@ var appClosing atomic.Bool
 // URLs do repositório — fonte ÚNICA (o About exibe e o OpenExternal valida
 // contra estes valores; renomear o remote é mudar aqui).
 const (
-	RepositoryURL = "https://github.com/wandersonareis/FFX_Resources"
+	RepositoryURL = "https://github.com/wandersonareis/ff-resources"
 	ReleasesURL   = RepositoryURL + "/releases"
 )
 

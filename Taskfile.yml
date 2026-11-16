@@ -22,6 +22,7 @@ vars:
   BIN_LAUNCHER: apps/launcher/bin/launcher.exe
   STAGE_SCRIPT: scripts/stage-launcher.ps1
   BUNDLE_SCRIPT: scripts/bundle.ps1
+  RELEASE_SCRIPT: scripts/release.ps1
 
 tasks:
   compile:
@@ -105,3 +106,35 @@ tasks:
     cmds:
       - task: build
       - powershell -NoProfile -ExecutionPolicy Bypass -File {{.BUNDLE_SCRIPT}}
+
+  # Um release por lote: sobe VERSION (raiz) + apps/<app>/VERSION e publica
+  # um zip por app incluido + suite + SHA256SUMS na tag v<VERSION>.
+  release:ffx:
+    desc: "publica release com o FFX (spira) + suite"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -Apps ffx
+
+  release:ff13:
+    desc: "publica release com o FF13 (pulse) + suite"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -Apps ff13
+
+  release:all:
+    desc: "publica release com FFX + FF13 + suite"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -Apps ffx,ff13
+
+  release:launcher:
+    desc: "publica release com o launcher + suite"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -Apps launcher
+
+  release:suite:
+    desc: "publica so a suite (sem zips de app)"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -SuiteOnly
+
+  release:dry:
+    desc: "monta zips/hashes do lote FF13 sem publicar"
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File {{.RELEASE_SCRIPT}} -Apps ff13 -DryRun -SkipBuild

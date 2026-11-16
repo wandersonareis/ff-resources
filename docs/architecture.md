@@ -197,6 +197,19 @@ Campos exclusivos de um jogo (`Character`/`Kind`, `Metadata.Files`,
 `ImageEntry.AssetPath/DDSData/...`, `Vbf*`) ficam **opcionais no DTO único**;
 os serializadores só os copiam quando existem.
 
+## Auto-update e release
+
+`internal/platform/appupdater` é **neutro** (não importa família): cada app
+configura `Repository`, `AssetPrefix` (`spira`/`pulse`), título e tema em
+`appupdater.Init`. O FF13 e o FFX usam o mesmo pacote; o FF13 expõe o
+`UpdateService` (CheckNow/Restart/CurrentVersion/AppVersion) e o frontend
+delega aos bindings.
+
+Um release pode conter só os apps que mudaram: cada app compara a tag do
+release train com a própria `currentVersion` e só atualiza se existir um
+asset com o seu prefixo (`spira-`/`pulse-`/`launcher-`). Detalhes de
+versionamento, artefatos e tasks em [`docs/release.md`](release.md).
+
 ## UI do FF13
 
 A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) com:

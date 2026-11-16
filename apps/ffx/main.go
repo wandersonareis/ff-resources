@@ -12,6 +12,8 @@ import (
 
 	ffxservice "ffresources/apps/ffx/backend/service"
 
+	"ffresources/internal/families/ffx/profile/interactions"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -28,11 +30,16 @@ var icon []byte
 //go:embed assets/logo_us.png
 var logoUS []byte
 
-// currentVersion é a versão em execução. Builds de release a injetam por
-// -ldflags "-X main.currentVersion=<VERSION>" (Taskfile, fonte única no
+// currentVersion é a versão do RELEASE TRAIN em execução. Builds de release a
+// injetam por -ldflags "-X main.currentVersion=<VERSION>" (fonte única no
 // arquivo VERSION da raiz); sem isso o valor é "dev", que desliga o check
-// silencioso de startup do updater (backend/appupdater).
+// silencioso de startup do updater.
 var currentVersion = "dev"
+
+// appVersion é a versão exibida do app (semver própria), também injetada por
+// -ldflags ("-X main.appVersion=<apps/ffx/VERSION>"). Pode ser diferente do
+// release train.
+var appVersion = "dev"
 
 func main() {
 	// Create an instance of the app structure
@@ -90,7 +97,14 @@ func main() {
 	// que o updater entra em modo helper (WAILS_UPDATER_HELPER=1), troca o
 	// binário e encerra antes de qualquer código daqui rodar — e antes do
 	// event loop. Falhar aqui é erro de configuração, não de rede.
-	if err := appupdater.Init(app, currentVersion); err != nil {
+	if err := appupdater.Init(app, currentVersion, appVersion, appupdater.Config{
+		Repository:  "wandersonareis/ff-resources",
+		AssetPrefix: "spira",
+		WindowTitle: "Atualização — FINAL FANTASY X | X-2 HD Remaster",
+		Theme: func() string {
+			return interactions.NewInteractionService().FFXAppConfig().GetTheme()
+		},
+	}); err != nil {
 		log.Fatalf("updater: %v", err)
 	}
 
