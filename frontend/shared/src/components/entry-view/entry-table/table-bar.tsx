@@ -1,6 +1,7 @@
 'use client';
 
-import { Save, Search } from 'lucide-react';
+import { cn } from 'cn';
+import { PanelLeft, Save, Search } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
@@ -12,6 +13,10 @@ import { SHORTCUTS, shortcutTip } from '../../../app/shortcuts';
  * botão Salvar (e o de buscar neste arquivo). Fica FORA do rolante (o
  * painel é flex-col: barra em cima, tabela rolando embaixo), então não
  * precisa de sticky — fixa por construção, independente do tamanho do texto.
+ *
+ * Responsivo: no estreito o badge de progresso some (a barra de status já o
+ * mostra), o rótulo da entrada trunca e o toggle da sidebar aparece quando o
+ * app passa `onToggleSidebar` (sidebar em gaveta).
  */
 export function TableBar({
   kindLabel,
@@ -21,6 +26,7 @@ export function TableBar({
   saving,
   onSave,
   onOpenFind,
+  onToggleSidebar,
 }: {
   kindLabel: string;
   entryLabel?: string | null;
@@ -30,27 +36,40 @@ export function TableBar({
   onSave: () => void;
   /** Abre a busca & substituição local (ausente em kinds sem rows, p/ images). */
   onOpenFind?: () => void;
+  /** Abre a gaveta da sidebar (só no layout estreito). */
+  onToggleSidebar?: () => void;
 }) {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-4">
-      <h3 className="flex gap-2 items-center text-primary text-lg font-malva-medium">
-        {kindLabel}
+    <div className="flex shrink-0 items-center justify-between gap-2 sm:gap-4">
+      <h3 className="flex min-w-0 items-center gap-2 text-base text-primary font-malva-medium md:text-lg">
+        <span className="shrink-0">{kindLabel}</span>
         {/* O span volta ao Malva padrão (Regular, família base), só desanimado. */}
-        {entryLabel ? <span className="opacity-70"> · {entryLabel}</span> : null}
+        {entryLabel ? <span className="truncate opacity-70"> · {entryLabel}</span> : null}
         {progress ? (
           <Badge
             variant="outline"
-            className={
+            className={cn(
+              'max-sm:hidden',
               progress.translated >= progress.total && progress.total > 0
                 ? 'text-success border-success/40'
-                : 'text-muted-foreground'
-            }
+                : 'text-muted-foreground',
+            )}
           >
             {progress.translated}/{progress.total} linhas traduzidas ({progress.pct}%)
           </Badge>
         ) : null}
       </h3>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
+        {onToggleSidebar ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Abrir conteúdo"
+            onClick={onToggleSidebar}
+          >
+            <PanelLeft size={18} />
+          </Button>
+        ) : null}
         {onOpenFind ? (
           <Tooltip>
             <TooltipTrigger asChild>

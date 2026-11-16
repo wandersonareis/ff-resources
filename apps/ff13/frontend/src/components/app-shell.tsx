@@ -177,8 +177,8 @@ export function AppShell() {
         onValueChange={onTabChange}
         className="flex-1 min-h-0 flex flex-col"
       >
-        <div className="mx-4 mt-2 flex items-center justify-between gap-1">
-          <TabsList variant="gradient" className="w-fit">
+        <div className="mx-3 mt-2 flex flex-wrap items-center justify-between gap-x-1 gap-y-2 sm:mx-4">
+          <TabsList variant="gradient" className="w-fit max-w-full overflow-x-auto">
             {GAME_VERSIONS.map((tab, index) => (
               <Tooltip key={tab.id}>
                 <TooltipTrigger asChild>

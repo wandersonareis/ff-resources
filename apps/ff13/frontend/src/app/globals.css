@@ -422,3 +422,15 @@
   --w: 35px;
   --h: 34px;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   JANELA ESTREITA (modo servidor no celular / janela pequena)
+   Ajustes que não cabem em utilitário Tailwind (popup posicionado).
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Popup de autocomplete do editor: não estoura a viewport. */
+  .tag-suggestion {
+    min-width: 0;
+    max-width: calc(100vw - 1rem);
+  }
+}

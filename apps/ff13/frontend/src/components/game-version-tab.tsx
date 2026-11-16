@@ -1,7 +1,7 @@
 'use client';
 
 import { useSelector } from '@tanstack/react-store';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PreloadVersions, SetUnsavedEdits } from '@/bindings/ffxresources/app';
 import { ImageActionDialogs } from '@/components/dialogs/image-action-dialogs';
 import { TranslationDialog } from '@/components/dialogs/translation-dialog';
@@ -23,6 +23,7 @@ import { LAYOUT_DEFAULTS_PX } from '@/lib/ffx/layout-storage';
 import { saveAllDrafts } from '@/lib/ffx/save-all';
 import { invalidateTextSearchResults } from '@/lib/ffx/search-store';
 import { warmTextSearch } from '@/lib/ffx/tree-data';
+import { useMediaQuery, NARROW_QUERY } from '@/lib/ffx/use-media-query';
 import { usePersistedLayout } from '@/lib/ffx/use-persisted-layout';
 import { useWailsEvent } from '@/lib/ffx/use-wails-event';
 
@@ -104,62 +105,109 @@ export function GameVersionTab({ version }: { version: GameVersionId }) {
     void saveAllDrafts(() => saving, setSaving);
   };
 
+  // Janela estreita (browser/celular ou janela pequena no desktop): a
+  // sidebar sai do fluxo e vira gaveta; a tabela ocupa a largura toda.
+  const narrow = useMediaQuery(NARROW_QUERY);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const previousEntryId = useRef<string | null>(null);
+
+  // Escolher um arquivo na gaveta a fecha: o foco vai para a tabela.
+  useEffect(() => {
+    const id = selectedEntry?.id ?? null;
+    if (id && id !== previousEntryId.current) setDrawerOpen(false);
+    previousEntryId.current = id;
+  }, [selectedEntry]);
+
+  // Escape fecha a gaveta (teclado físico em janela estreita).
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [drawerOpen]);
+
+  const mainPanel = (
+    <main className="h-full min-w-0 flex flex-col p-2 px-4">
+      <TableBar
+        kindLabel={KIND_LABELS[activeKind]}
+        entryLabel={selectedEntry?.label ?? null}
+        progress={progress}
+        hasDirty={hasDirty}
+        saving={saving}
+        onSave={() => void onSaveAll()}
+        onOpenFind={activeKind !== 'images' ? find.openFind : undefined}
+        onToggleSidebar={narrow ? () => setDrawerOpen(true) : undefined}
+      />
+      {/* Busca & substituição local: fora do rolante (shrink-0), abaixo
+          da save bar — digita já destaca e salta ao 1º match da tabela. */}
+      {showFind ? <FindBar find={find} /> : null}
+      {/* Único rolante da aba: a barra está fora do overflow, então só
+          as linhas rolam (o cabeçalho gruda em top-0 desse wrapper). */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {selectedEntry ? (
+          // images não tem rows: ocupa o lugar da tabela a pré-visualização
+          // + ações (extrair/salvar/importar) da textura.
+          activeKind === 'images' ? (
+            <ImagePanel view={view} />
+          ) : (
+            <EntryTable
+              view={view}
+              matchesByRow={find.matchesByRow}
+              activeRowKey={find.activeMatch?.rowKey ?? null}
+            />
+          )
+        ) : loading ? (
+          <p className="mt-4 opacity-70">Carregando…</p>
+        ) : (
+          <p className="mt-4 opacity-70">Selecione um arquivo no sidebar.</p>
+        )}
+      </div>
+    </main>
+  );
+
   return (
     <div className="flex h-full min-h-0 border-t">
-      <ResizablePanelGroup
-        orientation="horizontal"
-        className="min-w-0"
-        defaultLayout={defaultLayout}
-        onLayoutChanged={onLayoutChanged}
-      >
-        <ResizablePanel
-          id="tree"
-          defaultSize={LAYOUT_DEFAULTS_PX.sidebar}
-          minSize={200}
-          maxSize={600}
+      {narrow ? (
+        mainPanel
+      ) : (
+        <ResizablePanelGroup
+          orientation="horizontal"
+          className="min-w-0"
+          defaultLayout={defaultLayout}
+          onLayoutChanged={onLayoutChanged}
         >
-          <ContentTree view={view} />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
+          <ResizablePanel
+            id="tree"
+            defaultSize={LAYOUT_DEFAULTS_PX.sidebar}
+            minSize={200}
+            maxSize={600}
+          >
+            <ContentTree view={view} />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
 
-        <ResizablePanel id="main" minSize={300}>
-          <main className="h-full min-w-0 flex flex-col p-2 px-4">
-            <TableBar
-              kindLabel={KIND_LABELS[activeKind]}
-              entryLabel={selectedEntry?.label ?? null}
-              progress={progress}
-              hasDirty={hasDirty}
-              saving={saving}
-              onSave={() => void onSaveAll()}
-              onOpenFind={activeKind !== 'images' ? find.openFind : undefined}
-            />
-            {/* Busca & substituição local: fora do rolante (shrink-0), abaixo
-                da save bar — digita já destaca e salta ao 1º match da tabela. */}
-            {showFind ? <FindBar find={find} /> : null}
-            {/* Único rolante da aba: a barra está fora do overflow, então só
-                as linhas rolam (o cabeçalho gruda em top-0 desse wrapper). */}
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {selectedEntry ? (
-                // images não tem rows: ocupa o lugar da tabela a pré-visualização
-                // + ações (extrair/salvar/importar) da textura.
-                activeKind === 'images' ? (
-                  <ImagePanel view={view} />
-                ) : (
-                  <EntryTable
-                    view={view}
-                    matchesByRow={find.matchesByRow}
-                    activeRowKey={find.activeMatch?.rowKey ?? null}
-                  />
-                )
-              ) : loading ? (
-                <p className="mt-4 opacity-70">Carregando…</p>
-              ) : (
-                <p className="mt-4 opacity-70">Selecione um arquivo no sidebar.</p>
-              )}
-            </div>
-          </main>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <ResizablePanel id="main" minSize={300}>
+            {mainPanel}
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
+
+      {/* Gaveta da sidebar (só no estreito): overlay + painel à esquerda. */}
+      {narrow && drawerOpen ? (
+        <div className="fixed inset-0 z-40">
+          <button
+            type="button"
+            aria-label="Fechar conteúdo"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 flex w-[85%] max-w-[360px] flex-col border-r bg-background shadow-xl">
+            <ContentTree view={view} />
+          </div>
+        </div>
+      ) : null}
 
       <TranslationDialog view={view} />
       {/* Ações de imagem (extrair/replicar/deletar): um diálogo só, aberto

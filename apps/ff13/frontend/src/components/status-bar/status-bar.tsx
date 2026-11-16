@@ -127,7 +127,7 @@ export function StatusBar() {
             sidebar (pl-3), o progresso cai no centro exato da janela e o
             aviso encosta à direita. */}
         <fieldset
-          className="m-0 flex min-w-0 flex-1 items-center gap-1 border-0 p-0 pl-3"
+          className="m-0 hidden min-w-0 flex-1 items-center gap-1 border-0 p-0 pl-3 sm:flex"
           aria-label={SHORTCUTS.navigation.label}
         >
           {NAV_HINTS.map((hint) => (
@@ -136,7 +136,7 @@ export function StatusBar() {
         </fieldset>
 
         {/* Progresso (meio): fixo na abertura do arquivo. */}
-        <div className="flex min-w-0 flex-1 items-center justify-center">
+        <div className="flex min-w-0 flex-1 items-center justify-start sm:justify-center">
           {activeFile.progress && activeFile.kind ? (
             <Alert
               variant={progressPanelOpen ? 'info' : 'default'}
@@ -197,7 +197,7 @@ export function StatusBar() {
       {progressPanelOpen && activeFile.progress ? (
         <Alert
           variant="info"
-          className="absolute bottom-9 left-3 z-30 w-fit max-w-[80ch] shadow-md"
+          className="absolute bottom-9 left-3 z-30 w-fit max-w-[calc(100vw-1.5rem)] shadow-md sm:max-w-[80ch]"
         >
           <Info />
           <AlertTitle>
@@ -223,7 +223,7 @@ export function StatusBar() {
       {warningPanelOpen && warning ? (
         <Alert
           variant={warning.severity === 'error' ? 'destructive' : 'warning'}
-          className="absolute bottom-9 right-3 z-30 w-fit max-w-[90ch] shadow-md"
+          className="absolute bottom-9 right-3 z-30 w-fit max-w-[calc(100vw-1.5rem)] shadow-md sm:max-w-[90ch]"
         >
           <AlertTriangle />
           <AlertTitle className="pr-6">{warning.message}</AlertTitle>

@@ -5,9 +5,9 @@ import type { GameVersionId } from '@/lib/ffx/game-version';
 import { partUi } from '@/lib/parts';
 
 const TITLE = 'FINAL FANTASY XIII Trilogy Resources Editor';
-const TITLE_CLASS = 'text-xl font-malva-medium text-gradient';
+const TITLE_CLASS = 'text-base sm:text-xl font-malva-medium text-gradient';
 /** Logo do título (part3): altura do `text-xl`, largura pelo aspect ratio. */
-const TITLE_LOGO_CLASS = 'h-7 w-auto select-none';
+const TITLE_LOGO_CLASS = 'h-6 sm:h-7 w-auto select-none';
 
 /**
  * Título do header (fica à esquerda; o wrap do header cuida do mobile).

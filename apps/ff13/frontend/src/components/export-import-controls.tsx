@@ -214,7 +214,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
             title={`Exportar textos — ${EXPORT_FORMAT_LABELS[activeFormat]} (formato do seletor ao lado das configurações): todos os tipos, ou só os tipos marcados no escopo`}
           >
             <Download size={16} />
-            Exportar
+            <span className="hidden sm:inline">Exportar</span>
             <ChevronDown size={12} />
           </Button>
         </DropdownMenuTrigger>
@@ -252,7 +252,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
             title="Importar textos — em lote de mods/translated ou de arquivo JSON/Strings"
           >
             <Upload size={16} />
-            Importar
+            <span className="hidden sm:inline">Importar</span>
             <ChevronDown size={12} />
           </Button>
         </DropdownMenuTrigger>
