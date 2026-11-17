@@ -46,9 +46,9 @@ function rowCheckboxState(entry: dto.ImageImportPreviewEntry): boolean | 'indete
 }
 
 /**
- * Linha do modal: caminho (relativo a mods/translated/images, COM extensão —
- * semelhante ao interno do .vbf), checkbox da imagem e, quando a linha é a
- * primeira do grupo, o collapse com as cópias AUSENTES na pasta traduzida.
+ * Linha do modal: caminho relativo à raiz da part em translated/images
+ * (<container-rel>/<registro>.dds), checkbox da imagem e o collapse com as
+ * cópias ausentes (vazio no FF13 até existir índice de duplicatas).
  */
 function EntryRow({
   entry,
@@ -63,7 +63,7 @@ function EntryRow({
 }) {
   const [copyOpen, setCopyOpen] = useState(false);
   const copies = entry.copies ?? [];
-  const hasError = entry.validation_error !== '';
+  const hasError = Boolean(entry.validation_error);
   const identical = !entry.differs;
 
   return (
@@ -162,10 +162,10 @@ function EntryRow({
 }
 
 /**
- * Sumário do import de imagens: varredura de mods/translated/images com uma
- * linha por .dds.phyre encontrado (caminho relativo à raiz, com extensão).
- * Só a SELEÇÃO é importada; as iguais ao binário nascem desmarcadas e em cor
- * distinta — marcá-las regrava o binário.
+ * Sumário do import de imagens: varredura de mods/translated/images/<part>
+ * com uma linha por .dds encontrado (pasta = caminho do container, arquivo =
+ * nome do registro). Só a SELEÇÃO é importada; as iguais ao que já está em
+ * mods/ nascem desmarcadas e em cor distinta — marcá-las regrava o payload.
  */
 export function ImportImagesDetailedDialog({
   open,
@@ -218,8 +218,9 @@ export function ImportImagesDetailedDialog({
         <DialogHeader>
           <DialogTitle>Importar imagens traduzidas</DialogTitle>
           <DialogDescription>
-            Confira o que será importado: só as imagens e cópias marcadas são gravadas em mods/. Os
-            caminhos são relativos a mods/translated/images.
+            Confira o que será importado: só as imagens marcadas são gravadas em mods/. Os caminhos
+            são relativos a mods/translated/images/&lt;part&gt; (pasta = caminho do container,
+            arquivo = nome do registro).
           </DialogDescription>
         </DialogHeader>
 
@@ -245,7 +246,7 @@ export function ImportImagesDetailedDialog({
             <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>{preview.max} candidato(s)</span>
               <span className="font-medium text-success">{preview.new_count} nova(s)</span>
-              <span>{preview.identical_count} igual(is) ao binário</span>
+              <span>{preview.identical_count} igual(is) ao payload atual</span>
               {errors.length > 0 ? (
                 <span className="font-medium text-destructive">{errors.length} com erro</span>
               ) : null}
@@ -260,8 +261,8 @@ export function ImportImagesDetailedDialog({
                 Nada novo para importar.
               </p>
               <p className="mt-0.5 text-xs">
-                Todos os .dds.phyre da pasta são iguais ao que já está em mods/. As linhas em cinza
-                podem ser marcadas para forçar a regravação do binário.
+                Todos os .dds da pasta são iguais ao payload atual (mods/ ou data/). As linhas em
+                cinza podem ser marcadas para forçar a regravação do payload.
               </p>
             </div>
           ) : null}
@@ -269,7 +270,7 @@ export function ImportImagesDetailedDialog({
           {/* Lista PLANA: uma linha por imagem encontrada, sem agrupamento. */}
           {entries.length === 0 ? (
             <div className="rounded-md border border-muted bg-muted/40 p-2 text-sm">
-              Nenhum .dds.phyre encontrado nessa raiz.
+              Nenhum .dds encontrado nessa raiz.
             </div>
           ) : (
             <ScrollArea className="max-h-[46vh] rounded-md border p-2">
@@ -314,25 +315,20 @@ export function ImportImagesDetailedDialog({
             <ul className="mt-1.5 list-disc space-y-1 text-xs">
               <li>
                 <span className="rounded bg-primary/10 px-1 font-mono">branco</span> = imagem
-                diferente do binário em mods/ — nasce marcada.
+                diferente do payload atual (mods/ ou data/) — nasce marcada.
               </li>
               <li>
                 <span className="rounded bg-muted px-1 font-mono text-muted-foreground">cinza</span>{' '}
-                = imagem <strong>igual ao binário</strong> (sem alteração desde o último import) —
-                nasce desmarcada. Marcar força uma nova importação, regravando o binário.
+                = imagem <strong>igual ao payload atual</strong> (sem alteração desde o último
+                import) — nasce desmarcada. Marcar força uma nova importação, regravando o payload.
               </li>
               <li>
                 <span className="rounded bg-destructive/10 px-1 font-mono text-destructive">
                   vermelho
                 </span>{' '}
-                = erro de validação (formato DX, dimensões, mipmaps, IO ou formato inválido) — não
-                pode ser importada; corrija o arquivo na pasta traduzida.
-              </li>
-              <li>
-                <span className="font-mono">cópias</span> = outras texturas de mesmo payload
-                original (a otimização do DVD) que <strong>faltam arquivo</strong> na pasta
-                traduzida. As marcadas recebem os bytes desta imagem — a imagem em si é regravada
-                quando estiver igual ao binário, para o grupo não ficar dividido.
+                = erro de validação (container fora do filelist, imagem inexistente no container,
+                dimensões/formato DX/mipmaps divergentes ou IO) — não pode ser importada; corrija o
+                caminho ou o arquivo na pasta traduzida.
               </li>
             </ul>
           </div>

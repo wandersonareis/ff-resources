@@ -14,7 +14,6 @@ const emptyBatch = {
   warnings: [],
   errors: [],
 };
-const emptyImageResult = { imported: 0, skipped: 0, errors: [] };
 const emptyBatchResult = { ok: 0, failed: 0 };
 
 export const ff13Api: GameApi = {
@@ -131,12 +130,11 @@ export const ff13Api: GameApi = {
     image.ExtractImageSelection(version, [id, ...(targets ?? [])], '') as Promise<any>,
   extractImageSelection: (_kind, ids, version) =>
     image.ExtractImageSelection(version, ids, '') as Promise<any>,
-  importImage: async () => {
-    throw new Error('import de imagem será implementado na fase 4');
-  },
-  importImageGroup: async () => emptyImageResult,
-  importImages: async () => emptyImageResult,
-  previewImportImages: async () => ({ entries: [], errors: [] }),
+  importImage: (_kind, id, ddsPath, version) => image.ImportImage(version, id, ddsPath),
+  importImageGroup: (_kind, id, ddsPath, targets, version) =>
+    image.ImportImageGroup(version, id, ddsPath, targets),
+  importImages: (version, selection) => image.ImportImages(version, selection),
+  previewImportImages: (version) => image.PreviewImportImages(version),
   refreshImageDuplicates: async () => {},
   replicateImage: async () => emptyBatchResult,
   deleteImages: (_kind, id, targets, scope, version) =>
@@ -147,7 +145,16 @@ export const ff13Api: GameApi = {
     image.SaveImage(version, id, format, destPath),
   saveImageTo: async (_kind, id, format, destRoot, version) => {
     const path = await image.ImageExportPath(version, id, format);
-    const target = destRoot ? path.replace(/mods[\\/]edits[\\/]images/, destRoot) : path;
+    if (!destRoot) {
+      await image.SaveImage(version, id, format, path);
+      return path;
+    }
+    // O export já inclui <part>; o destino escolhido é a raiz DA PART.
+    // Removemos "…/edits/images/<part>/" e recompomos sob destRoot sem
+    // duplicar a part.
+    const inside = path.replace(/^.*[\\/]edits[\\/]images[\\/][^\\/]+[\\/]/, '');
+    const sep = destRoot.includes('\\') ? '\\' : '/';
+    const target = `${destRoot.replace(/[\\/]+$/, '')}${sep}${inside.replace(/[\\/]/g, sep)}`;
     await image.SaveImage(version, id, format, target);
     return target;
   },

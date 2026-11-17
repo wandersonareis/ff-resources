@@ -172,33 +172,70 @@ func InvalidateImageFileIndex(part string) {
 	imageFileIndexMu.Unlock()
 }
 
-// ResolveRelFile procura um caminho relativo a data/partN no disco (data,
-// depois mods) e, por fim, no white bin.
+// ResolveRelFile procura um caminho relativo a data/partN no disco e, por
+// fim, no white bin. A preferência MODS/DATA segue a flag enableMods (ligada =
+// tradução primeiro): é ela que faz uma imagem importada em mods/ ser servida.
 func ResolveRelFile(part, rel string) (ImageFile, bool) {
 	part = config.NormalizePart(part)
-	rel = strings.ToLower(strings.ReplaceAll(strings.TrimSpace(rel), "\\", "/"))
-	rel = strings.TrimPrefix(rel, "/")
+	rel = normalizeImageRel(rel)
 	if rel == "" {
 		return ImageFile{}, false
 	}
-	if dataDir, err := config.PartRoot("data", part); err == nil {
-		disk := filepath.Join(dataDir, filepath.FromSlash(rel))
-		if st, serr := os.Stat(disk); serr == nil && !st.IsDir() {
-			return ImageFile{Part: part, Rel: rel, Disk: disk}, true
+	modsFirst := config.EnableModsEnabled()
+	if modsFirst {
+		if f, ok := resolveDiskRel(part, "mods", rel); ok {
+			return f, true
 		}
 	}
-	if config.EnableModsEnabled() {
-		if modsDir, err := config.PartRoot("mods", part); err == nil {
-			disk := filepath.Join(modsDir, filepath.FromSlash(rel))
-			if st, serr := os.Stat(disk); serr == nil && !st.IsDir() {
-				return ImageFile{Part: part, Rel: rel, Disk: disk}, true
-			}
+	if f, ok := resolveDiskRel(part, "data", rel); ok {
+		return f, true
+	}
+	if !modsFirst {
+		if f, ok := resolveDiskRel(part, "mods", rel); ok {
+			return f, true
 		}
 	}
 	if f, ok := ImageFileIndexFor(parts.Get(part))[rel]; ok && f.Exists() {
 		return f, true
 	}
 	return ImageFile{}, false
+}
+
+// resolveRelFilePristine resolve SÓ data/ (e o white bin): é o lado
+// "original" usado para decidir se uma cópia em mods/ realmente difere.
+func resolveRelFilePristine(part, rel string) (ImageFile, bool) {
+	part = config.NormalizePart(part)
+	rel = normalizeImageRel(rel)
+	if rel == "" {
+		return ImageFile{}, false
+	}
+	if f, ok := resolveDiskRel(part, "data", rel); ok {
+		return f, true
+	}
+	if f, ok := ImageFileIndexFor(parts.Get(part))[rel]; ok && f.Exists() {
+		return f, true
+	}
+	return ImageFile{}, false
+}
+
+// resolveDiskRel resolve um caminho interno dentro de um escopo (data/mods).
+func resolveDiskRel(part, scope, rel string) (ImageFile, bool) {
+	dir, err := config.PartRoot(scope, part)
+	if err != nil {
+		return ImageFile{}, false
+	}
+	disk := filepath.Join(dir, filepath.FromSlash(rel))
+	if st, serr := os.Stat(disk); serr == nil && !st.IsDir() {
+		return ImageFile{Part: part, Rel: rel, Disk: disk}, true
+	}
+	return ImageFile{}, false
+}
+
+// normalizeImageRel padroniza um caminho interno para lookup (minúsculas,
+// barras "/", sem barra inicial).
+func normalizeImageRel(rel string) string {
+	rel = strings.ToLower(strings.ReplaceAll(strings.TrimSpace(rel), "\\", "/"))
+	return strings.TrimPrefix(rel, "/")
 }
 
 // ResolveImageFile resolve a tabela/arquivo da ref. Para filelist usa o
@@ -210,19 +247,9 @@ func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 		idx, zone, err := ResolveFilelistIndex(p, r.Root)
 		if err == nil {
 			rel := FilelistDataPath(zone, r.Path)
-			if dataDir, derr := config.PartRoot("data", part); derr == nil {
-				disk := filepath.Join(dataDir, filepath.FromSlash(rel))
-				if st, serr := os.Stat(disk); serr == nil && !st.IsDir() {
-					return ImageFile{Part: part, Rel: rel, Disk: disk}, nil
-				}
-			}
-			if config.EnableModsEnabled() {
-				if modsDir, merr := config.PartRoot("mods", part); merr == nil {
-					disk := filepath.Join(modsDir, filepath.FromSlash(rel))
-					if st, serr := os.Stat(disk); serr == nil && !st.IsDir() {
-						return ImageFile{Part: part, Rel: rel, Disk: disk}, nil
-					}
-				}
+			// mods-first/data-first + white bin, a mesma régua de ResolveRelFile.
+			if f, ok := ResolveRelFile(part, rel); ok {
+				return f, nil
 			}
 			if idx.Container != "" {
 				return ImageFile{
@@ -232,9 +259,6 @@ func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 					Coll:  idx.Coll,
 					VPath: r.Path,
 				}, nil
-			}
-			if f, ok := ResolveRelFile(part, rel); ok {
-				return f, nil
 			}
 			return ImageFile{}, fmt.Errorf("imagem: arquivo não encontrado no índice (%s)", r.Path)
 		}

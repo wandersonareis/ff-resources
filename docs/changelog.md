@@ -46,6 +46,9 @@ Remaster e FINAL FANTASY XIII Trilogy.
 - Containers de imagem WPD e TRB e as extensões de container suportadas
 - Arquivos diretos DDS e PNG
 - Pré-visualização e exportação em DDS e PNG
+- Importação de DDS em lote de `mods/translated/images/<part>` (pasta =
+  caminho do container, arquivo = nome do registro) ou avulsa para a imagem
+  aberta, validando dimensões, formato DX e mipmaps
 
 **Comum aos dois jogos**
 

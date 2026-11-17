@@ -35,18 +35,15 @@ func imageBaseName(p string) string {
 	return p
 }
 
+// imageOutputBase é o nome do ARQUIVO DIRETO exportado (sem extensão): o
+// nome original, sem a extensão de origem. Imagens de container usam a pasta
+// do container + o nome do registro (ver imageExportRelative).
 func imageOutputBase(r ImageRef) string {
-	base := imageBaseName(r.Path)
-	if r.Entry == "" {
-		return base
-	}
-	entry := strings.TrimPrefix(r.Entry, "rec:")
-	entry = strings.TrimPrefix(entry, "trb:")
-	entry = strings.NewReplacer(".", "_", ":", "_", "/", "_").Replace(entry)
-	return base + "_" + entry
+	return imageBaseName(r.Path)
 }
 
-func imageInMods(part, rel string) bool {
+// imageFileInMods diz se o arquivo interno existe em mods/partN.
+func imageFileInMods(part, rel string) bool {
 	if rel == "" {
 		return false
 	}
@@ -56,6 +53,132 @@ func imageInMods(part, rel string) bool {
 	}
 	_, err = os.Stat(filepath.Join(mods, filepath.FromSlash(rel)))
 	return err == nil
+}
+
+// imageRecordInMods diz se o REGISTRO da imagem já tem bytes diferentes em
+// mods/. O container compartilha um .imgb entre vários registros, então a
+// simples existência do arquivo em mods não basta: comparamos só os mips
+// deste registro com o pristine de data/ (ou o white bin).
+func imageRecordInMods(part string, r ImageRef) bool {
+	sec, table, err := ImageSection(part, r)
+	if err != nil {
+		return false
+	}
+	payloadRel := r.Payload
+	if payloadRel == "" {
+		payloadRel = ImagePairPath(table.Rel)
+	}
+	payloadRel = normalizeImageRel(payloadRel)
+	if payloadRel == "" {
+		return false
+	}
+	mods, err := config.PartRoot("mods", part)
+	if err != nil {
+		return false
+	}
+	modded, err := os.ReadFile(filepath.Join(mods, filepath.FromSlash(payloadRel)))
+	if err != nil {
+		return false
+	}
+	pristineFile, ok := resolveRelFilePristine(part, payloadRel)
+	if !ok {
+		// Só existe em mods/: é uma importação por definição.
+		return true
+	}
+	pristine, err := pristineFile.Read()
+	if err != nil {
+		return true
+	}
+	gtex, err := imgbcore.SectionGTEX(sec)
+	if err != nil {
+		return true
+	}
+	mips, err := imgbcore.ParseMipInfoTable(sec, gtex)
+	if err != nil {
+		return true
+	}
+	for _, m := range mips {
+		start := int(m.Offset)
+		end := start + int(m.Size)
+		if start < 0 || end > len(modded) || end > len(pristine) {
+			return true
+		}
+		if !bytes.Equal(modded[start:end], pristine[start:end]) {
+			return true
+		}
+	}
+	return false
+}
+
+// canonicalImageRel devolve o caminho interno (relativo a data/partN) da
+// tabela/arquivo da ref, resolvendo o índice do filelist quando a ref veio
+// da árvore de filelist.
+func canonicalImageRel(part string, r ImageRef) string {
+	rel := r.Path
+	if r.Root != "" {
+		if _, zone, err := ResolveFilelistIndex(parts.Get(part), r.Root); err == nil {
+			rel = FilelistDataPath(zone, r.Path)
+		}
+	}
+	rel = strings.ReplaceAll(rel, "\\", "/")
+	return strings.TrimPrefix(rel, "/")
+}
+
+// sanitizeImageName remove só os caracteres inválidos em nomes de arquivo do
+// Windows; pontos (nome.ext do registro) são preservados.
+func sanitizeImageName(name string) string {
+	return strings.NewReplacer(
+		"\\", "_", "/", "_", ":", "_", "*", "_", "?", "_",
+		"\"", "_", "<", "_", ">", "_", "|", "_",
+	).Replace(name)
+}
+
+// imageRecordFileName devolve o nome do registro como a árvore exibe:
+// "nome.ext" no WPD e "N.tipo" no TRB (fallback N).
+func imageRecordFileName(part string, r ImageRef) string {
+	entry := strings.TrimSpace(r.Entry)
+	switch {
+	case strings.HasPrefix(entry, "rec:"):
+		name := strings.TrimPrefix(entry, "rec:")
+		if name != "" {
+			return sanitizeImageName(name)
+		}
+	case strings.HasPrefix(entry, "trb:"):
+		n := strings.TrimPrefix(entry, "trb:")
+		if sec, _, err := ImageSection(part, r); err == nil {
+			if sh, herr := imgbcore.ParseSectionHeader(sec); herr == nil {
+				return sanitizeImageName(n + "." + sh.TypeName())
+			}
+		}
+		return sanitizeImageName(n)
+	}
+	return sanitizeImageName(entry)
+}
+
+// imageExportRelative devolve o caminho de exportação SEM a extensão do
+// formato:
+//
+//	arquivo direto → <pasta>/<nome original>
+//	container      → <container-rel>/<nome do registro>
+//
+// O import de translated/images espelha exatamente esse caminho.
+func imageExportRelative(part string, r ImageRef) (string, error) {
+	rel := canonicalImageRel(part, r)
+	if rel == "" || strings.Contains(rel, "..") || filepath.IsAbs(filepath.FromSlash(rel)) {
+		return "", fmt.Errorf("caminho da imagem inválido: %s", rel)
+	}
+	if r.Entry == "" {
+		dir := filepath.Dir(filepath.FromSlash(rel))
+		if dir == "." {
+			dir = ""
+		}
+		return filepath.Join(dir, imageOutputBase(r)), nil
+	}
+	record := imageRecordFileName(part, r)
+	if record == "" || record == "." || record == ".." || strings.ContainsAny(record, `/\`) {
+		return "", fmt.Errorf("nome do registro inválido: %q", record)
+	}
+	return filepath.Join(filepath.FromSlash(rel), record), nil
 }
 
 // GetImageEntry devolve a prévia PNG + metadados da imagem/ref.
@@ -94,7 +217,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 				Height:    info.Height,
 				PNGData:   ImageDataURL("image/png", png),
 				Flipped:   false,
-				Modded:    imageInMods(part, f.Rel),
+				Modded:    imageFileInMods(part, f.Rel),
 			}, nil
 		}
 		ext := strings.ToLower(filepath.Ext(r.Path))
@@ -114,7 +237,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 				Height:    info.Height,
 				PNGData:   ImageDataURL("image/png", png),
 				Flipped:   false,
-				Modded:    imageInMods(part, f.Rel),
+				Modded:    imageFileInMods(part, f.Rel),
 			}, nil
 		case ".png":
 			cfg, _, derr := image.DecodeConfig(bytes.NewReader(raw))
@@ -130,7 +253,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 				Height:    uint32(cfg.Height),
 				PNGData:   ImageDataURL("image/png", raw),
 				Flipped:   false,
-				Modded:    imageInMods(part, f.Rel),
+				Modded:    imageFileInMods(part, f.Rel),
 			}, nil
 		}
 		return dto.ImageEntry{}, fmt.Errorf("imagem: extensão não suportada (%s)", ext)
@@ -144,10 +267,6 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 	if perr != nil {
 		return dto.ImageEntry{}, perr
 	}
-	table, terr := ResolveImageFile(part, r)
-	if terr != nil {
-		return dto.ImageEntry{}, terr
-	}
 	return dto.ImageEntry{
 		Metadata:       imageSourceLabel(part, r),
 		AssetPath:      r.Path,
@@ -159,7 +278,7 @@ func (Service) GetImageEntry(part, ref string) (dto.ImageEntry, error) {
 		MaxMipmapLevel: info.MipmapCount,
 		PNGData:        ImageDataURL("image/png", png),
 		Flipped:        false,
-		Modded:         imageInMods(part, table.Rel),
+		Modded:         imageRecordInMods(part, r),
 		Duplicates:     nil,
 	}, nil
 }
@@ -281,31 +400,29 @@ func (Service) SaveImage(part, ref, format, destPath string) error {
 	return fmt.Errorf("formato %q inválido (esperado dds ou png)", format)
 }
 
-// ImageExportPath devolve o caminho padrão de exportação em mods/edits/images.
+// ImageExportPath devolve o caminho padrão de exportação em mods/edits/images:
+// <part>/<container-rel>/<registro>.<fmt> para imagens de container (o mesmo
+// caminho que o import de translated/images espera) e o layout antigo com o
+// nome original para arquivos diretos.
 func (Service) ImageExportPath(part, ref, format string) (string, error) {
 	r, err := DecodeImageRef(ref)
 	if err != nil {
 		return "", err
 	}
 	part = config.NormalizePart(part)
+	format = strings.ToLower(strings.TrimSpace(format))
+	if format != "dds" && format != "png" {
+		return "", fmt.Errorf("formato %q inválido (esperado dds ou png)", format)
+	}
 	root, err := config.DataRoot("mods")
 	if err != nil {
 		return "", err
 	}
-	rel := r.Path
-	if r.Root != "" {
-		if idx, zone, rerr := ResolveFilelistIndex(parts.Get(part), r.Root); rerr == nil {
-			_ = idx
-			rel = FilelistDataPath(zone, r.Path)
-		}
+	rel, err := imageExportRelative(part, r)
+	if err != nil {
+		return "", err
 	}
-	rel = strings.ReplaceAll(rel, "\\", "/")
-	rel = strings.TrimPrefix(rel, "/")
-	dir := filepath.Dir(filepath.FromSlash(rel))
-	if dir == "." {
-		dir = ""
-	}
-	return filepath.Join(root, "edits", "images", part, dir, imageOutputBase(r)+"."+format), nil
+	return filepath.Join(root, "edits", "images", part, rel+"."+format), nil
 }
 
 // ExtractImageSelection grava DDS+PNG das refs em destRoot.
@@ -327,14 +444,13 @@ func (Service) ExtractImageSelection(part string, refs []string, destRoot string
 			}
 			target = filepath.Join(root, "edits", "images", part)
 		}
-		rel := r.Path
-		if r.Root != "" {
-			if _, zone, rerr := ResolveFilelistIndex(parts.Get(part), r.Root); rerr == nil {
-				rel = FilelistDataPath(zone, r.Path)
-			}
+		rel, rerr := imageExportRelative(part, r)
+		if rerr != nil {
+			res.Failed = append(res.Failed, ref+": "+rerr.Error())
+			continue
 		}
 		dir := filepath.Join(target, filepath.Dir(filepath.FromSlash(rel)))
-		name := imageOutputBase(r)
+		name := filepath.Base(rel)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			res.Failed = append(res.Failed, ref+": "+err.Error())
 			continue
@@ -467,9 +583,6 @@ func (Service) DeleteImageSelection(part string, refs []string, scope string) (d
 	return (Service{}).DeleteImages(part, refs, scope)
 }
 
-func (Service) ImportImage(part, ref, ddsPath string) error {
-	return fmt.Errorf("import de imagem será implementado na fase 4")
-}
 func (Service) RefreshImageDuplicates(part string) {}
 
 // ListImageContainer lista os filhos de uma tabela WPD/TRB. Imagens ganham

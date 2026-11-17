@@ -83,8 +83,25 @@ export function SelectImageSavePath(
   );
 }
 
-export function ImportImage(): Promise<void> {
-  return Promise.reject(new Error('import de imagem será implementado na fase 4'));
+export function ImportImage(version: unknown, ref: string, ddsPath: string): Promise<void> {
+  return svc.ImportImage(partOf(version), ref, ddsPath);
+}
+
+export function ImportImageGroup(
+  version: unknown,
+  ref: string,
+  ddsPath: string,
+  targets: string[],
+): Promise<any> {
+  return svc.ImportImageGroup(partOf(version), ref, ddsPath, targets ?? null);
+}
+
+export function PreviewImportImages(version: unknown): Promise<any> {
+  return svc.PreviewImportImages(partOf(version));
+}
+
+export function ImportImages(version: unknown, selection: any): Promise<any> {
+  return svc.ImportImages(partOf(version), selection);
 }
 
 export function RefreshImageDuplicates(): Promise<void> {

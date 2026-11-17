@@ -12,13 +12,11 @@ import type { ImageBusy } from './use-image-actions';
 
 export function ImageImportMenu({
   disabled,
-  duplicateCount,
   onImportFile,
   onImportTranslated,
   busy,
 }: {
   disabled: boolean;
-  duplicateCount: number;
   onImportFile: () => void;
   onImportTranslated: () => void;
   busy: ImageBusy;
@@ -32,7 +30,7 @@ export function ImageImportMenu({
           size="sm"
           variant="outline"
           disabled={disabled || isBusy}
-          title={`Importar imagens — de mods/translated/images ou de um arquivo .dds (propaga para as ${duplicateCount + 1} cópias idênticas)`}
+          title="Importar imagens — de mods/translated/images/<part> (lote) ou de um arquivo .dds para a imagem aberta"
         >
           <Upload size={16} />
           {isBusy ? 'Importando…' : 'Importar'}
@@ -43,7 +41,7 @@ export function ImageImportMenu({
         {/* 1. Padrão = mods/translated/images (primeiro item, como no texto) */}
         <DropdownMenuItem
           onSelect={() => onImportTranslated()}
-          title="Importa em lote os .dds.phyre de mods/translated/images — só os diferentes dos já em mods/"
+          title="Importa os .dds de mods/translated/images/<part> — pasta = caminho do container, arquivo = nome do registro"
           disabled={isBusy}
         >
           <Images size={14} />
@@ -53,7 +51,7 @@ export function ImageImportMenu({
         {/* 2. Importar de arquivo .dds */}
         <DropdownMenuItem
           onSelect={() => onImportFile()}
-          title={`Importa um .dds escolhido para a textura e para as ${duplicateCount} cópias idênticas`}
+          title="Aplica um .dds escolhido na imagem ABERTA — o caminho e o nome do arquivo não importam"
           disabled={isBusy}
         >
           <FolderInput size={14} />

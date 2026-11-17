@@ -10,6 +10,107 @@ import (
 	"github.com/woozymasta/bcn"
 )
 
+// DDSFormat identifica o formato DX de pixel de um DDS. É o vocabulário
+// usado na comparação do import contra o formato GTEX do container.
+type DDSFormat int
+
+const (
+	DDSFormatUnknown DDSFormat = iota
+	DDSFormatDXT1
+	DDSFormatDXT3
+	DDSFormatDXT5
+	DDSFormatBC5
+	// DDSFormatRGB é o 32bpp opaco (X8R8G8B8 no GTEX).
+	DDSFormatRGB
+	// DDSFormatRGBA é o 32bpp com alpha (A8R8G8B8 no GTEX).
+	DDSFormatRGBA
+)
+
+// String devolve o nome do formato no vocabulário do GTEX/UI.
+func (f DDSFormat) String() string {
+	switch f {
+	case DDSFormatDXT1:
+		return "DXT1"
+	case DDSFormatDXT3:
+		return "DXT3"
+	case DDSFormatDXT5:
+		return "DXT5"
+	case DDSFormatBC5:
+		return "BC5"
+	case DDSFormatRGB:
+		return "X8R8G8B8"
+	case DDSFormatRGBA:
+		return "A8R8G8B8"
+	default:
+		return "desconhecido"
+	}
+}
+
+const (
+	ddsFourCCDX10 = 0x30315844 // "DX10"
+)
+
+// DDSHeaderInfo é o retrato do header DDS relevante para o import: dimensões,
+// mipmaps, formato DX e os caps do cubemap.
+type DDSHeaderInfo struct {
+	Width       uint32
+	Height      uint32
+	MipMapCount uint32
+	Format      DDSFormat
+	FourCC      uint32
+	PixelFlags  uint32
+	AlphaMask   uint32
+	Caps2       uint32
+}
+
+// ParseDDSHeader lê o header de um DDS sem decodificar os pixels. Recusa
+// DX10 (header extendido) e formatos que o GTEX do FF13 não representa.
+func ParseDDSHeader(dds []byte) (DDSHeaderInfo, error) {
+	var out DDSHeaderInfo
+	if len(dds) < ddsHeaderLen || string(dds[0:4]) != "DDS " {
+		return out, fmt.Errorf("dds inválido: header ausente ou magic incorreto")
+	}
+	out.Height = binary.LittleEndian.Uint32(dds[12:16])
+	out.Width = binary.LittleEndian.Uint32(dds[16:20])
+	out.MipMapCount = binary.LittleEndian.Uint32(dds[28:32])
+	if out.MipMapCount == 0 {
+		out.MipMapCount = 1
+	}
+	out.PixelFlags = binary.LittleEndian.Uint32(dds[80:84])
+	out.FourCC = binary.LittleEndian.Uint32(dds[84:88])
+	out.AlphaMask = binary.LittleEndian.Uint32(dds[104:108])
+	out.Caps2 = binary.LittleEndian.Uint32(dds[112:116])
+	if out.Width == 0 || out.Height == 0 {
+		return out, fmt.Errorf("dds inválido: dimensões %dx%d", out.Width, out.Height)
+	}
+	if out.PixelFlags&ddpfFourCC != 0 {
+		switch out.FourCC {
+		case fccDXT1:
+			out.Format = DDSFormatDXT1
+		case fccDXT3:
+			out.Format = DDSFormatDXT3
+		case fccDXT5:
+			out.Format = DDSFormatDXT5
+		case fccBC5U, fccATI2:
+			out.Format = DDSFormatBC5
+		case ddsFourCCDX10:
+			return out, fmt.Errorf("dds com header DX10 não é suportado")
+		default:
+			return out, fmt.Errorf("dds com FourCC 0x%08X não é suportado", out.FourCC)
+		}
+		return out, nil
+	}
+	if out.PixelFlags&ddpfRGB != 0 {
+		if out.AlphaMask != 0 {
+			out.Format = DDSFormatRGBA
+		} else {
+			out.Format = DDSFormatRGB
+		}
+		return out, nil
+	}
+	return out, fmt.Errorf("dds com formato de pixel não suportado (pfFlags=0x%08X)", out.PixelFlags)
+}
+
 const ddsHeaderLen = 128
 
 const (

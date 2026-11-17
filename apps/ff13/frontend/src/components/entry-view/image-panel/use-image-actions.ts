@@ -233,8 +233,9 @@ export function useImageActions({
           toast.success(`Textura importada em ${result.updated.length} textura(s) idêntica(s).`);
         }
       }
-      // Recarrega árvore + textura: os containers em mods/ mudaram.
+      // Recarrega árvore + textura: o payload em mods/ mudou.
       await actions.reload();
+      await actions.selectEntry(entry);
     } catch (error) {
       toast.error(parseError(error));
     } finally {
@@ -324,6 +325,7 @@ export function useImageActions({
         },
       );
       await actions.reload();
+      if (entry) await actions.selectEntry(entry);
     } catch (error) {
       toast.error(parseError(error), { id: toastId });
     } finally {

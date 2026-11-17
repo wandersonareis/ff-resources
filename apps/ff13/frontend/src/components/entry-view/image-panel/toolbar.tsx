@@ -66,7 +66,6 @@ export function ImageToolbar({
         {showImport ? (
           <ImageImportMenu
             disabled={busy !== null}
-            duplicateCount={duplicateCount}
             onImportFile={onImport}
             onImportTranslated={onImportTranslated}
             busy={busy}

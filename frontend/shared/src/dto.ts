@@ -69,6 +69,7 @@ export interface ImageDuplicate {
   key: string;
   vbfPath?: string;
   modded: boolean;
+  identical: boolean;
 }
 
 export interface ImageDuplicates {
@@ -85,6 +86,15 @@ export interface ImageEntry {
   mipmapCount: number;
   maxMipmapLevel: number;
   preview?: string;
+  assetPath?: string;
+  pngData: string;
+  ddsData?: string;
+  flipped?: boolean;
+  ddsPath?: string;
+  pngPath?: string;
+  modded: boolean;
+  duplicates: ImageDuplicate[];
+  dupPayload: number;
 }
 
 export interface ImageImportPreviewCopy {
@@ -92,13 +102,18 @@ export interface ImageImportPreviewCopy {
   display_path: string;
   in_mods: boolean;
   identical: boolean;
+  selected: boolean;
 }
 
 export interface ImageImportPreviewEntry {
   id: string;
   display_path: string;
   differs: boolean;
+  copy_count: number;
+  copy_missing_count: number;
   copies?: ImageImportPreviewCopy[];
+  validation_error?: string;
+  selected: boolean;
 }
 
 export interface ImageImportPreview {
@@ -106,6 +121,8 @@ export interface ImageImportPreview {
   entries: ImageImportPreviewEntry[];
   max: number;
   new_count: number;
+  identical_count: number;
+  errors: string[];
 }
 
 export interface ImageImportResult {

@@ -154,7 +154,6 @@ export function ImagePanel({ view }: { view: EntryView }) {
           onToggleFlip={preview.toggleFlip}
           onToggleInfo={toggleImageInfo}
           onRefresh={() => void onRefresh()}
-          showImport={false}
           showReplicate={false}
           showRefresh={false}
         />
