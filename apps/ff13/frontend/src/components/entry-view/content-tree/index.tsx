@@ -9,7 +9,7 @@ import { highlightedNodeId, type SideNode } from '@/lib/ffx/content-tree/model';
 import type { EntryKind } from '@/lib/ffx/display-names';
 import { useExportSelection } from '@/lib/ffx/export-selection';
 import { openSearchDialog } from '@/lib/ffx/search-store';
-import { entryKindsFor, imageKindsFor } from '@/lib/ffx/kinds';
+import { ALL_FF13_KINDS, entryKindsFor, imageKindsFor } from '@/lib/ffx/kinds';
 import { useVbfSelection } from '@/lib/ffx/vbf-selection';
 import { partUi } from '@/lib/parts';
 import { EntryActionsMenu } from '../entry-actions-menu';
@@ -72,7 +72,17 @@ export function ContentTree({ view }: { view: EntryView }) {
   // não reconstrói os Set por kind nem a lista de imagens marcadas.
   const selectedByKind = useMemo(() => {
     const out = new Map<EntryKind, ReadonlySet<string>>();
-    for (const kind of [...entryKindsFor(version), ...imageKindsFor(version)]) {
+    // Todos os kinds que a árvore pode representar: os da part + os do
+    // filelist (que deriva o kind do caminho da unidade e cai em `ztr` no
+    // fallback). Sem a lista completa, uma folha de filelist com kind fora
+    // do escopo da part marcaria no store sem o checkbox refletir.
+    const kinds = new Set<EntryKind>([
+      ...entryKindsFor(version),
+      ...imageKindsFor(version),
+      ...ALL_FF13_KINDS,
+      'ztr',
+    ]);
+    for (const kind of kinds) {
       out.set(kind, new Set(selection.byKind.get(`${version}|${kind}`) ?? []));
     }
     return out;
@@ -136,10 +146,10 @@ export function ContentTree({ view }: { view: EntryView }) {
     actions.consumeRevealedNode();
   }, [revealedNodeId, actions]);
 
-  // A árvore do FF13 tem duas fontes somente-leitura: o índice dos filelists
-  // (game root / árvore extraída) e os arquivos .ztr de data/partN. O grupo de
-  // filelists vem PRIMEIRO (é o mapa do jogo); cada grupo só aparece quando
-  // tem nó — nada de seção vazia.
+  // A árvore do FF13 combina duas fontes: o índice dos filelists (game root /
+  // árvore extraída) e os arquivos .ztr de data/partN. O grupo de filelists
+  // vem PRIMEIRO (é o mapa do jogo); cada grupo só aparece quando tem nó —
+  // nada de seção vazia.
   const groups: TreeGroup[] = [
     ...(filelistRoots.length > 0
       ? [{ id: 'filelist', label: part.filelistGroupLabel, nodes: filelistRoots }]

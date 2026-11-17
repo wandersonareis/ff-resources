@@ -42,7 +42,7 @@ export interface SideNode {
   /** Descrição longa da linha, usada como tooltip. */
   description?: string;
 
-  // ---- Navegador de filelist (família White, somente leitura) ----
+  // ---- Navegador de filelist (família White) ----
   /** true = nó que pertence a um filelist. */
   filelist?: boolean;
   /** Caminho absoluto do filelist que indexa este nó — só nas raízes. */
@@ -69,14 +69,33 @@ export interface SideNode {
   imageContainer?: boolean;
   /** Nó de imagem (ícone e painel). */
   image?: boolean;
-  /** Folha de filelist: somente leitura (sem delete). */
+  /**
+   * Operação destrutiva (delete) indisponível neste nó. É uma capacidade da
+   * FONTE (o .vbf é estritamente somente-leitura); não existe para o filelist.
+   */
   readOnly?: boolean;
 }
 
-/** IDs das folhas de entrada contidas no nó; grupos de imagens são aninhados. */
+/** Uma folha de entrada do nó, com o kind que a identifica na seleção. */
+export interface NodeEntryRef {
+  kind: EntryKind;
+  id: string;
+}
+
+/** IDS das folhas de entrada contidas no nó; grupos de imagens são aninhados. */
 export function entryIdsInNode(node: SideNode): string[] {
   if (node.entry) return [node.entry.id];
   return (node.children ?? []).flatMap(entryIdsInNode);
+}
+
+/**
+ * FOLHAS do nó com o kind de cada uma. Um grupo pode misturar kinds (um
+ * diretório do filelist tem texto e imagens sob o mesmo nó), então a seleção
+ * não pode ser indexada por um `kind` único do nó.
+ */
+export function nodeEntries(node: SideNode): NodeEntryRef[] {
+  if (node.entry) return [{ kind: node.entry.kind, id: node.entry.id }];
+  return (node.children ?? []).flatMap(nodeEntries);
 }
 
 /** Estado tri-state do checkbox de um nó data/ sobre todas as folhas abaixo. */
@@ -87,6 +106,38 @@ export function entryCheckState(
   const ids = entryIdsInNode(node);
   const count = ids.filter((id) => selected.has(id)).length;
   return count === 0 ? false : count === ids.length ? true : 'indeterminate';
+}
+
+/**
+ * Tri-state por KIND: cada folha é consultada no conjunto do seu próprio
+ * kind (o mapa é `version|kind` → ids projetado pelo app). É o estado usado
+ * pela árvore, porque um grupo pode misturar texto e imagem.
+ *
+ * Grupo com subárvore AINDA NÃO CARREGADA nunca fica "cheio": o que está
+ * marcado é só o que já foi listado. Isso mantém o tri-state honesto (o
+ * usuário vê que falta conteúdo) sem exigir indexar o índice inteiro.
+ */
+export function entryCheckStateByKind(
+  node: SideNode,
+  selectedByKind: ReadonlyMap<EntryKind, ReadonlySet<string>>,
+): boolean | 'indeterminate' {
+  const entries = nodeEntries(node);
+  if (entries.length === 0) return false;
+  const count = entries.filter((entry) => selectedByKind.get(entry.kind)?.has(entry.id)).length;
+  if (count === 0) return false;
+  if (count < entries.length) return 'indeterminate';
+  return hasUnloadedGroupChildren(node) ? 'indeterminate' : true;
+}
+
+/**
+ * true quando o nó ainda tem conteúdo de grupo por listar. Nó com `entry`
+ * próprio é FOLHA de seleção (ex.: .bin que também é container): o checkbox
+ * marca a unidade, não os registros internos.
+ */
+function hasUnloadedGroupChildren(node: SideNode): boolean {
+  if (node.entry) return false;
+  if (node.expandable && (node.children?.length ?? 0) === 0) return true;
+  return (node.children ?? []).some(hasUnloadedGroupChildren);
 }
 
 /**
@@ -158,6 +209,43 @@ export function buildNodeIndex(
   roots.forEach(walk);
   filelistRoots?.forEach(walk);
   return map;
+}
+
+/**
+ * Reaproveita por ID as subárvores JÁ CARREGADAS ao remontar uma lista de
+ * raízes. A listagem do filelist/.vbf é preguiçosa: o reload reconstrói as
+ * raízes sem filhos, e sem esta fusão tudo o que estava aberto "fecha" (os
+ * ids continuam no `expanded`, mas os filhos somem).
+ *
+ * `next` manda no que existe: nó que sumiu da listagem não volta; nó novo
+ * entra fechado; nó que continua e tem filhos carregados em `prev` mantém a
+ * subárvore (recursivamente). Filhos estáticos de `next` (ex.: o grupo de
+ * zonas) são mantidos e completados a partir de `prev`.
+ */
+export function mergeLoadedChildren(
+  next: readonly SideNode[],
+  prev: readonly SideNode[],
+): SideNode[] {
+  if (prev.length === 0) return [...next];
+  const loaded = new Map<string, readonly SideNode[]>();
+  const walk = (nodes: readonly SideNode[]): void => {
+    for (const node of nodes) {
+      if (node.children && node.children.length > 0) {
+        loaded.set(node.id, node.children);
+        walk(node.children);
+      }
+    }
+  };
+  walk(prev);
+
+  const attach = (nodes: readonly SideNode[]): SideNode[] =>
+    nodes.map((node) => {
+      const base = node.children && node.children.length > 0 ? node.children : (loaded.get(node.id) ?? []);
+      if (base.length === 0) return node;
+      return { ...node, children: attach(base) };
+    });
+
+  return attach(next);
 }
 
 /**

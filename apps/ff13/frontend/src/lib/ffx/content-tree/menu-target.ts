@@ -12,7 +12,7 @@ export interface TreeCtxNode {
   vbfRoot?: string;
   vbfPath?: string;
   selectedVbfPaths?: string[];
-  /** FF13: filelist/container somente leitura (sem delete). */
+  /** Nó com operação destrutiva indisponível (.vbf é somente-leitura). */
   readOnly?: boolean;
 }
 
@@ -24,7 +24,7 @@ export interface EntryMenuTarget {
   /** Presente para nó do navegador .vbf. */
   vbfRoot?: string;
   vbfPath?: string;
-  /** FF13: filelist somente leitura. */
+  /** Operação destrutiva indisponível (.vbf). */
   readOnly?: boolean;
 }
 
@@ -47,8 +47,8 @@ export function menuTargetOf(node: TreeCtxNode | null): EntryMenuTarget | null {
       readOnly: node.readOnly,
     };
   }
-  // FF13: folhas de imagem do filelist não têm `kind` no nó (o ícone vem do
-  // entry); o alvo sai do id `leaf:images:<ref>`.
+  // Folhas do filelist não derivam o id do nó (o id é `filelist:<root>|<path>`);
+  // o alvo de imagem sai do id `imagecontainer:<ref>`.
   const prefix = node.kind ? `leaf:${node.kind}:` : null;
   const isLeaf = prefix ? node.id.startsWith(prefix) : false;
   const id = isLeaf ? node.id.slice(prefix!.length) : null;

@@ -129,8 +129,9 @@ class ExportSelectionStore {
   }
 
   /**
-   * Marca/desmarca várias entradas de uma vez (grupo = filhos; clique em
-   * indeterminado chega como checked=true via radix). Uma única notificação.
+   * Marca/desmarca várias entradas de um MESMO kind (grupo = filhos; clique
+   * em indeterminado chega como checked=true via radix). Uma única
+   * notificação.
    *
    * `whole` marca a operação como "o kind inteiro" (a raiz do kind):
    * liga o flag de dedupe do artefato bulk. Desmarcar QUALQUER coisa —
@@ -144,24 +145,60 @@ class ExportSelectionStore {
     checked: boolean,
     whole = false,
   ): void {
-    if (ids.length === 0) return;
+    this.setManyByKind(
+      version,
+      ids.map((id) => ({ kind, id })),
+      checked,
+      whole,
+    );
+  }
+
+  /**
+   * Marca/desmarca entradas de KINDS DIVERSOS numa única notificação.
+   *
+   * Um diretório do filelist (ou um índice embutido) pode conter texto e
+   * imagem sob o mesmo nó; a seleção é indexada por `version|kind`, então o
+   * grupo é dividido e todos os kinds recebem a marcação no mesmo snapshot.
+   */
+  setManyByKind(
+    version: GameVersionId,
+    entries: readonly { kind: EntryKind; id: string }[],
+    checked: boolean,
+    whole = false,
+  ): void {
+    if (entries.length === 0) return;
+    let mutated = false;
+    for (const { kind, id } of entries) {
+      if (this.apply(version, kind, id, checked, whole)) mutated = true;
+    }
+    if (mutated) this.notify();
+  }
+
+  /** Aplica um id no kind; devolve true quando algo mudou (notifica depois). */
+  private apply(
+    version: GameVersionId,
+    kind: EntryKind,
+    id: string,
+    checked: boolean,
+    whole: boolean,
+  ): boolean {
     const key = stateKey(version, kind);
     let set = this.selected.get(key);
     if (!set) {
-      if (!checked) return;
+      if (!checked) return false;
       set = new Set();
       this.selected.set(key, set);
     }
     if (checked) {
-      for (const id of ids) set.add(id);
+      set.add(id);
       if (whole) this.complete.add(key);
     } else {
-      for (const id of ids) set.delete(id);
+      set.delete(id);
       // Toda remoção derruba o "kind inteiro" — mesmo desmarcar a raiz.
       this.complete.delete(key);
     }
     if (set.size === 0) this.selected.delete(key);
-    this.notify();
+    return true;
   }
 
   has(version: GameVersionId, kind: EntryKind, id: string): boolean {

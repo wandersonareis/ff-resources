@@ -29,7 +29,11 @@ export interface ContentTreeValue {
   renderItem?: (node: SideNode, depth: number, defaultContent: ReactNode) => ReactNode;
   onToggle: (node: SideNode) => void;
   onSelect: (node: SideNode) => void;
-  onCheck: (node: SideNode, checked: boolean) => void;
+  /**
+   * Marca/desmarca o nó. Pode ser assíncrono: um grupo ainda não carregado
+   * (diretório, container, índice) carrega os filhos antes de marcar.
+   */
+  onCheck: (node: SideNode, checked: boolean) => void | Promise<void>;
 }
 
 const ContentTreeContext = createContext<ContentTreeValue | null>(null);

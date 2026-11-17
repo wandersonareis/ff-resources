@@ -108,8 +108,10 @@ export function buildFilelistRoots(roots: FilelistRoot[], part: PartUi): SideNod
       label: part.filelistZoneLabel,
       type: 'folder',
       filelist: true,
-      expandable: true,
       hint: zoneHint,
+      // Sem `expandable`: o grupo não é carregável por si (os filhos são os
+      // índices de zona). A expansão vem dos `children`; o checkbox só
+      // aparece quando alguma zona já trouxe folhas.
       children: zoneChildren,
     });
   }
@@ -144,12 +146,9 @@ export function buildFilelistChildren(
     // No part1 o diretório "zone" dentro de um índice some: o conteúdo da
     // zona vive só no nó "Zone".
     if (part.zoneAsTopLevel && node.isDir && lowerName(node.name) === 'zone') continue;
-    const id = node.imageContainer && node.imageRef
-      ? `imagecontainer:${node.imageRef}`
-      : `filelist:${root}|${node.path}`;
     if (node.isDir) {
       out.push({
-        id,
+        id: `filelist:${root}|${node.path}`,
         label: mergeLabel(node),
         type: 'folder',
         filelist: true,
@@ -162,23 +161,35 @@ export function buildFilelistChildren(
     const nested = node.kind === 'index';
     const imageContainer = isFilelistImageContainer(node);
     const imageLeaf = isFilelistImageLeaf(node);
-    const entry =
-      nested || imageContainer
-        ? undefined
-        : isFilelistTextLeaf(node)
-          ? filelistEntryOf(node, version)
-          : imageLeaf
-            ? filelistImageEntryOf(node)
-            : undefined;
+    // Um .bin WPD pode ser TEXTO e container ao mesmo tempo (o WPD carrega o
+    // registro .ztr). O TEXTO tem prioridade: a folha abre a unidade e o
+    // chevron continua expandindo os registros — por isso o nó mantém o id
+    // de filelist (e não `imagecontainer:`), para o menu de contexto tratá-lo
+    // como texto.
+    const textLeaf = isFilelistTextLeaf(node);
+    const entry = nested
+      ? undefined
+      : textLeaf
+        ? filelistEntryOf(node, version)
+        : imageLeaf
+          ? filelistImageEntryOf(node)
+          : undefined;
+    // Container de IMAGEM (sem unidade de texto): id de container, que é o
+    // que o menu de contexto usa para extrair/deletar a tabela.
+    const isImageContainerNode = imageContainer && !entry;
     out.push({
-      id,
+      id: isImageContainerNode
+        ? `imagecontainer:${node.imageRef ?? node.path}`
+        : `filelist:${root}|${node.path}`,
       label: nested
         ? filelistLabel(node)
-        : isFilelistTextLeaf(node) || imageLeaf
+        : textLeaf || imageLeaf
           ? filelistLeafLabel(node)
           : filelistOpaqueLabel(node),
-      type: imageContainer ? 'folder' : 'file',
-      kind: imageContainer || imageLeaf ? 'images' : undefined,
+      type: isImageContainerNode ? 'folder' : 'file',
+      // Só formatos CONHECIDOS têm seleção: texto (kind da unidade), imagem
+      // e container de imagem. Arquivo fora do escopo não tem kind/entry.
+      kind: entry?.kind ?? (imageContainer || imageLeaf ? 'images' : undefined),
       filelist: true,
       filelistRoot: root,
       filelistPath: node.path,
@@ -186,9 +197,10 @@ export function buildFilelistChildren(
       unsupported: !nested && !entry && !imageContainer,
       nestedFilelist: nested,
       expandable: nested || imageContainer,
-      imageContainer,
+      // Mantém o container expansível mesmo quando o nó é primariamente
+      // TEXTO: o chevron lista os registros internos do WPD.
+      imageContainer: imageContainer || undefined,
       imageRef: node.imageRef,
-      readOnly: imageContainer || imageLeaf || undefined,
     });
   }
   return out;

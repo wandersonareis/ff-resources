@@ -8,6 +8,7 @@ import {
   ancestorPathOf,
   buildNodeIndex,
   entryIdsInNode,
+  mergeLoadedChildren,
   type SideNode,
   TEXT_ROOT_NODE_ID,
 } from '@/lib/ffx/content-tree/model';
@@ -26,7 +27,7 @@ import {
 import type { FilelistNode } from '@/lib/ffx/filelist-common';
 import { buildFilelistChildren, buildFilelistRoots } from '@/lib/ffx/filelist-tree';
 import type { GameVersionId } from '@/lib/ffx/game-version';
-import { allKindsFor, ALL_FF13_KINDS } from '@/lib/ffx/kinds';
+import { ALL_FF13_KINDS, allKindsFor } from '@/lib/ffx/kinds';
 import { SOURCE_LANG } from '@/lib/ffx/save-all';
 import { invalidateTextSearchResults } from '@/lib/ffx/search-store';
 import {
@@ -204,6 +205,13 @@ export interface EntryActions {
   selectNode(node: SideNode): Promise<void>;
   /** Alterna expandir/colapsar grupo ou raiz. */
   toggleNode(node: SideNode): void;
+  /**
+   * Carrega os filhos de um nó expansível SEM alternar a expansão (usado
+   * pelo checkbox de grupo: marcar um diretório/container/índice ainda não
+   * carregado busca as folhas antes de marcar). No-op quando já tem filhos,
+   * não é expansível ou já está carregando.
+   */
+  loadNodeChildren(node: SideNode): Promise<void>;
   /** ArrowRight na folha: pede foco na 1ª linha após o arquivo carregar. */
   requestTableFocus(): void;
   /** Tabela focou a 1ª linha: limpa o pedido pendente. */
@@ -884,19 +892,23 @@ export function createEntryView(version: GameVersionId): EntryView {
       // container próprio). Nomes sem a extensão — a seção acima da árvore
       // já diz que é .vbf.
       const list = all.filter((root) => root.version === version);
-      patch({
-        vbfStatus: 'ready',
-        vbfRoots: list.map((root) => ({
-          // Mesmo formato de vbfNodeId com path/id vazios = a RAIZ do
-          // container (é o que a expansão usa como diretório inicial).
-          id: vbfNodeId(root.path, { path: '', id: '' }),
-          label: root.name.replace(/\.vbf$/i, ''),
-          vbf: true,
-          vbfRoot: root.path,
-          vbfPath: '',
-          expandable: true,
-        })),
-      });
+      const nextRoots: SideNode[] = list.map((root) => ({
+        // Mesmo formato de vbfNodeId com path/id vazios = a RAIZ do
+        // container (é o que a expansão usa como diretório inicial).
+        id: vbfNodeId(root.path, { path: '', id: '' }),
+        label: root.name.replace(/\.vbf$/i, ''),
+        vbf: true,
+        vbfRoot: root.path,
+        vbfPath: '',
+        expandable: true,
+      }));
+      store.setState((prev) => ({
+        ...prev,
+        vbfStatus: 'ready' as const,
+        // Reload remonta as raízes: reaproveita as subárvores já carregadas
+        // por id para a expansão preguiçosa não "fechar" a árvore.
+        vbfRoots: mergeLoadedChildren(nextRoots, prev.vbfRoots),
+      }));
     } catch (error) {
       if (gen !== generationCounter.current) return;
       // A lista é final mesmo no erro (vazia): o aviso da árvore pode ser
@@ -919,7 +931,15 @@ export function createEntryView(version: GameVersionId): EntryView {
       const roots = await loadFilelistRoots(version);
       if (gen !== generationCounter.current) return;
       const part = partUi(version);
-      patch({ filelistStatus: 'ready', filelistRoots: buildFilelistRoots(roots, part) });
+      const nextRoots = buildFilelistRoots(roots, part);
+      store.setState((prev) => ({
+        ...prev,
+        filelistStatus: 'ready' as const,
+        // A listagem é preguiçosa: as raízes novas vêm SEM filhos. Sem a
+        // fusão, todo reload (imagem/save/import) fecharia o que estava
+        // aberto no filelist.
+        filelistRoots: mergeLoadedChildren(nextRoots, prev.filelistRoots),
+      }));
     } catch (error) {
       if (gen !== generationCounter.current) return;
       patch({ filelistStatus: 'ready', filelistRoots: [] });
@@ -1001,7 +1021,6 @@ export function createEntryView(version: GameVersionId): EntryView {
             label: child.name,
             kind: 'images',
             type: 'image',
-            readOnly: node.filelist === true,
             entry: {
               kind: 'images',
               id: imageRef,
@@ -1127,6 +1146,26 @@ export function createEntryView(version: GameVersionId): EntryView {
       else next.add(node.id);
       return { ...prev, expanded: next };
     });
+  };
+
+  /**
+   * Carga sob demanda dos filhos de um nó expansível, SEM alternar a
+   * expansão. O checkbox de grupo usa isto: marcar um diretório/container/
+   * índice ainda não carregado precisa das folhas antes de marcar. Os
+   * loaders já são idempotentes (guard de `loading` + cache do backend).
+   */
+  const loadNodeChildren = async (node: SideNode): Promise<void> => {
+    if (node.loading || (node.children && node.children.length > 0)) return;
+    if (!node.expandable) return;
+    if (node.imageContainer && node.imageRef) {
+      await loadImageChildren(node);
+      return;
+    }
+    if (node.filelist) {
+      await loadFilelistChildren(node);
+      return;
+    }
+    if (node.vbf) await loadVbfChildren(node);
   };
 
   /**
@@ -1281,6 +1320,7 @@ export function createEntryView(version: GameVersionId): EntryView {
       }
     },
     toggleNode,
+    loadNodeChildren,
     requestTableFocus: () => patch({ pendingTableFocus: true }),
     consumeTableFocus: () => patch({ pendingTableFocus: false }),
     consumeTableRowFocus: () => patch({ pendingTableRowFocus: null }),

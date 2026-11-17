@@ -14,9 +14,9 @@ import { memo } from 'react';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import {
-  EMPTY_IDS,
-  entryCheckState,
+  entryCheckStateByKind,
   entryNodeId,
+  nodeEntries,
   type SideNode,
   TEXT_ROOT_NODE_ID,
 } from '../../../app/content-tree/model';
@@ -63,10 +63,18 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
   // `Texto` é só visual (sem kind) e imagens seguem pela marcação de
   // folha/grupo, que alimenta extrair/deletar.
   const isTextRoot = node.id === TEXT_ROOT_NODE_ID || node.id.startsWith('kind:images');
-  const selectable = !isVbfContainerRoot && !isTextRoot && !node.readOnly && !!node.kind;
+  // Marcável quando TEM conteúdo de entrada (folha ou descendentes já
+  // carregados) OU quando pode carregá-lo sob demanda (`expandable`:
+  // diretório, container de imagem/texto, índice de filelist aninhado). O
+  // `kind` do nó NÃO é requisito: um grupo pode misturar texto e imagem.
+  const selectable =
+    !isVbf &&
+    !isVbfContainerRoot &&
+    !isTextRoot &&
+    (nodeEntries(node).length > 0 || node.expandable === true);
+  const hasCheckbox = selectable || (isVbf && !isVbfContainerRoot);
   const vbfRoot = node.vbfRoot ?? node.entry?.vbf?.root;
   const vbfPath = node.vbfPath ?? node.entry?.vbf?.path ?? '';
-  const selected = node.kind ? (selectedByKind.get(node.kind) ?? EMPTY_IDS) : EMPTY_IDS;
   // Rótulo do nó é o nome que veio do backend (arquivo/pasta, não traduzido).
   // Só quando o label é a PRÓPRIA categoria (`system`, `event`…) o frontend
   // troca pelo rótulo i18n — assim nome de arquivo nunca vira "Arquivo".
@@ -75,7 +83,7 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
   const customIcon = typeIcons?.[node.type ?? ''];
 
   let checked: boolean | 'indeterminate' = false;
-  if (selectable) checked = entryCheckState(node, selected);
+  if (selectable) checked = entryCheckStateByKind(node, selectedByKind);
 
   if (isVbf && !isVbfContainerRoot) {
     const paths = vbfRoot ? (vbfSelectionByRoot.get(vbfRoot) ?? []) : [];
@@ -119,14 +127,14 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
         ) : (
           <span className="w-8 shrink-0" />
         )}
-        {isVbfContainerRoot || isTextRoot ? null : (
+        {hasCheckbox ? (
           <Checkbox
             className="mr-1"
             checked={checked}
-            onCheckedChange={(value) => onCheck(node, value === true)}
+            onCheckedChange={(value) => void onCheck(node, value === true)}
             aria-label={`Selecionar ${node.label}`}
           />
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="sm"

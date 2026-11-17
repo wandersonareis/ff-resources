@@ -2,7 +2,12 @@
 
 import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 import type { TreeCtxNode } from '@/lib/ffx/content-tree/menu-target';
-import { entryIdsInNode, isKindRootNode, type SideNode } from '@/lib/ffx/content-tree/model';
+import {
+  buildNodeIndex,
+  isKindRootNode,
+  nodeEntries,
+  type SideNode,
+} from '@/lib/ffx/content-tree/model';
 import { parseError } from '@/lib/ffx/error-handler';
 import { exportLangs } from '@/lib/ffx/export-langs';
 import { exportSelection } from '@/lib/ffx/export-selection';
@@ -54,27 +59,43 @@ export function useContentTreeActions({
     [ctxNode],
   );
 
-  // Checkbox de data/: folha = 1 id; grupo = todos os filhos; raiz do kind
-  // = o kind INTEIRO (`whole`), que deduplica a exportação para o artefato
-  // bulk único.
-  // Checkbox do .vbf: guarda o caminho (diretório = subárvore, expandida
-  // pelo backend); inclui imagens e formatos fora do escopo de texto para
-  // permitir a extração dos binários originais.
+  /**
+   * Checkbox da árvore. Folha = as entradas do próprio nó; grupo = todas as
+   * folhas abaixo (o kind de cada uma, porque um diretório do filelist pode
+   * misturar texto e imagem). A raiz de kind de data/ marca o kind INTEIRO
+   * (`whole`), que deduplica a exportação para o artefato bulk único.
+   *
+   * Grupo ainda NÃO CARREGADO (diretório, container de imagem/texto, índice
+   * de filelist aninhado) busca as folhas antes de marcar — só os formatos
+   * compatíveis entram (folhas sem `entry` ficam de fora).
+   *
+   * Checkbox do .vbf: guarda o caminho (diretório = subárvore, expandida
+   * pelo backend); inclui imagens e formatos fora do escopo de texto para
+   * permitir a extração dos binários originais.
+   */
   const checkNode = useCallback(
-    (node: SideNode, checked: boolean) => {
+    async (node: SideNode, checked: boolean): Promise<void> => {
       if (node.vbf) {
         const root = node.vbfRoot ?? node.entry?.vbf?.root;
         const path = node.vbfPath ?? node.entry?.vbf?.path ?? '';
         if (root) vbfSelection.set(root, path, checked);
         return;
       }
-      if (!node.kind) return;
-      // A raiz do kind (kind:<kind>) cobre tudo que a árvore serve dele:
-      // marcar ela é marcar o kind inteiro — daí o `whole`.
       const whole = isKindRootNode(node) && checked;
-      exportSelection.setMany(version, node.kind, entryIdsInNode(node), checked, whole);
+      let entries = nodeEntries(node);
+      if (checked && entries.length === 0 && node.expandable) {
+        await actions.loadNodeChildren(node);
+        const fresh = buildNodeIndex(
+          view.store.state.roots,
+          view.store.state.vbfRoots,
+          view.store.state.filelistRoots,
+        ).get(node.id);
+        if (fresh) entries = nodeEntries(fresh);
+      }
+      if (entries.length === 0) return;
+      exportSelection.setManyByKind(version, entries, checked, whole);
     },
-    [version],
+    [actions, version, view],
   );
 
   const onExtractSelectedImages = useCallback(async () => {

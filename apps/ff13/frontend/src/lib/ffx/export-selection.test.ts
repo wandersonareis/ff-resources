@@ -28,4 +28,22 @@ describe('export selection snapshot', () => {
     exportSelection.setMany('us', 'events', ['k'], false);
     expect(exportSelection.getSnapshot().byKind.has('us|events')).toBe(false);
   });
+
+  it('marca kinds diferentes numa ÚNICA notificação (grupo do filelist)', () => {
+    const before = exportSelection.getSnapshot();
+    const entries = [
+      { kind: 'events' as const, id: 'a' },
+      { kind: 'images' as const, id: 'b' },
+    ];
+
+    exportSelection.setManyByKind('us', entries, true);
+    const after = exportSelection.getSnapshot();
+    expect(after.revision).toBe(before.revision + 1);
+    expect(after.byKind.get('us|events')).toEqual(['a']);
+    expect(after.byKind.get('us|images')).toEqual(['b']);
+
+    exportSelection.setManyByKind('us', entries, false);
+    expect(exportSelection.getSnapshot().byKind.has('us|events')).toBe(false);
+    expect(exportSelection.getSnapshot().byKind.has('us|images')).toBe(false);
+  });
 });

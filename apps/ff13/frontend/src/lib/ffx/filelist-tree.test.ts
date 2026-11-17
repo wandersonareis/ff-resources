@@ -99,6 +99,9 @@ describe('filelist-tree — raízes', () => {
     expect(zone.children?.[0].filelistZone).toBe('z000');
     expect(zone.children?.[0].filelistRoot).toBe('zone:z000');
     expect(zone.hint).toBe('PC · white_data');
+    // O grupo não é carregável por si: nada de checkbox morto antes de uma
+    // zona trazer folhas.
+    expect(zone.expandable).toBeUndefined();
   });
 
   it('part2/part3: as zonas continuam no grupo "zone", com os índices dentro', () => {
@@ -255,5 +258,135 @@ describe('filelist-tree — filhos', () => {
       'part2',
     );
     expect(children.map((c) => c.label)).toEqual(['zone']);
+  });
+});
+
+describe('filelist-tree — seleção por formato conhecido', () => {
+  const ROOT = 'C:/game/white_data/sys/filelistu.win32.bin';
+
+  it('texto (.ztr) carrega o kind da unidade no NÓ (checkbox do filelist)', () => {
+    const [leaf] = buildFilelistChildren(
+      ROOT,
+      [
+        node({
+          name: 'txtres_us.ztr',
+          path: 'txtres/resident/book/txtres_us.ztr',
+          text: true,
+          unitId: 'txtres/resident/book/txtres',
+          container: 'ztr',
+        }),
+      ],
+      part1,
+      'part1',
+    );
+    expect(leaf.kind).toBe('resident');
+    expect(leaf.entry?.id).toBe('txtres/resident/book/txtres');
+    expect(leaf.readOnly).toBeUndefined();
+    expect(leaf.id).toBe(`filelist:${ROOT}|txtres/resident/book/txtres_us.ztr`);
+  });
+
+  it('texto em container WPD: o TEXTO tem prioridade e o nó continua expansível', () => {
+    const [leaf] = buildFilelistChildren(
+      ROOT,
+      [
+        node({
+          name: 'txtres_us.bin',
+          path: 'db/ai/npc/pack/txtres_us.bin',
+          text: true,
+          unitId: 'db/ai/npc/pack/txtres',
+          container: 'wpd',
+          image: true,
+          imageContainer: true,
+          imageRef: 'ref-container',
+        }),
+      ],
+      part1,
+      'part1',
+    );
+    // O checkbox marca a UNIDADE de texto...
+    expect(leaf.kind).toBe('scenario');
+    expect(leaf.entry?.id).toBe('db/ai/npc/pack/txtres');
+    // ...e o chevron continua abrindo os registros do container.
+    expect(leaf.expandable).toBe(true);
+    expect(leaf.imageContainer).toBe(true);
+    expect(leaf.imageRef).toBe('ref-container');
+    // Id de filelist (não `imagecontainer:`) para o menu tratar como texto.
+    expect(leaf.id).toBe(`filelist:${ROOT}|db/ai/npc/pack/txtres_us.bin`);
+    expect(leaf.readOnly).toBeUndefined();
+  });
+
+  it('container de IMAGEM sem unidade de texto mantém o id de container', () => {
+    const [leaf] = buildFilelistChildren(
+      ROOT,
+      [
+        node({
+          name: 'c001.win32.trb',
+          path: 'db/c001.win32.trb',
+          image: true,
+          imageContainer: true,
+          imageRef: 'ref-trb',
+          container: 'trb',
+        }),
+      ],
+      part1,
+      'part1',
+    );
+    expect(leaf.kind).toBe('images');
+    expect(leaf.entry).toBeUndefined();
+    expect(leaf.expandable).toBe(true);
+    expect(leaf.id).toBe('imagecontainer:ref-trb');
+    expect(leaf.readOnly).toBeUndefined();
+  });
+
+  it('imagem direta (.dds) é marcável e não é somente-leitura', () => {
+    const [leaf] = buildFilelistChildren(
+      ROOT,
+      [
+        node({
+          name: 'b00.dds',
+          path: 'db/b00.dds',
+          image: true,
+          imageRef: 'ref-dds',
+        }),
+      ],
+      part1,
+      'part1',
+    );
+    expect(leaf.kind).toBe('images');
+    expect(leaf.entry?.source).toBe('filelist');
+    expect(leaf.readOnly).toBeUndefined();
+  });
+
+  it('índice embutido é grupo exposto (sem kind/entry, expansível)', () => {
+    const [index] = buildFilelistChildren(
+      ROOT,
+      [
+        node({
+          name: 'filelist_z000u.win32.bin',
+          path: 'zone/filelist_z000u.win32.bin',
+          kind: 'index',
+          language: 'u',
+        }),
+      ],
+      part1,
+      'part1',
+    );
+    expect(index.nestedFilelist).toBe(true);
+    expect(index.expandable).toBe(true);
+    expect(index.kind).toBeUndefined();
+    expect(index.entry).toBeUndefined();
+  });
+
+  it('formato fora do escopo não tem kind/entry (sem checkbox)', () => {
+    const [opaque] = buildFilelistChildren(
+      ROOT,
+      [node({ name: 'system.win32.imgb', path: 'gui/system.win32.imgb' })],
+      part1,
+      'part1',
+    );
+    expect(opaque.unsupported).toBe(true);
+    expect(opaque.kind).toBeUndefined();
+    expect(opaque.entry).toBeUndefined();
+    expect(opaque.expandable).toBe(false);
   });
 });

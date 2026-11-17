@@ -4,9 +4,13 @@ import {
   buildContentRoots,
   buildNodeIndex,
   entryCheckState,
+  entryCheckStateByKind,
   entryIdsInNode,
+  mergeLoadedChildren,
+  nodeEntries,
   type SideNode,
 } from '@/lib/ffx/content-tree/model';
+import type { EntryKind } from '@/lib/ffx/display-names';
 
 const imageTree: SideNode = {
   id: 'category',
@@ -44,6 +48,135 @@ describe('data tree checkbox selection', () => {
     expect(entryCheckState(imageTree, new Set())).toBe(false);
     expect(entryCheckState(imageTree, new Set(['a']))).toBe('indeterminate');
     expect(entryCheckState(imageTree, new Set(['a', 'b']))).toBe(true);
+  });
+});
+
+describe('filelist group selection (kinds mistos)', () => {
+  const mixed: SideNode = {
+    id: 'filelist:root|dir',
+    label: 'dir',
+    filelist: true,
+    children: [
+      {
+        id: 'filelist:root|a.ztr',
+        label: 'a.ztr',
+        kind: 'resident',
+        entry: { kind: 'resident', id: 'txt/a', key: 'k', label: 'a' },
+      },
+      {
+        id: 'filelist:root|b.dds',
+        label: 'b.dds',
+        kind: 'images',
+        entry: { kind: 'images', id: 'ref-b', key: 'ref-b', label: 'b' },
+      },
+      // Arquivo fora do escopo: sem entry, não entra na seleção.
+      { id: 'filelist:root|system.imgb', label: 'system.imgb', unsupported: true },
+    ],
+  };
+
+  it('lists only the compatible leaves, with their own kind', () => {
+    expect(nodeEntries(mixed)).toEqual([
+      { kind: 'resident', id: 'txt/a' },
+      { kind: 'images', id: 'ref-b' },
+    ]);
+  });
+
+  it('reads each leaf from its own kind set', () => {
+    const byKind = new Map<EntryKind, ReadonlySet<string>>([
+      ['resident', new Set(['txt/a'])],
+      ['images', new Set(['ref-b'])],
+    ]);
+    expect(entryCheckStateByKind(mixed, new Map())).toBe(false);
+    expect(
+      entryCheckStateByKind(
+        mixed,
+        new Map<EntryKind, ReadonlySet<string>>([['resident', new Set(['txt/a'])]]),
+      ),
+    ).toBe('indeterminate');
+    expect(entryCheckStateByKind(mixed, byKind)).toBe(true);
+  });
+
+  it('a group with unlisted subtrees never reports a full check', () => {
+    const collapsed: SideNode = {
+      id: 'filelist:root|dir',
+      label: 'dir',
+      expandable: true,
+    };
+    expect(entryCheckStateByKind(collapsed, new Map())).toBe(false);
+
+    const partiallyListed: SideNode = {
+      ...collapsed,
+      children: [
+        {
+          id: 'filelist:root|a.ztr',
+          label: 'a.ztr',
+          kind: 'resident',
+          entry: { kind: 'resident', id: 'txt/a', key: 'k', label: 'a' },
+        },
+        { id: 'filelist:root|sub', label: 'sub', expandable: true },
+      ],
+    };
+    const byKind = new Map<EntryKind, ReadonlySet<string>>([['resident', new Set(['txt/a'])]]);
+    expect(entryCheckStateByKind(partiallyListed, byKind)).toBe('indeterminate');
+  });
+});
+
+describe('mergeLoadedChildren', () => {
+  it('keeps loaded subtrees by id when the roots are rebuilt', () => {
+    const prev: SideNode[] = [
+      {
+        id: 'filelist:root|',
+        label: 'filelistu',
+        filelist: true,
+        expandable: true,
+        children: [
+          {
+            id: 'filelist:root|txtres',
+            label: 'txtres',
+            filelist: true,
+            children: [{ id: 'filelist:root|txtres/a.ztr', label: 'a.ztr' }],
+          },
+        ],
+      },
+    ];
+    const next: SideNode[] = [{ id: 'filelist:root|', label: 'filelistu', expandable: true }];
+    const merged = mergeLoadedChildren(next, prev);
+    expect(merged[0].children?.[0].children?.[0].label).toBe('a.ztr');
+    // A raiz antiga não é reaproveitada: o nó novo manda no label/flags.
+    expect(merged[0]).not.toBe(prev[0]);
+  });
+
+  it('drops nodes that disappeared and keeps static children of the new tree', () => {
+    const prev: SideNode[] = [
+      {
+        id: 'filelist:zone|',
+        label: 'Zone',
+        children: [
+          {
+            id: 'filelist:zone:z000',
+            label: 'z000',
+            filelistZone: 'z000',
+            children: [{ id: 'zone-leaf', label: 'loaded' }],
+          },
+          { id: 'gone', label: 'gone', children: [{ id: 'x', label: 'x' }] },
+        ],
+      },
+    ];
+    const next: SideNode[] = [
+      {
+        id: 'filelist:zone|',
+        label: 'Zone',
+        children: [{ id: 'filelist:zone:z000', label: 'z000', filelistZone: 'z000' }],
+      },
+    ];
+    const merged = mergeLoadedChildren(next, prev);
+    expect(merged[0].children?.map((c) => c.id)).toEqual(['filelist:zone:z000']);
+    expect(merged[0].children?.[0].children?.[0].label).toBe('loaded');
+  });
+
+  it('returns the new roots untouched when there is nothing loaded', () => {
+    const next: SideNode[] = [{ id: 'filelist:root|', label: 'filelistu' }];
+    expect(mergeLoadedChildren(next, [])).toEqual(next);
   });
 });
 
