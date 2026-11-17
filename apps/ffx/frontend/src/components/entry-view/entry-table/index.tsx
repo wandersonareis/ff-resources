@@ -10,6 +10,7 @@ import { DEDUP_VIEW_KINDS } from '@/lib/ffx/hash-ref';
 import type { EntryView } from '../entry-view-store';
 import { EntryTableBody } from '@/components/entry-view/entry-table/entry-table-body';
 import { EntryTableEmpty } from '@/components/entry-view/entry-table/entry-table-empty';
+import { EntryTableLoading } from '@/components/entry-view/entry-table/entry-table-loading';
 import { EntryTableHeader } from '@/components/entry-view/entry-table/entry-table-header';
 import { features } from '@/components/entry-view/entry-table/table-types';
 import { useEntryTableColumns } from './use-entry-table-columns';
@@ -41,6 +42,8 @@ export const EntryTable = memo(function EntryTable({
   const activeKind = useSelector(store, (s) => s.activeKind);
   const selectedEntry = useSelector(store, (s) => s.selectedEntry);
   const loading = useSelector(store, (s) => s.loading);
+  const entryLoading = useSelector(store, (s) => s.entryLoading);
+  const eventsProgress = useSelector(store, (s) => s.eventsProgress);
   const refLinks = useSelector(store, (s) => s.refLinks);
   const version = view.version;
   // Re-render quando o rascunho muda (exclusões manuais escondem a linha).
@@ -106,8 +109,22 @@ export const EntryTable = memo(function EntryTable({
     rowRefs.current.get(rowKey(rows[0]))?.focus();
   }, [pendingTableFocus, selectedEntry, rows, actions, rowRefs.current.get]);
 
+  // Arquivo em CARGA no backend: a lista já está completa, o conteúdo deste
+  // evento ainda não. Só a folha marcada como pendente abre em espera com o
+  // progresso (nada de tabela velha nem de "não encontrado"); um arquivo já
+  // carregado segue o caminho normal, sem piscar placeholder.
+  if (entryLoading && selectedEntry?.loading === true) {
+    return (
+      <EntryTableLoading
+        label={selectedEntry.label}
+        loaded={eventsProgress?.loaded}
+        total={eventsProgress?.total}
+      />
+    );
+  }
+
   // Arquivo sem NENHUMA linha servível: a tabela ficaria com o corpo vazio,
-  // então o aviso explica. Note que as refs NÃO entram aqui — elas ficam
+  // então o aviso explica. Note que as refs NÃO entram aqui - elas ficam
   // VISÍVEIS como link (nada é oculto: nem arquivo, nem linha repetida, em
   // data/ ou no .vbf).
   if (DEDUP_VIEW_KINDS.has(activeKind) && selectedEntry && !loading && rows.length === 0) {

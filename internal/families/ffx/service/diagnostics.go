@@ -16,8 +16,8 @@ import (
 	"strings"
 	"sync"
 
-	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/codecs/event"
+	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/shared/logging"
 )
 
@@ -274,15 +274,33 @@ func (s *MetadataService) emitTreeDiag(kind string, version common.GameVersion, 
 }
 
 // modsOnlyFilesForEvents varre a árvore mods/ de eventos e devolve os
-// arquivos que NÃO existem em data/ — um evento descoberto só pelo mods é
+// arquivos que NÃO existem em data/ - um evento descoberto só pelo mods é
 // invisível para a árvore (a descoberta é data-driven), então só o log
 // denuncia. Devolve caminhos relativos à raiz de localização.
+//
+// A comparação é contra os ARQUIVOS DE data/ EM DISCO (descoberta própria),
+// nunca contra o store: o store tem só o que a árvore decidiu carregar -
+// exclui a lista estática de skip e, durante a carga, é parcial. Era daí que
+// vinham os milhares de "mods com arquivo ausente em data/".
+//
+// Só event/obj_ps3: a árvore mods/ do ffx2 também tem obj_psv (PS Vita), com
+// os MESMOS ids - varrer tudo dobrava a contagem (1060 arquivos, 530 entradas)
+// e denunciava arquivos que não são entradas de evento.
 func modsOnlyFilesForEvents(version common.GameVersion) []string {
 	lroot := common.GetLocalizationRootForVersion(version, common.DefaultLocalization)
-	modsRoot := filepath.Join(common.GameFilesRoot, common.ModsFolder, lroot, "event")
-	dataIds := map[string]bool{}
-	for _, id := range event.GetAllEventIDs(version) {
-		dataIds[strings.ToLower(id)] = true
+	modsRoot := filepath.Join(common.GameFilesRoot, common.ModsFolder, lroot, "event", "obj_ps3")
+
+	dataIDs, err := event.DiscoverEventIDsFromData(version)
+	if err != nil {
+		common.LogWarning("descoberta de events em data/ para o inventário falhou: %v", err)
+		return nil
+	}
+	if len(dataIDs) == 0 {
+		return nil
+	}
+	dataSet := make(map[string]bool, len(dataIDs))
+	for _, id := range dataIDs {
+		dataSet[strings.ToLower(id)] = true
 	}
 
 	var extra []string
@@ -294,7 +312,7 @@ func modsOnlyFilesForEvents(version common.GameVersion) []string {
 			return nil
 		}
 		id := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
-		if dataIds[strings.ToLower(id)] {
+		if dataSet[strings.ToLower(id)] {
 			return nil
 		}
 		rel, rerr := filepath.Rel(filepath.Join(common.GameFilesRoot, common.ModsFolder, lroot), path)

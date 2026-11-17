@@ -61,6 +61,10 @@ const EternalCalmShortened = "sc"
 type EntrySummary struct {
 	ID  string `json:"id"`
 	Key string `json:"key"`
+	// Status "loading" = o arquivo já está na árvore (descoberta concluída)
+	// mas o conteúdo ainda não foi lido. A UI mostra a folha em carga; clicar
+	// nela espera a carga em vez de erro "não encontrado".
+	Status string `json:"status,omitempty"`
 }
 
 // MetadataService é o acesso do frontend (via Wails) a metadata e texto.
@@ -1025,14 +1029,28 @@ func (s *MetadataService) ListEntries(kind string, version common.GameVersion) (
 	}
 	switch strings.ToLower(strings.TrimSpace(kind)) {
 	case KindEvents:
-		if err := s.ensureEventsLoaded(version); err != nil {
+		// Lista o UNIVERSO descoberto (só ReadDir), não o store: a árvore
+		// aparece inteira de imediato e cada arquivo ainda não lido vem com
+		// status "loading". A leitura segue em background; clicar num arquivo
+		// pendente espera a carga (nunca "entry not found").
+		_, ids, err := s.prepareEvents(version)
+		if err != nil {
 			return nil, err
 		}
-		ids := filterEventIDsForVersion(event.GetAllEventIDs(version), version)
+		ids = filterEventIDsForVersion(ids, version)
 		sort.Strings(ids)
+		pending := eventsPendingStatus(version, ids)
 		out := make([]EntrySummary, 0, len(ids))
 		for _, id := range ids {
-			out = append(out, EntrySummary{ID: id, Key: ffxmetadata.NewEventMetadata(id, version).Key})
+			status := ""
+			if pending[id] {
+				status = "loading"
+			}
+			out = append(out, EntrySummary{
+				ID:     id,
+				Key:    ffxmetadata.NewEventMetadata(id, version).Key,
+				Status: status,
+			})
 		}
 
 		// Inventário de arquivos em paralelo (stat por arquivo) + varredura
@@ -1567,44 +1585,6 @@ func (s *MetadataService) resolveObjectLayouts(version common.GameVersion, ids [
 		return nil, fmt.Errorf("none of the %d requested object(s) found: %v", len(ids), missing)
 	}
 	return out, nil
-}
-
-// ensureEventsLoaded garante o store em memória (carga bulk única;
-// chamadas seguintes usam o datastore). Sem isso, o DTO viria vazio
-// onde o Extract direto do arquivo funcionaria.
-// ensureEventsLoaded garante o store em memória (carga bulk única;
-// método: precisa do notifier para reportar os eventos pulados).
-// Sob o viewLoadMu (leitura): uma carga bulk em voo não pode atravessar
-// o ClearAllEvents de um InvalidateViewCaches e repovoar o store com o
-// conteúdo da árvore anterior (ver view_load_barrier.go).
-func (s *MetadataService) ensureEventsLoaded(version common.GameVersion) error {
-	viewLoadMu.RLock()
-	defer viewLoadMu.RUnlock()
-	if event.HasEvents(version) {
-		return nil
-	}
-	b := event.NewEventsBinaryFile(version)
-	if err := b.LoadFromBinary(); err != nil {
-		return fmt.Errorf("failed to load events for version %s: %w", version, err)
-	}
-	// A carga é silenciosa (implícita), mas os eventos pulados AVISAM:
-	// diagnóstico + toast com cap — ver reportEventSkips.
-	s.reportEventSkips(b.Skipped)
-	return nil
-}
-
-// ensureAllEventsLoaded carrega TODOS os eventos, mesmo com um subconjunto
-// já no store (a árvore carrega só a primeira página). Export bulk (ids=[])
-// precisa do universo completo. Mesma barreira do ensureEventsLoaded.
-func (s *MetadataService) ensureAllEventsLoaded(version common.GameVersion) error {
-	viewLoadMu.RLock()
-	defer viewLoadMu.RUnlock()
-	b := event.NewEventsBinaryFile(version)
-	if err := b.LoadFromBinary(); err != nil {
-		return fmt.Errorf("failed to load all events for version %s: %w", version, err)
-	}
-	s.reportEventSkips(b.Skipped)
-	return nil
 }
 
 // ensureHelpLoaded garante os painéis de ajuda em memória (carga única).

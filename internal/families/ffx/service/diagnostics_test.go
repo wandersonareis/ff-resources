@@ -97,7 +97,19 @@ func TestTreeDiagCountsParallelDeterministic(t *testing.T) {
 	defer func() { diagWorkers = prevWorkers }()
 
 	stripTime := regexp.MustCompile(`,"time":"[^"]+"`)
-	normalize := func(s string) string { return stripTime.ReplaceAllString(s, "") }
+	// A carga de events roda em background e pode intercalar a própria linha
+	// ("events loaded: N") em qualquer posição: o que este teste compara é o
+	// INVENTÁRIO, que deve ser idêntico com 1 ou N workers.
+	normalize := func(s string) string {
+		var kept []string
+		for _, line := range strings.Split(s, "\n") {
+			if strings.Contains(line, `"events loaded:`) {
+				continue
+			}
+			kept = append(kept, line)
+		}
+		return stripTime.ReplaceAllString(strings.Join(kept, "\n"), "")
+	}
 
 	diagWorkers = 1
 	info1, warn1 := run()

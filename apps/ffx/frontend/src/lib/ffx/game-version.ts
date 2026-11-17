@@ -23,3 +23,12 @@ export function isGameVersionId(value: unknown): value is GameVersionId {
     (GAME_VERSIONS as readonly { id: string }[]).some((v) => v.id === value)
   );
 }
+
+/**
+ * Árvore (bucket de arquivos) de uma versão: eternalcalm divide a árvore do
+ * FFX e lastmiss a do FFX-2. É a chave dos avisos de carga do backend
+ * (EventsLoadProgress/EventsLoaded), que valem para as duas abas.
+ */
+export function treeOfVersion(version: string): 'ffx' | 'ffx2' {
+  return version === 'ffx2' || version === 'lastmiss' ? 'ffx2' : 'ffx';
+}

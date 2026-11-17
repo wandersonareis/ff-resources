@@ -18,7 +18,7 @@ import { onEnableModsChanged } from '@/lib/ffx/config-store';
 import { KIND_LABELS } from '@/lib/ffx/display-names';
 import { useEditDraft } from '@/lib/ffx/edit-draft';
 import type { GameVersionId } from '@/lib/ffx/game-version';
-import { GAME_VERSIONS } from '@/lib/ffx/game-version';
+import { GAME_VERSIONS, treeOfVersion } from '@/lib/ffx/game-version';
 import { LAYOUT_DEFAULTS_PX } from '@/lib/ffx/layout-storage';
 import { saveAllDrafts } from '@/lib/ffx/save-all';
 import { invalidateTextSearchResults } from '@/lib/ffx/search-store';
@@ -91,6 +91,25 @@ export function GameVersionTab({ version }: { version: GameVersionId }) {
   useWailsEvent('ImportDone', () => {
     invalidateTextSearchResults(version);
     void view.actions.reload();
+  });
+
+  /**
+   * Carga de events do backend. A lista já chega completa (universo
+   * descoberto) com as folhas pendentes em "loading"; este aviso só tira o
+   * spinner quando o conteúdo termina. Vale para o BUCKET: a aba do
+   * eternalcalm/lastmiss escuta a carga compartilhada da árvore.
+   */
+  useWailsEvent('EventsLoaded', (data) => {
+    const evt = data as { tree?: string } | null;
+    if (evt?.tree && evt.tree !== treeOfVersion(version)) return;
+    view.actions.setEventsProgress(null);
+    void view.actions.refreshKind('events');
+  });
+
+  useWailsEvent('EventsLoadProgress', (data) => {
+    const evt = data as { tree?: string; loaded?: number; total?: number } | null;
+    if (!evt || evt.tree !== treeOfVersion(version)) return;
+    view.actions.setEventsProgress({ loaded: evt.loaded ?? 0, total: evt.total ?? 0 });
   });
 
   // Preferência de mods virou no backend (eco AppConfigChanged): todo o

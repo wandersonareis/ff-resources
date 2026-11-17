@@ -6,9 +6,6 @@ import (
 	"sync"
 
 	"ffresources/internal/families/ffx/builders"
-	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/families/ffx/profile/datastore"
-	"ffresources/internal/shared/dto"
 	"ffresources/internal/families/ffx/codecs/ddsphyre"
 	"ffresources/internal/families/ffx/codecs/event"
 	"ffresources/internal/families/ffx/codecs/eventtable"
@@ -17,6 +14,9 @@ import (
 	"ffresources/internal/families/ffx/codecs/macrodic"
 	"ffresources/internal/families/ffx/codecs/objectsfile"
 	"ffresources/internal/families/ffx/codecs/objectsfile/chunkmap"
+	"ffresources/internal/families/ffx/profile/common"
+	"ffresources/internal/families/ffx/profile/datastore"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 )
 
@@ -639,6 +639,10 @@ func InvalidateViewCaches() {
 	preloadMu.Unlock()
 	clearDedupViewCache()
 	event.ClearAllEvents()
+	// A descoberta/carga de events pertence à árvore anterior: zera o estado
+	// para a próxima listagem redescobrir (e aborta a carga em voo pela
+	// geração, dentro do próprio loader).
+	resetEventsLoadStates()
 	helpfile.ClearAllHelp()
 	lockit.DataStore.Clear()
 	eventtable.ClearStore()

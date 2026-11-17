@@ -59,6 +59,12 @@ export interface EntrySummary {
    * rótulo pelo id.
    */
   label?: string;
+  /**
+   * "loading" = o arquivo existe na árvore (descoberta concluída) mas o
+   * conteúdo ainda está sendo lido no backend. A folha aparece com spinner;
+   * abrir espera a carga em vez de dar "não encontrado".
+   */
+  status?: 'loading' | 'ready';
   /** Idiomas presentes na entrada (FF13: a unidade de texto). */
   langs?: string[];
   /** Arquivo editável da entrada (FF13: o "_us" da unidade). */

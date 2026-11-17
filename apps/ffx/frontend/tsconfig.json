@@ -33,6 +33,7 @@
       "@/components/game-text-view": ["./node_modules/@ff-resources/ui/src/components/game-text-view.tsx"],
       "@/components/progress/progress-modal": ["./node_modules/@ff-resources/ui/src/components/progress/progress-modal.tsx"],
       "@/components/entry-view/entry-table/entry-table-empty": ["./node_modules/@ff-resources/ui/src/components/entry-view/entry-table/entry-table-empty.tsx"],
+      "@/components/entry-view/entry-table/entry-table-loading": ["./node_modules/@ff-resources/ui/src/components/entry-view/entry-table/entry-table-loading.tsx"],
       "@/components/entry-view/content-tree/search-control": ["./node_modules/@ff-resources/ui/src/components/entry-view/content-tree/search-control.tsx"],
       "@/components/entry-view/content-tree/tree-context": ["./node_modules/@ff-resources/ui/src/components/entry-view/content-tree/tree-context.tsx"],
       "@/components/entry-view/content-tree/tree-item": ["./node_modules/@ff-resources/ui/src/components/entry-view/content-tree/tree-item.tsx"],

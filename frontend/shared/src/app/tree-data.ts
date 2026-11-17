@@ -51,6 +51,11 @@ export interface EntryRow {
   /** Origem da folha (FF13): data/ editável ou filelist somente leitura. */
   source?: 'data' | 'filelist';
   /**
+   * true = arquivo já listado (descoberto) mas conteúdo ainda em carga no
+   * backend. A folha mostra spinner; abrir espera em vez de falhar.
+   */
+  loading?: boolean;
+  /**
    * FF13: a unidade já tem tradução em `mods/partN`. A árvore usa para
    * preferir a cópia traduzida quando o mesmo caminho visual aparece no
    * `data/` global e no de zona (as duas são idênticas no original).
@@ -127,6 +132,8 @@ export async function loadKindEntries(
       // O backend pode mandar o rótulo (FF13: a unidade de texto, sem o
       // sufixo de idioma). Sem ele, a árvore resolve pelo id (FFX).
       label: s.label ?? resolveEntryLabel(kind, s.id),
+      // Conteúdo ainda em carga (events): a folha nasce com spinner.
+      loading: s.status === 'loading',
       langs: s.langs,
       primary: s.primary,
       files: s.files,

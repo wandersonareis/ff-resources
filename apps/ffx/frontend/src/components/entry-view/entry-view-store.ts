@@ -124,6 +124,13 @@ export interface EntryViewState {
    */
   image: dto.ImageEntry | null;
   loading: boolean;
+  /** Abertura de UM arquivo em curso (a carga de um event pendente espera). */
+  entryLoading: boolean;
+  /**
+   * Progresso da carga de events no backend: o universo já está na árvore,
+   * o conteúdo chega em N arquivos. null = nada em carga.
+   */
+  eventsProgress: { loaded: number; total: number } | null;
   /**
    * Progresso de tradução da entrada aberta (por row, todos os formatos):
    * FIXA na abertura do arquivo — não acompanha rascunho em edição.
@@ -178,6 +185,10 @@ export interface EntryActions {
   reload(): Promise<void>;
   /** Reload frio (botão): limpa a árvore para placeholders e recarrega tudo. */
   coldReload(): Promise<void>;
+  /** Recarrega UM kind (a carga de events terminou no backend). */
+  refreshKind(kind: EntryKind): Promise<void>;
+  /** Progresso da carga de events (evento Wails); null limpa. */
+  setEventsProgress(progress: { loaded: number; total: number } | null): void;
   /** Abre um arquivo na tabela (carrega rows e registra a base do rascunho). */
   selectEntry(entry: EntryRow, searchMatch?: services.TextSearchMatch): Promise<void>;
   /** Clique/Enter num nó da árvore: folha abre; grupo/raiz expande (como
@@ -278,6 +289,7 @@ function eventGroups(version: GameVersionId, entries: EntryRow[]): SideNode[] {
         label: entry.label,
         kind: entry.kind,
         entry,
+        loading: entry.loading === true,
       })),
     });
   }
@@ -298,6 +310,8 @@ function createEntryStore(version: GameVersionId) {
     refLinks: {},
     image: null,
     loading: true,
+    entryLoading: false,
+    eventsProgress: null,
     progress: null,
     kindStatus: Object.fromEntries(kinds.map((k) => [k, 'loading' as const])) as Record<
       EntryKind,
@@ -532,8 +546,13 @@ export function createEntryView(version: GameVersionId): EntryView {
     entry: EntryRow,
     searchMatch?: services.TextSearchMatch,
   ): Promise<void> => {
+    // Token: abrir um event pendente pode esperar a carga inteira; se o
+    // usuário clicar em outro arquivo nesse meio-tempo, a resposta atrasada
+    // NÃO pode sobrescrever a seleção mais nova.
+    const token = ++selectionCounter.current;
     patch({
       loading: true,
+      entryLoading: true,
       pendingTableFocus: false,
       pendingTableRowFocus: searchMatch ?? null,
     });
@@ -544,6 +563,7 @@ export function createEntryView(version: GameVersionId): EntryView {
         const image = entry.vbf
           ? await loadVbfImage(entry.vbf.root, entry.vbf.path)
           : await loadImage(entry.id, version);
+        if (token !== selectionCounter.current) return;
         patch({ image, rows: [], progress: null });
         return;
       }
@@ -551,6 +571,7 @@ export function createEntryView(version: GameVersionId): EntryView {
       const full = entry.vbf
         ? await loadVbfEntry(entry.vbf.root, entry.vbf.path, entry.id)
         : await loadEntry(entry.kind, entry.id, version);
+      if (token !== selectionCounter.current) return;
       // Rascunho por fonte: data/ e o .vbf têm namespaces separados (o
       // mesmo id pode existir nos dois). A tabela aberta pelo .vbf alimenta
       // o rascunho do container: o salvar roteia ao binding de .vbf.
@@ -582,10 +603,13 @@ export function createEntryView(version: GameVersionId): EntryView {
       );
       patch({ rows });
     } catch (error) {
+      if (token !== selectionCounter.current) return;
       sendErrorNotification(error);
       patch({ ...NO_SELECTION });
     } finally {
-      patch({ loading: false });
+      if (token === selectionCounter.current) {
+        patch({ loading: false, entryLoading: false });
+      }
     }
   };
 
@@ -603,11 +627,39 @@ export function createEntryView(version: GameVersionId): EntryView {
               label: entry.label,
               kind: entry.kind,
               entry,
+              loading: entry.loading === true,
             })),
   });
 
   /** Contador de geração: patches de geração passada são descartados. */
   const generationCounter = { current: 0 };
+  /** Token da SELEÇÃO: uma abertura lenta não sobrescreve a mais recente. */
+  const selectionCounter = { current: 0 };
+
+  /** Upsert de UM kind na árvore (ordem canônica preservada). */
+  const applyKindEntries = (kind: EntryKind, entries: EntryRow[]): void => {
+    store.setState((prev) => {
+      const byKind = new Map(
+        prev.roots.flatMap((r) => (r.kind ? [[r.kind, r] as const] : [])),
+      );
+      // Kind sem nada (ex.: images numa versão sem texturas) não vira
+      // raiz vazia "Imagens (0)" — a árvore só mostra o que existe.
+      if (entries.length === 0) byKind.delete(kind);
+      else byKind.set(kind, buildKindNode(kind, entries));
+      const roots = allKindsFor(version)
+        .map((k) => byKind.get(k))
+        .filter((n): n is SideNode => Boolean(n));
+      // A árvore nasce FECHADA, inclusive a de data/: nada é expandido
+      // automaticamente. O expanded que já está aqui guarda só o que o
+      // USUÁRIO abriu, e sobrevive ao reload (união) — quem quer ver os
+      // filhos expande o nó.
+      return {
+        ...prev,
+        roots,
+        kindStatus: { ...prev.kindStatus, [kind]: 'ready' as const },
+      };
+    });
+  };
 
   /**
    * Carga da árvore em PARTES para uma geração: todos os kinds disparam em
@@ -622,25 +674,7 @@ export function createEntryView(version: GameVersionId): EntryView {
         try {
           const entries = await loadKindEntries(kind, version);
           if (gen !== generationCounter.current) return;
-          store.setState((prev) => {
-            const byKind = new Map(
-              prev.roots.flatMap((r) => (r.kind ? [[r.kind, r] as const] : [])),
-            );
-            // Kind sem nada (ex.: images numa versão sem texturas) não vira
-            // raiz vazia "Imagens (0)" — a árvore só mostra o que existe.
-            if (entries.length === 0) byKind.delete(kind);
-            else byKind.set(kind, buildKindNode(kind, entries));
-            const roots = kinds.map((k) => byKind.get(k)).filter((n): n is SideNode => Boolean(n));
-            // A árvore nasce FECHADA, inclusive a de data/: nada é expandido
-            // automaticamente. O expanded que já está aqui guarda só o que
-            // o USUÁRIO abriu, e sobrevive ao reload (união) — quem quer ver
-            // os filhos expande o nó.
-            return {
-              ...prev,
-              roots,
-              kindStatus: { ...prev.kindStatus, [kind]: 'ready' as const },
-            };
-          });
+          applyKindEntries(kind, entries);
           // Revalida a seleção quando o KIND dela completa (não no fim de
           // tudo): entrada removida por import limpa a tabela. Seleção que
           // veio do .vbf fica de fora — a árvore de data/ não tem como
@@ -679,6 +713,25 @@ export function createEntryView(version: GameVersionId): EntryView {
       }),
     );
   };
+
+  /**
+   * Recarrega UM kind sem mexer na seleção. Usado quando a carga de events
+   * termina no backend: a árvore já estava completa (universo descoberto),
+   * só as folhas em "loading" precisam perder o spinner. Não reabre o arquivo
+   * - a abertura pendente já espera a carga e recebe o conteúdo completo.
+   */
+  const refreshKind = async (kind: EntryKind): Promise<void> => {
+    const gen = generationCounter.current;
+    try {
+      const entries = await loadKindEntries(kind, version);
+      if (gen !== generationCounter.current) return;
+      applyKindEntries(kind, entries);
+    } catch (error) {
+      if (gen !== generationCounter.current) return;
+      sendErrorNotification(error);
+    }
+  };
+
 
   /**
    * Raízes dos containers .vbf descobertos perto do executável do jogo. O
@@ -887,6 +940,8 @@ export function createEntryView(version: GameVersionId): EntryView {
   const actions: EntryActions = {
     reload,
     coldReload,
+    refreshKind,
+    setEventsProgress: (progress) => patch({ eventsProgress: progress }),
     selectEntry,
     selectNode: async (node) => {
       if (node.vbf && node.unsupported) {

@@ -3,9 +3,19 @@ package event
 import (
 	"ffresources/internal/families/ffx/profile/common"
 	"ffresources/internal/families/ffx/profile/datastore"
+	"sync/atomic"
 )
 
 var _ datastore.IEventObject = (*EventFile)(nil)
+
+// storeGeneration sobe a cada LIMPEZA do store (ClearEvents/ClearAllEvents).
+// O serviço usa para saber que o "carregado" que ele memorizou não vale mais
+// - sem isso, um store limpo por troca de árvore/teste continuaria sendo
+// tratado como completo.
+var storeGeneration atomic.Uint64
+
+// StoreGeneration devolve a geração atual do store de events.
+func StoreGeneration() uint64 { return storeGeneration.Load() }
 
 // SetEvent registra um evento diretamente no datastore (fonte única da verdade)
 func SetEvent(gameVersion common.GameVersion, eventID string, eventFile *EventFile) {
@@ -35,11 +45,13 @@ func SetEvents(gameVersion common.GameVersion, events map[string]*EventFile) {
 // ClearEvents limpa todos os eventos do datastore para a versão indicada
 func ClearEvents(gameVersion common.GameVersion) {
 	datastore.Instance.ClearEvents(gameVersion)
+	storeGeneration.Add(1)
 }
 
 // ClearAllEvents limpa os eventos de todas as versões
 func ClearAllEvents() {
 	datastore.Instance.ClearAllEvents()
+	storeGeneration.Add(1)
 }
 
 // GetAllEventIDs recupera todos os IDs dos eventos registrados no datastore para a versão indicada

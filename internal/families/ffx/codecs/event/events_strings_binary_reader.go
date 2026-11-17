@@ -8,49 +8,29 @@ import (
 	"strings"
 
 	"ffresources/internal/families/ffx/profile/common"
-	"ffresources/internal/families/ffx/codecs/components"
 	"ffresources/internal/families/ffx/profile/models"
 )
 
+// ReadAllEventFiles carrega todos os eventos da árvore original direto no
+// store (caminho síncrono/legado: appcore e CLI).
 func ReadAllEventFiles(eventsFolder common.FileAccessor, version common.GameVersion) error {
 	if !eventsFolder.Exists {
 		return fmt.Errorf("events directory not found: %s", eventsFolder.ResolvedPath)
 	}
 
-	first := true
-
-	loadedEvents := components.NewList[*models.EventFileInfo](0)
-	for _, localization := range SortedSupportedLocalizations() {
-		eventInfos, err := discoverEventFiles(eventsFolder, localization, version)
-		if err != nil {
-			if first {
-				return fmt.Errorf("failed to discover event files: %w", err)
-			}
-			common.LogVerbose("failed to discover event files for %s: %v", localization, err)
-			continue
-		}
-
-		for _, info := range eventInfos {
-			if first {
-				loadedEvents.Add(info)
-				continue
-			}
-			if loadedEvents.TryAdd(info) {
-				common.LogInfo("event id added from %s: %s", localization, info.EventID)
-			}
-		}
-
-		first = false
+	discovered, err := discoverEventFiles(eventsFolder, version, false)
+	if err != nil {
+		return fmt.Errorf("failed to discover event files: %w", err)
 	}
 
-	for _, info := range loadedEvents.Items() {
+	for _, info := range discovered {
 		if _, err := ReadCompleteEventFile(info); err != nil {
 			common.LogVerbose("failed to read event file %s: %v", info.EventID, err)
 			continue
 		}
 	}
 
-	common.LogInfo("events loaded: %d", loadedEvents.Len())
+	common.LogInfo("events loaded: %d", len(discovered))
 	return nil
 }
 
@@ -66,7 +46,16 @@ func SortedSupportedLocalizations() []string {
 	return append([]string{common.DefaultLocalization}, keys...)
 }
 
-func discoverEventFiles(eventsFolder common.FileAccessor, localization string, version common.GameVersion) ([]*models.EventFileInfo, error) {
+// discoverEventFiles enumera as pastas de evento da árvore informada.
+//
+// A descoberta é DATA-DRIVEN e de UMA localização (a padrão): as pastas são
+// globais (event/obj_ps3/<xx>/<id>), não por idioma - varrer as demais
+// localizações relia a MESMA pasta ~10× e nunca encontrava nada novo.
+//
+// includeSkipped=true devolve também os ids da lista estática de skip: usado
+// pelo inventário de mods, que compara ARQUIVOS EXISTENTES em disco (a lista
+// de skip esconde da árvore, não do disco).
+func discoverEventFiles(eventsFolder common.FileAccessor, version common.GameVersion, includeSkipped bool) ([]*models.EventFileInfo, error) {
 	entries, err := os.ReadDir(eventsFolder.ResolvedPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read events directory: %w", err)
@@ -77,7 +66,7 @@ func discoverEventFiles(eventsFolder common.FileAccessor, localization string, v
 		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
-		subInfos, err := discoverSubdirectoryEvents(eventsFolder.ResolvedPath, entry.Name(), version)
+		subInfos, err := discoverSubdirectoryEvents(eventsFolder.ResolvedPath, entry.Name(), version, includeSkipped)
 		if err != nil {
 			common.LogVerbose("failed to read subdirectory %s: %v", entry.Name(), err)
 			continue
@@ -91,7 +80,11 @@ func discoverEventFiles(eventsFolder common.FileAccessor, localization string, v
 	return eventInfos, nil
 }
 
-func discoverSubdirectoryEvents(eventsRoot, subdirName string, version common.GameVersion) ([]*models.EventFileInfo, error) {
+// discoverSubdirectoryEvents aceita como evento toda subpasta que tenha o
+// binário homônimo (<id>/<id>.bin) - o MESMO critério de eventtable.IDs.
+// Pasta sem binário não é evento: fica fora da descoberta (e do universo
+// conhecido) em vez de virar, mais tarde, um "evento pulado (sem conteúdo)".
+func discoverSubdirectoryEvents(eventsRoot, subdirName string, version common.GameVersion, includeSkipped bool) ([]*models.EventFileInfo, error) {
 	subPath := filepath.Join(eventsRoot, subdirName)
 	subEntries, err := os.ReadDir(subPath)
 	if err != nil {
@@ -103,19 +96,51 @@ func discoverSubdirectoryEvents(eventsRoot, subdirName string, version common.Ga
 		if !subEntry.IsDir() || strings.HasPrefix(subEntry.Name(), ".") {
 			continue
 		}
-		info := models.NewEventFileInfo(subEntry.Name(), version)
-		if info != nil {
-			if common.IsSkippedFilePath(info.LocalizationPattern, info.Version) {
-				continue // silencioso: lista estática
-			}
-			eventInfos = append(eventInfos, info)
+		bin := filepath.Join(subPath, subEntry.Name(), subEntry.Name()+".bin")
+		if _, statErr := os.Stat(bin); statErr != nil {
+			common.LogVerbose("pasta de evento sem binário em data/: %s/%s", subdirName, subEntry.Name())
+			continue
 		}
+		info := models.NewEventFileInfo(subEntry.Name(), version)
+		if info == nil {
+			continue
+		}
+		if !includeSkipped && common.IsSkippedFilePath(info.LocalizationPattern, info.Version) {
+			continue // silencioso: lista estática
+		}
+		eventInfos = append(eventInfos, info)
 	}
 
 	return eventInfos, nil
 }
 
-func ReadCompleteEventFile(info *models.EventFileInfo) (*EventFile, error) {
+// DiscoverEventIDsFromData devolve os ids de evento que existem em data/ (o
+// binário homônimo), INCLUINDO os da lista estática de skip. É a fonte da
+// verdade do inventário de mods: comparação por arquivo em disco, não pelo
+// store (que só tem o que a árvore decidiu carregar).
+func DiscoverEventIDsFromData(version common.GameVersion) ([]string, error) {
+	folder, err := NewEventsBinaryFile(version).eventsFolder(common.DefaultLocalization)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve events directory: %w", err)
+	}
+	if !folder.Exists {
+		return nil, nil
+	}
+	infos, err := discoverEventFiles(folder, version, true)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(infos))
+	for _, info := range infos {
+		ids = append(ids, info.EventID)
+	}
+	return ids, nil
+}
+
+// readEventFile lê UM evento do disco (preferindo o binário de mods) SEM tocar
+// no store. É a metade "leitura" de ReadCompleteEventFile - a publicação fica
+// com quem orquestra a carga (permite ler em paralelo e publicar em ordem).
+func readEventFile(info *models.EventFileInfo) (*EventFile, error) {
 	if info == nil || len(info.EventID) < 2 {
 		return nil, fmt.Errorf("invalid event ID")
 	}
@@ -130,13 +155,21 @@ func ReadCompleteEventFile(info *models.EventFileInfo) (*EventFile, error) {
 		return nil, nil
 	}
 
-	eventFile := &EventFile{
+	return &EventFile{
 		ID:      info.EventID,
 		Version: info.Version,
 		Strings: localizedStrings,
-	}
+	}, nil
+}
 
+// ReadCompleteEventFile lê o evento e o publica no store (caminho de UM
+// arquivo - frescura/recarga). A carga bulk usa readEventFile e publica em
+// ordem, depois de ler tudo em paralelo.
+func ReadCompleteEventFile(info *models.EventFileInfo) (*EventFile, error) {
+	eventFile, err := readEventFile(info)
+	if err != nil || eventFile == nil {
+		return eventFile, err
+	}
 	SetEvent(info.Version, info.EventID, eventFile)
 	return eventFile, nil
 }
-
