@@ -317,6 +317,35 @@ Regras do esquema:
 em `apps/ff13/bin/pulse.exe` (nome de distribuição; o launcher o copia para
 `apps/launcher/bin/ff13/pulse.exe`).
 
+## YKD (telas de UI do FF13)
+
+O `apps/ff13` lê o `.ykd` (definição 2D de menu/HUD) e oferece **preview de tela**
++ **edição da largura das caixas de texto** para a tradução caber. O formato e
+os limites estão em [`docs/ykd.md`](ykd.md).
+
+- **Parser** `internal/families/white/codecs/ykd`: header, blocos (transform de
+  5 × Vector4 float32 LE), entradas/keyframes, caudas e recursos. O `Payload`
+  do WPD é big endian; o `ykd` é little endian.
+- **Serviço** `internal/families/white/service/ykd.go`:
+  - `GetYkdScreen` monta a lista plana de desenho (sprites + textos) com o
+    transform acumulado dos pais;
+  - resolve texturas no mesmo container e, como fallback, no índice global de
+    `gui/**/*.win32.xgr` (cache por part);
+  - calcula o teto de largura de cada texto a partir do pristine de `data/`
+    (2× a largura original ou +64 px, limitado pela borda direita da tela);
+  - `ApplyYkdText` altera **só os 4 bytes da largura** no registro e grava o
+    container em `mods/partN` (offsets/tamanhos do WPD não mudam; o registro é
+    reparseado antes da gravação).
+- **UI** `apps/ff13/frontend/src/components/entry-view/ykd-panel`: canvas
+  1280×720, sprites com recorte/escala/rotação/pivô/flip, **caixas de texto**
+  tracejadas, wireframe, seletor de telas do mesmo container, destaque/ocultação
+  de camadas e o card de edição da largura (com `original`, `atual` e `máx.`).
+- **Árvore**: `ListImageContainer` marca registros `.ykd` com `kind: "ykd"`; o
+  store abre a tela no painel e o kind entra em `KIND_LABELS` como
+  "Telas (YKD)". O menu de contexto desse nó não oferece exportar/deletar.
+- **Contrato**: `getYkdScreen`/`applyYkdText` são opcionais no `GameApi`
+  compartilhado — o app FFX não é afetado.
+
 ## Kinds de texto do FF13 (a régua é o DIRETÓRIO)
 
 O FF13 tem texto em **um formato só** (o `.ztr`). Dividir o escopo por tipo de

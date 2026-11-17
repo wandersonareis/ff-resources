@@ -129,7 +129,7 @@ type ImageNode struct {
 	Name       string `json:"name"`
 	Path       string `json:"path"`
 	Size       uint32 `json:"size,omitempty"`
-	Kind       string `json:"kind"` // "image" | "file"
+	Kind       string `json:"kind"` // "image" | "ykd" | "file"
 	ImageRef   string `json:"imageRef,omitempty"`
 	Container  string `json:"container,omitempty"` // wpd/trb
 	Expandable bool   `json:"expandable,omitempty"`

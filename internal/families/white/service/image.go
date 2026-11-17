@@ -637,6 +637,11 @@ func (Service) ListImageContainer(part, ref string) ([]common.ImageNode, error) 
 						node.Container = "wpd"
 					}
 				}
+			} else if strings.EqualFold(rec.Extension, "ykd") {
+				// Tela de UI: o registro abre o preview de layout (não é imagem).
+				node.Kind = "ykd"
+				node.ImageRef = node.ID
+				node.Container = "wpd"
 			}
 			nodes = append(nodes, node)
 		}

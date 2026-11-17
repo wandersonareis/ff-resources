@@ -21,7 +21,8 @@ export type EntryKind =
   | 'zone'
   | 'event'
   | 'scenario'
-  | 'images';
+  | 'images'
+  | 'ykd';
 
 export const KIND_LABELS: Record<EntryKind, string> = {
   events: 'Eventos',
@@ -40,6 +41,7 @@ export const KIND_LABELS: Record<EntryKind, string> = {
   event: 'Eventos',
   scenario: 'Cenários',
   images: 'Imagens',
+  ykd: 'Telas (YKD)',
 };
 
 /** Tipo de armazenamento de um registro do lockit. */

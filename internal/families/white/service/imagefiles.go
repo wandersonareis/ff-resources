@@ -170,6 +170,7 @@ func InvalidateImageFileIndex(part string) {
 		}
 	}
 	imageFileIndexMu.Unlock()
+	InvalidateYkdCaches(part)
 }
 
 // ResolveRelFile procura um caminho relativo a data/partN no disco e, por

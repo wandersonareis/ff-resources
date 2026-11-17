@@ -12,6 +12,7 @@ import { createEntryView, type EntryView } from '@/components/entry-view/entry-v
 import { FindBar } from '@/components/entry-view/find/find-bar';
 import { useEntryFind } from '@/components/entry-view/find/use-entry-find';
 import { ImagePanel } from '@/components/entry-view/image-panel';
+import { YkdPanel } from '@/components/entry-view/ykd-panel';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { setActiveFile } from '@/lib/ffx/active-file-store';
 import { onEnableModsChanged } from '@/lib/ffx/config-store';
@@ -43,8 +44,9 @@ export function GameVersionTab({ version }: { version: GameVersionId }) {
   // Busca & substituição local no arquivo aberto (Ctrl+F). O estado fica no
   // find-store por versão; os matches derivam das rows aqui montadas.
   const find = useEntryFind(view);
-  // A barra só faz sentido com um arquivo de TEXTO aberto (images não tem rows).
-  const showFind = find.open && !!selectedEntry && activeKind !== 'images';
+  // A barra só faz sentido com um arquivo de TEXTO aberto (images/ykd não
+  // têm rows).
+  const showFind = find.open && !!selectedEntry && activeKind !== 'images' && activeKind !== 'ykd';
   // Largura da sidebar persistida (percentual do grupo por id de painel).
   const { defaultLayout, onLayoutChanged } = usePersistedLayout('sidebar');
 
@@ -137,7 +139,7 @@ export function GameVersionTab({ version }: { version: GameVersionId }) {
         hasDirty={hasDirty}
         saving={saving}
         onSave={() => void onSaveAll()}
-        onOpenFind={activeKind !== 'images' ? find.openFind : undefined}
+        onOpenFind={activeKind !== 'images' && activeKind !== 'ykd' ? find.openFind : undefined}
         onToggleSidebar={narrow ? () => setDrawerOpen(true) : undefined}
       />
       {/* Busca & substituição local: fora do rolante (shrink-0), abaixo
@@ -151,6 +153,8 @@ export function GameVersionTab({ version }: { version: GameVersionId }) {
           // + ações (extrair/salvar/importar) da textura.
           activeKind === 'images' ? (
             <ImagePanel view={view} />
+          ) : activeKind === 'ykd' ? (
+            <YkdPanel key={selectedEntry.id} view={view} />
           ) : (
             <EntryTable
               view={view}

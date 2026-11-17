@@ -119,6 +119,9 @@ export const ff13Api: GameApi = {
 
   /* ---- imagens ---- */
   getImageEntry: (_kind, id, version) => image.GetImageEntry(version, id) as Promise<any>,
+  getYkdScreen: (_kind, id, version) => image.GetYkdScreen(version, id) as Promise<any>,
+  applyYkdText: (_kind, id, version, patch) =>
+    image.ApplyYkdText(version, id, patch) as Promise<any>,
   imageExists: (_kind, id, version) => image.ImageExists(version, id),
   imageDuplicates: async () => ({ duplicates: [], dupPayload: 0 }),
   imageSelectionCopies: async () => [],

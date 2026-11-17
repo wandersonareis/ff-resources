@@ -144,6 +144,10 @@ export interface GameApi {
 
   /* ---- imagens (DTO tipado numa fase posterior) ---- */
   getImageEntry(kind: string, id: string, version: string): Promise<any>;
+  /** FF13: preview de tela .ykd. Opcional para os outros apps. */
+  getYkdScreen?(kind: string, id: string, version: string): Promise<any>;
+  /** FF13: edita a caixa de um texto .ykd e grava em mods/. */
+  applyYkdText?(kind: string, id: string, version: string, patch: any): Promise<any>;
   imageExists(kind: string, id: string, version: string): Promise<boolean>;
   imageDuplicates(kind: string, id: string, version: string): Promise<any>;
   imageSelectionCopies(kind: string, ids: string[], version: string): Promise<string[]>;

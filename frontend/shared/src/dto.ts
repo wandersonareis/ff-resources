@@ -146,3 +146,125 @@ export interface BatchResult {
   failed: string[];
   total: number;
 }
+
+/* ---- YKD (telas de UI do FF13) ---- */
+
+export interface YkdHeader {
+  unknown1: number;
+  u2: number;
+  u3: number;
+  u4: number;
+  u5: number;
+}
+
+export interface YkdText {
+  width: number;
+  height: number;
+  fontSize: number;
+  flags: number;
+  color1: number;
+  color2: number;
+  color3: number;
+  mode: number;
+  originalWidth: number;
+  maxWidth: number;
+}
+
+export interface YkdTextPatch {
+  blockIndex: number;
+  width: number;
+}
+
+export interface YkdBlock {
+  type: number;
+  index: number;
+  parentIndex: number;
+  unknown: number;
+  scale: number[];
+  rotation: number[];
+  position: number[];
+  pivot: number[];
+  extra: number[];
+  resourceIndexes?: number[] | null;
+  text?: YkdText | null;
+  entries?: string[] | null;
+}
+
+export interface YkdResource {
+  index: number;
+  type: number;
+  typeName: string;
+  name: string;
+  sourceX: number;
+  sourceY: number;
+  sourceWidth: number;
+  sourceHeight: number;
+  viewWidth: number;
+  viewHeight: number;
+  flags: number;
+  colors: number[];
+  texture?: string | null;
+  missing: boolean;
+}
+
+export interface YkdItem {
+  kind: 'sprite' | 'text';
+  blockIndex: number;
+  blockType: number;
+  nodeIndex: number;
+  x: number;
+  y: number;
+  scaleX: number;
+  scaleY: number;
+  rotation: number;
+  pivotX: number;
+  pivotY: number;
+  flipX: boolean;
+  flipY: boolean;
+  resourceIndex: number;
+  texture?: string | null;
+  missing: boolean;
+  sourceX: number;
+  sourceY: number;
+  sourceWidth: number;
+  sourceHeight: number;
+  viewWidth: number;
+  viewHeight: number;
+  flags: number;
+  text?: YkdText | null;
+}
+
+export interface YkdTexture {
+  pngData: string;
+  width: number;
+  height: number;
+  source: string;
+}
+
+export interface YkdStats {
+  blocks: number;
+  resources: number;
+  items: number;
+  textures: number;
+  missingTextures: number;
+  textNodes: number;
+  texturedItems: number;
+}
+
+export interface YkdScreenRef {
+  name: string;
+  ref: string;
+}
+
+export interface YkdScreen {
+  canvasWidth: number;
+  canvasHeight: number;
+  header: YkdHeader;
+  blocks?: YkdBlock[] | null;
+  resources?: YkdResource[] | null;
+  items?: YkdItem[] | null;
+  textures: Record<string, YkdTexture>;
+  missingTextures?: string[] | null;
+  siblings?: YkdScreenRef[] | null;
+  stats: YkdStats;
+}

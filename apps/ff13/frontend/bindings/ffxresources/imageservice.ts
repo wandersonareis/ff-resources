@@ -15,6 +15,14 @@ export function GetImageEntry(version: unknown, ref: string): Promise<any> {
   return svc.GetImageEntry(partOf(version), ref);
 }
 
+export function GetYkdScreen(version: unknown, ref: string): Promise<any> {
+  return svc.GetYkdScreen(partOf(version), ref);
+}
+
+export function ApplyYkdText(version: unknown, ref: string, patch: any): Promise<any> {
+  return svc.ApplyYkdText(partOf(version), ref, patch);
+}
+
 export function ImageExists(version: unknown, ref: string): Promise<boolean> {
   return svc.ImageExists(partOf(version), ref);
 }

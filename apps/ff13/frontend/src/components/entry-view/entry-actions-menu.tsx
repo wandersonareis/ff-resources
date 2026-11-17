@@ -76,6 +76,7 @@ export function EntryActionsMenu({
   const targetId = target?.id ?? null;
   const isVbf = Boolean(target?.vbfRoot);
   const isImage = target?.kind === 'images';
+  const isYkd = target?.kind === 'ykd';
 
   const duplicates =
     initialId != null && initialId === targetId && initialDuplicates
@@ -174,17 +175,21 @@ export function EntryActionsMenu({
         ) : null}
         {!isVbf ? (
           <>
-            <ContextMenuItem
-              disabled={isImage && !canExtract}
-              onSelect={() => (isImage ? openAction('extract') : onExport?.())}
-            >
-              <Download size={16} />
-              Exportar
-            </ContextMenuItem>
-            <ContextMenuItem disabled={!canFile} onSelect={onReveal}>
-              <FolderOpen size={16} />
-              Abrir até o arquivo
-            </ContextMenuItem>
+            {!isYkd ? (
+              <ContextMenuItem
+                disabled={isImage && !canExtract}
+                onSelect={() => (isImage ? openAction('extract') : onExport?.())}
+              >
+                <Download size={16} />
+                Exportar
+              </ContextMenuItem>
+            ) : null}
+            {!isYkd ? (
+              <ContextMenuItem disabled={!canFile} onSelect={onReveal}>
+                <FolderOpen size={16} />
+                Abrir até o arquivo
+              </ContextMenuItem>
+            ) : null}
             {isImage ? (
               <>
                 <ContextMenuItem disabled={!canReplicate} onSelect={() => openAction('replicate')}>
@@ -208,14 +213,16 @@ export function EntryActionsMenu({
                 </ContextMenuItem>
               </>
             ) : null}
-            <ContextMenuItem
-              variant="destructive"
-              disabled={!canDelete}
-              onSelect={() => openAction('delete')}
-            >
-              <Trash2 size={16} />
-              Deletar
-            </ContextMenuItem>
+            {!isYkd ? (
+              <ContextMenuItem
+                variant="destructive"
+                disabled={!canDelete}
+                onSelect={() => openAction('delete')}
+              >
+                <Trash2 size={16} />
+                Deletar
+              </ContextMenuItem>
+            ) : null}
           </>
         ) : null}
       </ContextMenuContent>

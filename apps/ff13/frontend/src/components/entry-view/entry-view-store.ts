@@ -32,10 +32,12 @@ import { SOURCE_LANG } from '@/lib/ffx/save-all';
 import { invalidateTextSearchResults } from '@/lib/ffx/search-store';
 import {
   type EntryRow,
+  applyYkdText as applyYkdTextApi,
   imageExists,
   loadEntry,
   loadImage,
   loadKindEntries,
+  loadYkd,
   locFromVbfPath,
 } from '@/lib/ffx/tree-data';
 import {
@@ -143,6 +145,11 @@ export interface EntryViewState {
    * estado próprio (e para sobreviver à troca de componente).
    */
   image: dto.ImageEntry | null;
+  /**
+   * Tela .ykd aberta (kind=ykd). null = nenhum / outro kind.
+   * O backend já entrega os sprites com as texturas em data URL.
+   */
+  ykd: dto.YkdScreen | null;
   loading: boolean;
   /**
    * Progresso de tradução da entrada aberta (por row, todos os formatos):
@@ -200,6 +207,11 @@ export interface EntryActions {
   coldReload(): Promise<void>;
   /** Abre um arquivo na tabela (carrega rows e registra a base do rascunho). */
   selectEntry(entry: EntryRow, searchMatch?: services.TextSearchMatch): Promise<void>;
+  /** Edita a caixa de um texto .ykd e grava o container em mods/. */
+  applyYkdText(
+    blockIndex: number,
+    values: Omit<dto.YkdTextPatch, 'blockIndex'>,
+  ): Promise<void>;
   /** Clique/Enter num nó da árvore: folha abre; grupo/raiz expande (como
    * no .vbf) e raiz de kind também troca o kind ativo. */
   selectNode(node: SideNode): Promise<void>;
@@ -337,6 +349,7 @@ function createEntryStore(version: GameVersionId) {
     rows: [],
     refLinks: {},
     image: null,
+    ykd: null,
     loading: true,
     progress: null,
     kindStatus: Object.fromEntries(kinds.map((k) => [k, 'loading' as const])) as Record<
@@ -447,6 +460,7 @@ const NO_SELECTION: Partial<EntryViewState> = {
   refLinks: {},
   progress: null,
   image: null,
+  ykd: null,
   pendingTableRowFocus: null,
 };
 
@@ -744,10 +758,17 @@ export function createEntryView(version: GameVersionId): EntryView {
         const image = entry.vbf
           ? await loadVbfImage(entry.vbf.root, entry.vbf.path)
           : await loadImage(entry.id, version);
-        patch({ image, rows: [], progress: null });
+        patch({ image, ykd: null, rows: [], progress: null });
         return;
       }
-      patch({ image: null });
+      if (entry.kind === 'ykd') {
+        // Tela de UI: o backend entrega o layout + sprites (PNG em data URL).
+        // Não tem rows/progresso nem rascunho de tradução.
+        const screen = await loadYkd(entry.id, version);
+        patch({ ykd: screen, image: null, rows: [], progress: null, refLinks: {} });
+        return;
+      }
+      patch({ image: null, ykd: null });
       const full = entry.vbf
         ? await loadVbfEntry(entry.vbf.root, entry.vbf.path, entry.id)
         : await loadEntry(entry.kind, entry.id, version, entry.lang);
@@ -1033,6 +1054,22 @@ export function createEntryView(version: GameVersionId): EntryView {
             },
           };
         }
+        if (child.kind === 'ykd') {
+          const ykdRef = child.imageRef ?? child.id;
+          return {
+            id: `leaf:ykd:${ykdRef}`,
+            label: child.name,
+            kind: 'ykd',
+            type: 'ykd',
+            entry: {
+              kind: 'ykd',
+              id: ykdRef,
+              key: ykdRef,
+              label: child.name,
+              source: node.filelist ? 'filelist' : 'data',
+            },
+          };
+        }
         return {
           id: `imagefile:${node.id}:${child.path}`,
           label: child.name,
@@ -1107,6 +1144,7 @@ export function createEntryView(version: GameVersionId): EntryView {
       selectedEntry: null,
       rows: [],
       image: null,
+      ykd: null,
       kindStatus: loadingStatuses(kinds),
       generation: gen,
       loading: true,
@@ -1270,6 +1308,12 @@ export function createEntryView(version: GameVersionId): EntryView {
     reload,
     coldReload,
     selectEntry,
+    applyYkdText: async (blockIndex, values) => {
+      const entry = store.state.selectedEntry;
+      if (!entry || entry.kind !== 'ykd') return;
+      const screen = await applyYkdTextApi(entry.id, version, { blockIndex, ...values });
+      patch({ ykd: screen });
+    },
     selectNode: async (node) => {
       if (node.imageContainer && !node.entry) {
         toggleNode(node);

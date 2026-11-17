@@ -1,3 +1,20 @@
+# Não lançado
+
+## FINAL FANTASY XIII — telas de UI (YKD)
+
+- Novo leitor de `.ykd` (header, blocos, transform, animações, recursos e
+  caudas) em `internal/families/white/codecs/ykd`.
+- Preview de tela 1280×720 no app FF13: sprites com recorte, posição, escala,
+  rotação, pivô e flip; caixas de texto; wireframe; seletor das telas do mesmo
+  container; destaque e ocultação de camadas.
+- Texturas resolvidas no mesmo WPD e, como fallback, no índice global de
+  `gui/**/*.win32.xgr` da part.
+- Edição da **largura das caixas de texto** para ajustar a tradução, com teto
+  de 2× a largura original (ou +64 px) limitado pela borda direita da tela.
+  A gravação altera só o campo de largura e grava o container em `mods/partN`;
+  `data/` e os offsets do WPD não mudam.
+- Documentação do formato e dos limites em [`docs/ykd.md`](ykd.md).
+
 # 1.0.0 — primeiro release
 
 Primeiro release público do editor de recursos de FINAL FANTASY X | X-2 HD

@@ -174,6 +174,28 @@ export async function loadImage(id: string, version: GameVersionId): Promise<dto
   return api().getImageEntry('images', id, version);
 }
 
+/** Carrega a definição de tela de um .ykd (blocos + sprites + texturas). */
+export async function loadYkd(id: string, version: GameVersionId): Promise<dto.YkdScreen> {
+  const api = getCurrentApi();
+  if (!api.getYkdScreen) {
+    throw new Error('Este jogo não oferece preview de telas .ykd.');
+  }
+  return api.getYkdScreen('ykd', id, version);
+}
+
+/** Edita a caixa de um texto .ykd e devolve a tela recarregada. */
+export async function applyYkdText(
+  id: string,
+  version: GameVersionId,
+  patch: dto.YkdTextPatch,
+): Promise<dto.YkdScreen> {
+  const api = getCurrentApi();
+  if (!api.applyYkdText) {
+    throw new Error('Este jogo não oferece edição de telas .ykd.');
+  }
+  return api.applyYkdText('ykd', id, version, patch);
+}
+
 /** Reempacota um .dds sobre o container pristine e grava em mods/. */
 export function importImage(id: string, ddsPath: string, version: GameVersionId): Promise<void> {
   return api().importImage('images', id, ddsPath, version);
