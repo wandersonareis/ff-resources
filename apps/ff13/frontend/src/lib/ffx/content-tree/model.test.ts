@@ -6,6 +6,7 @@ import {
   entryCheckState,
   entryCheckStateByKind,
   entryIdsInNode,
+  hasSelectableContent,
   mergeLoadedChildren,
   nextCheckState,
   nodeEntries,
@@ -169,6 +170,58 @@ describe('nextCheckState (clique no checkbox)', () => {
     // do clique é remover.
     expect(entryCheckStateByKind(node, byKind(['a']))).toBe('indeterminate');
     expect(nextCheckState(node, byKind(['a']))).toBe(false);
+  });
+});
+
+describe('hasSelectableContent (checkbox do nó)', () => {
+  const closedContainer: SideNode = {
+    id: 'imagecontainer:ref',
+    label: 'container.bin',
+    kind: 'images',
+    imageContainer: true,
+    imageRef: 'ref',
+    expandable: true,
+  };
+
+  it('libera o checkbox de uma pasta ESTÁTICA que só tem container fechado', () => {
+    const folder: SideNode = {
+      id: 'datadir:gui/resident',
+      label: 'resident',
+      children: [
+        closedContainer,
+        { id: 'imagefile:imgb', label: 'title0.win32.imgb', type: 'file', unsupported: true },
+      ],
+    };
+    // Antes ficava sem checkbox: sem folha (`entry`) e sem `expandable`, o
+    // estado só aparecia depois que o container era aberto.
+    expect(nodeEntries(folder)).toEqual([]);
+    expect(hasSelectableContent(folder)).toBe(true);
+  });
+
+  it('não libera checkbox em pasta sem nada selecionável', () => {
+    const folder: SideNode = {
+      id: 'datadir:so-arquivos',
+      label: 'so-arquivos',
+      children: [{ id: 'imagefile:x', label: 'x.imgb', type: 'file', unsupported: true }],
+    };
+    expect(hasSelectableContent(folder)).toBe(false);
+    expect(hasSelectableContent({ id: 'empty', label: 'empty' })).toBe(false);
+  });
+
+  it('não libera checkbox em wrapper cujos filhos são grupos expansíveis de outro tipo', () => {
+    // Caso real: `Zone` do filelist (filhos = zonas carregadas uma a uma). O
+    // lote do checkbox não sabe buscar essas folhas — o checkbox seria morto.
+    const zone: SideNode = {
+      id: 'filelist:zone|',
+      label: 'Zone',
+      children: [{ id: 'filelist:zone:z000', label: 'z000', filelistZone: 'z000', expandable: true }],
+    };
+    expect(hasSelectableContent(zone)).toBe(false);
+  });
+
+  it('nó expansível (container/índice) tem checkbox mesmo fechado', () => {
+    expect(hasSelectableContent(closedContainer)).toBe(true);
+    expect(hasSelectableContent({ id: 'idx', label: 'idx', expandable: true })).toBe(true);
   });
 });
 

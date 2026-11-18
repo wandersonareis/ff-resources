@@ -76,11 +76,17 @@ export function ContentTree({ view }: { view: EntryView }) {
     // filelist (que deriva o kind do caminho da unidade e cai em `ztr` no
     // fallback). Sem a lista completa, uma folha de filelist com kind fora
     // do escopo da part marcaria no store sem o checkbox refletir.
+    //
+    // `ykd` entra pelo mesmo motivo: as telas são folhas dos containers de
+    // imagem e, sem a chave, o tri-state as lia como "nunca marcadas" — o
+    // container e a pasta ficavam `indeterminate` para sempre depois de
+    // marcar (as .txbh apareciam marcadas e as .ykd não).
     const kinds = new Set<EntryKind>([
       ...entryKindsFor(version),
       ...imageKindsFor(version),
       ...ALL_FF13_KINDS,
       'ztr',
+      'ykd',
     ]);
     for (const kind of kinds) {
       out.set(kind, new Set(selection.byKind.get(`${version}|${kind}`) ?? []));

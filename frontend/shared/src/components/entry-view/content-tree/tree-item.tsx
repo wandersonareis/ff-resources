@@ -16,8 +16,8 @@ import { Checkbox } from '../../ui/checkbox';
 import {
   entryCheckStateByKind,
   entryNodeId,
+  hasSelectableContent,
   nextCheckState,
-  nodeEntries,
   type SideNode,
   TEXT_ROOT_NODE_ID,
 } from '../../../app/content-tree/model';
@@ -65,14 +65,12 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
   // folha/grupo, que alimenta extrair/deletar.
   const isTextRoot = node.id === TEXT_ROOT_NODE_ID || node.id.startsWith('kind:images');
   // Marcável quando TEM conteúdo de entrada (folha ou descendentes já
-  // carregados) OU quando pode carregá-lo sob demanda (`expandable`:
-  // diretório, container de imagem/texto, índice de filelist aninhado). O
-  // `kind` do nó NÃO é requisito: um grupo pode misturar texto e imagem.
+  // carregados) OU quando pode carregá-lo (container/índice expansível) — a
+  // pasta estática com só containers fechados também entra, senão ela ficava
+  // sem checkbox até um container ser aberto. O `kind` do nó NÃO é requisito:
+  // um grupo pode misturar texto e imagem.
   const selectable =
-    !isVbf &&
-    !isVbfContainerRoot &&
-    !isTextRoot &&
-    (nodeEntries(node).length > 0 || node.expandable === true);
+    !isVbf && !isVbfContainerRoot && !isTextRoot && hasSelectableContent(node);
   const hasCheckbox = selectable || (isVbf && !isVbfContainerRoot);
   const vbfRoot = node.vbfRoot ?? node.entry?.vbf?.root;
   const vbfPath = node.vbfPath ?? node.entry?.vbf?.path ?? '';

@@ -162,6 +162,37 @@ export function nextCheckState(
 }
 
 /**
+ * true quando o nó PODE exibir checkbox: tem folha de entrada em qualquer
+ * profundidade, é ele mesmo expansível (container/índice, que o clique
+ * carrega), ou contém um container de imagem FECHADO — o único tipo que o
+ * lote do checkbox sabe carregar a partir de uma pasta estática.
+ *
+ * A árvore checava só `nodeEntries(node).length > 0 || node.expandable`, e uma
+ * pasta ESTÁTICA cujos filhos são todos containers fechados dava zero folhas e
+ * não era expansível: ficava sem checkbox, e ele "aparecia" só depois que um
+ * container era aberto (as folhas entravam na contagem). Com isto o checkbox
+ * nasce junto com a pasta: marcar a pasta dispara a carga em lote e marca.
+ *
+ * Fica de fora grupo estático que só tem filhos expansíveis de OUTRO tipo
+ * (ex.: o wrapper `Zone` do filelist, cujos filhos são zonas carregadas uma a
+ * uma): o clique não teria como buscar essas folhas e o checkbox seria morto.
+ */
+export function hasSelectableContent(node: SideNode): boolean {
+  if (node.entry) return true;
+  if (node.expandable === true) return true;
+  return containsImageContainer(node);
+}
+
+/** true quando há container de imagem (WPD/TRB) em qualquer profundidade. */
+function containsImageContainer(node: SideNode): boolean {
+  for (const child of node.children ?? []) {
+    if (child.imageContainer === true && child.imageRef) return true;
+    if (containsImageContainer(child)) return true;
+  }
+  return false;
+}
+
+/**
  * Containers de imagem (WPD/TRB) abaixo do nó cujos filhos ainda NÃO foram
  * listados. O checkbox de grupo usa a lista para carregar tudo num lote só
  * antes de marcar — sem isso, marcar uma pasta deixaria de fora todo registro
