@@ -8,7 +8,7 @@ import { sharedAliases } from '../../../frontend/shared/vite-aliases.mjs';
 const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 
 export default defineConfig({
-  plugins: [react({ babel: { plugins: ['babel-plugin-react-compiler'] } })],
+  plugins: [react({ compiler: true })],
   resolve: {
     tsconfigPaths: true,
     dedupe: [
@@ -31,7 +31,7 @@ export default defineConfig({
       '@tiptap/extension-color',
       '@tiptap/extension-text-style',
       '@tiptap/suggestion',
-    ],    // A ordem importa: o alias é prefixo e o PRIMEIRO que casa vence. Os
+    ], // A ordem importa: o alias é prefixo e o PRIMEIRO que casa vence. Os
     // aliases do pacote compartilhado (@ff-resources/ui, @/components/ui,
     // @/components/editor, @/lib/ffx/*) vêm ANTES do '@' genérico, senão
     // '@/components/ui' viraria 'src/components/ui' (inexistente).

@@ -54,8 +54,10 @@ const sharedDeps = [
 export default defineConfig({
   plugins: [
     // React Compiler: memoização automática dos componentes (o Next fazia
-    // isso com reactCompiler: true; aqui é o plugin de Babel).
-    react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
+    // isso com reactCompiler: true). Usa o transform em Rust
+    // (`oxc-transform-react`) — o `babel-plugin-react-compiler` não entra
+    // mais. O peer do @vitejs/plugin-react limita a faixa: >=0.152.0 <0.157.0.
+    react({ compiler: true }),
     tailwindcss(),
     wails('./bindings-ff13'),
     bindingsJsToTs(),
@@ -87,7 +89,7 @@ export default defineConfig({
   build: {
     outDir: 'out',
     emptyOutDir: true,
-    target: 'es2022',
+    target: 'esnext',
     cssCodeSplit: true,
     reportCompressedSize: false,
     chunkSizeWarningLimit: 900,

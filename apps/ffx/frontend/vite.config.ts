@@ -54,8 +54,9 @@ const sharedDeps = [
 export default defineConfig({
   plugins: [
     // React Compiler: memoização automática dos componentes (o Next fazia
-    // isso com reactCompiler: true; aqui é o plugin de Babel).
-    react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
+    // isso com reactCompiler: true). Usa o transform em Rust
+    // (`oxc-transform-react`), não o plugin de Babel.
+    react({ compiler: true }),
     tailwindcss(),
     wails('./bindings'),
     bindingsJsToTs(),
