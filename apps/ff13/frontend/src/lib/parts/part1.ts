@@ -40,6 +40,7 @@ export function part1FilelistOrder(name: string): string {
 
 export const part1: PartUi = {
   id: 'part1',
+  titleLogoSrc: '/part1-logo.avif',
   dataGroupLabel: 'Data',
   filelistGroupLabel: 'Filelist',
   filelistZoneLabel: 'Zone',

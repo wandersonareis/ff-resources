@@ -24,7 +24,7 @@ import { type BoltPath, createBolt } from '@/lib/title-effects/lightning';
  * <LightningText className="text-xl text-gradient" color="#4ade80">
  *   FINAL FANTASY XIII
  * </LightningText>
- * <LightningText src="/title-logo.avif" alt="LR:FF13" className="h-7 w-auto" />
+ * <LightningText src="/part3-logo.avif" alt="LR:FF13" className="h-7 w-auto" />
  * ```
  */
 export type LightningTextProps = {

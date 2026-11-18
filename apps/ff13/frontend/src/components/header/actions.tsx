@@ -10,12 +10,14 @@ import { LogWindowToggle } from './log-window-toggle';
 import { ThemeToggle } from './theme-toggle';
 
 /**
- * Botões do header. `ml-auto`/`justify-end` mantêm o grupo no canto direito
- * no desktop e também quando o header quebra a linha no mobile.
+ * Botões do header. No mobile a barra inverte (row-reverse + justify-start):
+ * o Tema fica na extremidade direita e os demais botões seguem para a esquerda,
+ * inclusive quando o header quebra a linha. A partir de `sm` volta à ordem e
+ * ao alinhamento normais (`justify-end`), mantendo o grupo no canto direito.
  */
 export function AppHeaderActions({ onOpenConfig }: { onOpenConfig: () => void }) {
   return (
-    <div className="ml-auto flex flex-wrap items-center justify-end gap-0.5">
+    <div className="flex flex-row-reverse flex-wrap items-center justify-start gap-0.5 sm:flex-row sm:justify-end">
       <ThemeToggle />
       <Tooltip>
         <TooltipTrigger asChild>

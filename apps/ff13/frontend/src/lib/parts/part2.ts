@@ -10,6 +10,7 @@ import { buildUnitTree } from './unit-tree';
  */
 export const part2: PartUi = {
   id: 'part2',
+  titleLogoSrc: '/part2-logo.avif',
   dataGroupLabel: 'Data',
   filelistGroupLabel: 'Filelist',
   filelistZoneLabel: 'zone',
