@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@ff-resources/ui": "file:../../../frontend/shared",
-    "@tanstack/react-hotkeys": "^0.22.0",
+    "@tanstack/react-hotkeys": "^0.27.1",
     "@tanstack/react-store": "^0.11.2",
     "@tanstack/react-table": "^9.3.1",
     "@tanstack/store": "^0.11.2",
@@ -55,7 +55,8 @@
     "@vitejs/plugin-react": "^6.2.1",
     "@vitest/coverage-v8": "^5.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
-    "jsdom": "^30.1.3",
+    "jsdom": "^31.0.1",
+    "oxc-transform-react": "^0.156.0",
     "tailwindcss": "^4.3.4",
     "typescript": "^7.0.2",
     "vite": "^8.2.4",

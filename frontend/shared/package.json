@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Pacote local, Wails-agnostic: contrato GameApi, tema e componentes/estados React compartilhados entre os apps ffx e ff13. NÃO importa bindings/* (isso é adapter de cada app).",
   "dependencies": {
-    "@tanstack/react-hotkeys": "^0.22.0",
+    "@tanstack/react-hotkeys": "^0.27.1",
     "@tanstack/react-store": "^0.11.2",
     "@tanstack/store": "^0.11.2",
     "@tiptap/core": "^3.32.2",
