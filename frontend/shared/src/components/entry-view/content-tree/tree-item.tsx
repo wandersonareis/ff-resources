@@ -16,6 +16,7 @@ import { Checkbox } from '../../ui/checkbox';
 import {
   entryCheckStateByKind,
   entryNodeId,
+  nextCheckState,
   nodeEntries,
   type SideNode,
   TEXT_ROOT_NODE_ID,
@@ -131,7 +132,10 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
           <Checkbox
             className="mr-1"
             checked={checked}
-            onCheckedChange={(value) => void onCheck(node, value === true)}
+            /* O Radix pede `true` quando `indeterminate`: quem decide o alvo é
+               o modelo (nextCheckState), senão grupo com subárvore não listada
+               fica preso em "só marca". */
+            onCheckedChange={() => void onCheck(node, nextCheckState(node, selectedByKind))}
             aria-label={`Selecionar ${node.label}`}
           />
         ) : null}

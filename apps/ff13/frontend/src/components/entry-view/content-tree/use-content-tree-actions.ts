@@ -7,6 +7,7 @@ import {
   isKindRootNode,
   nodeEntries,
   type SideNode,
+  unloadedImageContainers,
 } from '@/lib/ffx/content-tree/model';
 import { parseError } from '@/lib/ffx/error-handler';
 import { exportLangs } from '@/lib/ffx/export-langs';
@@ -67,7 +68,9 @@ export function useContentTreeActions({
    *
    * Grupo ainda NÃO CARREGADO (diretório, container de imagem/texto, índice
    * de filelist aninhado) busca as folhas antes de marcar — só os formatos
-   * compatíveis entram (folhas sem `entry` ficam de fora).
+   * compatíveis entram (folhas sem `entry` ficam de fora). Containers de
+   * imagem fechados vão num LOTE ÚNICO antes de marcar, senão marcar uma
+   * pasta deixaria de fora tudo o que está dentro dos WPD/TRB.
    *
    * Checkbox do .vbf: guarda o caminho (diretório = subárvore, expandida
    * pelo backend); inclui imagens e formatos fora do escopo de texto para
@@ -82,16 +85,23 @@ export function useContentTreeActions({
         return;
       }
       const whole = isKindRootNode(node) && checked;
-      let entries = nodeEntries(node);
-      if (checked && entries.length === 0 && node.expandable) {
-        await actions.loadNodeChildren(node);
-        const fresh = buildNodeIndex(
+      const nodeIndex = () =>
+        buildNodeIndex(
           view.store.state.roots,
           view.store.state.vbfRoots,
           view.store.state.filelistRoots,
-        ).get(node.id);
-        if (fresh) entries = nodeEntries(fresh);
+        );
+      if (checked) {
+        const containers = unloadedImageContainers(node);
+        if (containers.length > 0) await actions.loadImageContainers(containers);
+        // Grupo não-imagem sem folhas listadas (índice de filelist, diretório
+        // do .vbf): busca o próprio nó antes de marcar.
+        const current = nodeIndex().get(node.id) ?? node;
+        if (!current.imageContainer && current.expandable && nodeEntries(current).length === 0) {
+          await actions.loadNodeChildren(current);
+        }
       }
+      const entries = nodeEntries(nodeIndex().get(node.id) ?? node);
       if (entries.length === 0) return;
       exportSelection.setManyByKind(version, entries, checked, whole);
     },

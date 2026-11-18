@@ -7,8 +7,10 @@ import {
   entryCheckStateByKind,
   entryIdsInNode,
   mergeLoadedChildren,
+  nextCheckState,
   nodeEntries,
   type SideNode,
+  unloadedImageContainers,
 } from '@/lib/ffx/content-tree/model';
 import type { EntryKind } from '@/lib/ffx/display-names';
 
@@ -118,6 +120,98 @@ describe('filelist group selection (kinds mistos)', () => {
     };
     const byKind = new Map<EntryKind, ReadonlySet<string>>([['resident', new Set(['txt/a'])]]);
     expect(entryCheckStateByKind(partiallyListed, byKind)).toBe('indeterminate');
+  });
+});
+
+describe('nextCheckState (clique no checkbox)', () => {
+  const folder = (children: SideNode[]): SideNode => ({
+    id: 'datadir:folder',
+    label: 'folder',
+    children,
+  });
+  const imageLeaf = (id: string): SideNode => ({
+    id: `leaf:images:${id}`,
+    label: id,
+    kind: 'images',
+    entry: { kind: 'images', id, key: id, label: id },
+  });
+  // Container de imagem ainda FECHADO: existe como nó, sem filhos listados.
+  const closedContainer: SideNode = {
+    id: 'imagecontainer:ref',
+    label: 'container.bin',
+    kind: 'images',
+    imageContainer: true,
+    imageRef: 'ref',
+    expandable: true,
+  };
+  const byKind = (ids: string[]) =>
+    new Map<EntryKind, ReadonlySet<string>>([['images', new Set(ids)]]);
+
+  it('marks a group that has nothing selected', () => {
+    const node = folder([imageLeaf('a'), closedContainer]);
+    expect(nextCheckState(node, byKind([]))).toBe(true);
+  });
+
+  it('completes a partially marked group', () => {
+    const node = folder([imageLeaf('a'), imageLeaf('b')]);
+    expect(nextCheckState(node, byKind(['a']))).toBe(true);
+  });
+
+  it('unmarks a fully marked group', () => {
+    const node = folder([imageLeaf('a'), imageLeaf('b')]);
+    expect(nextCheckState(node, byKind(['a', 'b']))).toBe(false);
+  });
+
+  it('unmarks a saturated group even with closed containers below (the stuck case)', () => {
+    const node = folder([imageLeaf('a'), closedContainer]);
+    // Todas as folhas LISTADAS marcadas + container fechado: o estado visual
+    // fica `indeterminate` para sempre, e o Radix pediria `true`. A intenção
+    // do clique é remover.
+    expect(entryCheckStateByKind(node, byKind(['a']))).toBe('indeterminate');
+    expect(nextCheckState(node, byKind(['a']))).toBe(false);
+  });
+});
+
+describe('unloadedImageContainers', () => {
+  const leaf = (id: string): SideNode => ({
+    id: `leaf:images:${id}`,
+    label: id,
+    kind: 'images',
+    entry: { kind: 'images', id, key: id, label: id },
+  });
+  const container = (ref: string, children?: SideNode[]): SideNode => ({
+    id: `imagecontainer:${ref}`,
+    label: `${ref}.bin`,
+    kind: 'images',
+    imageContainer: true,
+    imageRef: ref,
+    expandable: true,
+    ...(children ? { children } : {}),
+  });
+
+  it('collects closed containers at any depth', () => {
+    const node: SideNode = {
+      id: 'datadir:images',
+      label: 'images',
+      children: [
+        leaf('a'),
+        container('wpd1'),
+        {
+          id: 'datadir:images/sub',
+          label: 'sub',
+          children: [container('trb1'), container('wpdOpen', [leaf('b')])],
+        },
+      ],
+    };
+    expect(unloadedImageContainers(node).map((n) => n.imageRef)).toEqual(['wpd1', 'trb1']);
+  });
+
+  it('ignores a text unit that is also a container', () => {
+    const textContainer: SideNode = {
+      ...container('binText'),
+      entry: { kind: 'resident', id: 'txt/unit', key: 'k', label: 'unit' },
+    };
+    expect(unloadedImageContainers(textContainer)).toEqual([]);
   });
 });
 

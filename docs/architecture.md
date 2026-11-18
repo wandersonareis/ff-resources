@@ -237,6 +237,17 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   lidos em memória sob demanda (`whitebin.ExtractBytes`) — nada é gravado em
   `data/`. Sem o jogo instalado, o fallback não existe e vale o comportamento
   antigo (erro "unidade de texto não encontrada").
+- **Seleção na árvore (checkbox de exportação/extração)**: o estado é tri-state
+  por kind; grupo com subárvore ainda não listada fica `indeterminate` de
+  propósito (só o que foi listado está marcado). Como o Radix pede `true` em
+  `indeterminate`, o próximo estado é decidido pelo modelo
+  (`nextCheckState` em `frontend/shared/src/app/content-tree/model.ts`): se
+  tudo o que está listado já está marcado, o clique **remove** — sem isso um
+  grupo com container fechado ficava preso em "só marca". Ao marcar, os
+  containers de imagem (WPD/TRB) fechados abaixo do nó são listados num
+  **lote único** (`FF13Service.ListImageContainers`), com janela de
+  coalescência de 120 ms no store (`entry-view-store.ts`), para os registros
+  internos entrarem na seleção; o teto por clique é 400 containers.
 - O código do FF13 é dividido por **partN**, porque cada jogo tem as suas
   particularidades de filelist e de `/data`:
   - backend `internal/families/white/profile/parts/{part1,part2,part3}.go`: pasta de dados

@@ -1,8 +1,8 @@
 import * as dto from '@ff-resources/ui/dto';
 import { createStore } from '@tanstack/store';
-import { InvalidateDataCollection } from '@/bindings/ffxresources/textservice';
-import { ListImageContainer } from '@/bindings/ffxresources/imageservice';
 import type * as services from '@/bindings/ffxresources/backend/services/models';
+import { ListImageContainers } from '@/bindings/ffxresources/imageservice';
+import { InvalidateDataCollection } from '@/bindings/ffxresources/textservice';
 import { isBlankSourceRow } from '@/lib/ffx/blank-us';
 import {
   ancestorPathOf,
@@ -30,9 +30,10 @@ import type { GameVersionId } from '@/lib/ffx/game-version';
 import { ALL_FF13_KINDS, allKindsFor } from '@/lib/ffx/kinds';
 import { SOURCE_LANG } from '@/lib/ffx/save-all';
 import { invalidateTextSearchResults } from '@/lib/ffx/search-store';
+import { loggedToast } from '@/lib/ffx/toast-logged';
 import {
-  type EntryRow,
   applyYkdText as applyYkdTextApi,
+  type EntryRow,
   imageExists,
   loadEntry,
   loadImage,
@@ -208,10 +209,7 @@ export interface EntryActions {
   /** Abre um arquivo na tabela (carrega rows e registra a base do rascunho). */
   selectEntry(entry: EntryRow, searchMatch?: services.TextSearchMatch): Promise<void>;
   /** Edita a caixa de um texto .ykd e grava o container em mods/. */
-  applyYkdText(
-    blockIndex: number,
-    values: Omit<dto.YkdTextPatch, 'blockIndex'>,
-  ): Promise<void>;
+  applyYkdText(blockIndex: number, values: Omit<dto.YkdTextPatch, 'blockIndex'>): Promise<void>;
   /** Clique/Enter num nó da árvore: folha abre; grupo/raiz expande (como
    * no .vbf) e raiz de kind também troca o kind ativo. */
   selectNode(node: SideNode): Promise<void>;
@@ -224,6 +222,13 @@ export interface EntryActions {
    * não é expansível ou já está carregando.
    */
   loadNodeChildren(node: SideNode): Promise<void>;
+  /**
+   * Carga em LOTE dos containers de imagem (WPD/TRB) abaixo de um nó, sem
+   * alternar a expansão. O checkbox de grupo chama isto antes de marcar para
+   * as folhas dentro de containers fechados entrarem na seleção; pedidos
+   * próximos são coalescidos num único IPC.
+   */
+  loadImageContainers(nodes: readonly SideNode[]): Promise<void>;
   /** ArrowRight na folha: pede foco na 1ª linha após o arquivo carregar. */
   requestTableFocus(): void;
   /** Tabela focou a 1ª linha: limpa o pedido pendente. */
@@ -487,6 +492,102 @@ function imageDisplayPath(entry: EntryRow): string {
   return String(entry.title ?? entry.id).replace(/\\/g, '/');
 }
 
+/** Registro devolvido por `ListImageContainer`/`ListImageContainers`. */
+interface ImageContainerRecord {
+  id: string;
+  name: string;
+  path: string;
+  size?: number;
+  kind: string;
+  imageRef?: string;
+  container?: string;
+  expandable?: boolean;
+  pair?: string;
+}
+
+/**
+ * Filhos de um container de imagem (WPD/TRB) como nós da árvore. Puro: o
+ * nó só define o `source` da folha (data/ vs filelist) e o prefixo dos ids
+ * dos arquivos não decodificáveis.
+ */
+function imageContainerChildren(
+  node: SideNode,
+  records: readonly ImageContainerRecord[],
+): SideNode[] {
+  return records.map((child) => {
+    if (child.kind === 'image') {
+      const imageRef = child.imageRef ?? child.id;
+      return {
+        id: `leaf:images:${imageRef}`,
+        label: child.name,
+        kind: 'images',
+        type: 'image',
+        entry: {
+          kind: 'images',
+          id: imageRef,
+          key: imageRef,
+          label: child.name,
+          image: true,
+          imageRef,
+          pair: child.pair,
+          source: node.filelist ? 'filelist' : 'data',
+        },
+      } satisfies SideNode;
+    }
+    if (child.kind === 'ykd') {
+      const ykdRef = child.imageRef ?? child.id;
+      return {
+        id: `leaf:ykd:${ykdRef}`,
+        label: child.name,
+        kind: 'ykd',
+        type: 'ykd',
+        entry: {
+          kind: 'ykd',
+          id: ykdRef,
+          key: ykdRef,
+          label: child.name,
+          source: node.filelist ? 'filelist' : 'data',
+        },
+      } satisfies SideNode;
+    }
+    return {
+      id: `imagefile:${node.id}:${child.path}`,
+      label: child.name,
+      type: 'file',
+      unsupported: true,
+    } satisfies SideNode;
+  });
+}
+
+/** Pedido de carga de UM container: o nó dono, o ref e se deve abrir. */
+interface ImageLoadRequest {
+  node: SideNode;
+  ref: string;
+  expand: boolean;
+}
+
+/** Pedido pendente de um ref: nós que o esperam e se ele abre o container. */
+interface PendingImageLoad {
+  ids: Set<string>;
+  expand: boolean;
+  waiters: Array<() => void>;
+}
+
+/** Janela de coalescência dos pedidos de container (um IPC por janela). */
+const IMAGE_LOAD_WINDOW_MS = 120;
+
+/**
+ * Teto de containers por clique. Marcar uma pasta patológica não pode virar
+ * um lote gigante (cada ref é uma leitura + parse no backend); o que passar
+ * do teto fica de fora e a pasta continua `indeterminate` na árvore.
+ */
+const IMAGE_LOAD_MAX_REFS = 400;
+
+/** Ref opaca de imagem do nó (container ou folha). */
+function imageRefOf(node: SideNode): string {
+  return node.imageRef ?? node.entry?.imageRef ?? '';
+}
+
 /**
  * Árvore de imagens do FF13: as pastas reais de data/partN, misturando
  * arquivos de imagem e containers (que expandem sob demanda).
@@ -700,6 +801,28 @@ export function createEntryView(version: GameVersionId): EntryView {
             ? { ...node, children: walk(node.children) }
             : node,
       );
+    store.setState((prev) => ({
+      ...prev,
+      roots: walk(prev.roots),
+      vbfRoots: walk(prev.vbfRoots),
+      filelistRoots: walk(prev.filelistRoots),
+    }));
+  };
+
+  /**
+   * Mesmo patch de `patchNode`, para VÁRIOS nós numa notificação só (lote de
+   * containers): uma passada por raiz e um `setState`, em vez de N.
+   */
+  const patchNodes = (patches: ReadonlyMap<string, Partial<SideNode>>): void => {
+    if (patches.size === 0) return;
+    const walk = (list: SideNode[]): SideNode[] =>
+      list.map((node) => {
+        const partial = patches.get(node.id);
+        const merged = partial ? { ...node, ...partial } : node;
+        // `children` no patch = filhos novos: não desce nos antigos.
+        if (!merged.children || partial?.children) return merged;
+        return { ...merged, children: walk(merged.children) };
+      });
     store.setState((prev) => ({
       ...prev,
       roots: walk(prev.roots),
@@ -1015,85 +1138,142 @@ export function createEntryView(version: GameVersionId): EntryView {
     }
   };
 
-  /** Expansão preguiçosa de um container de imagem (WPD/TRB). */
-  const loadingImages = new Set<string>();
-  const loadImageChildren = async (node: SideNode): Promise<void> => {
-    const ref = node.imageRef ?? node.entry?.imageRef;
-    if (!ref || loadingImages.has(node.id)) return;
-    loadingImages.add(node.id);
-    patchNode(node.id, { loading: true });
-    try {
-      const list = (await ListImageContainer(version, ref)) as Array<{
-        id: string;
-        name: string;
-        path: string;
-        size?: number;
-        kind: string;
-        imageRef?: string;
-        container?: string;
-        expandable?: boolean;
-        pair?: string;
-      }>;
-      const children: SideNode[] = list.map((child) => {
-        if (child.kind === 'image') {
-          const imageRef = child.imageRef ?? child.id;
-          return {
-            id: `leaf:images:${imageRef}`,
-            label: child.name,
-            kind: 'images',
-            type: 'image',
-            entry: {
-              kind: 'images',
-              id: imageRef,
-              key: imageRef,
-              label: child.name,
-              image: true,
-              imageRef,
-              pair: child.pair,
-              source: node.filelist ? 'filelist' : 'data',
-            },
-          };
-        }
-        if (child.kind === 'ykd') {
-          const ykdRef = child.imageRef ?? child.id;
-          return {
-            id: `leaf:ykd:${ykdRef}`,
-            label: child.name,
-            kind: 'ykd',
-            type: 'ykd',
-            entry: {
-              kind: 'ykd',
-              id: ykdRef,
-              key: ykdRef,
-              label: child.name,
-              source: node.filelist ? 'filelist' : 'data',
-            },
-          };
-        }
-        return {
-          id: `imagefile:${node.id}:${child.path}`,
-          label: child.name,
-          type: 'file',
-          unsupported: true,
-        };
-      });
-      patchNode(node.id, {
-        children,
-        loading: false,
-        expandable: children.length > 0,
-      });
-      if (children.length > 0) {
-        store.setState((prev) => ({
-          ...prev,
-          expanded: new Set(prev.expanded).add(node.id),
-        }));
+  /**
+   * Expansão preguiçosa de containers de imagem (WPD/TRB) — em LOTE e com
+   * janela de coalescência: marcar uma pasta pede todos os containers
+   * fechados abaixo dela de uma vez, e cliques individuais rápidos caem na
+   * mesma janela em vez de virar um IPC por clique.
+   */
+  const pendingImageLoads = new Map<string, PendingImageLoad>();
+  /** Refs com lote EM VOO (quem pede de novo espera o mesmo lote). */
+  const inFlightImageLoads = new Map<string, Promise<void>>();
+  let imageLoadTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Enfileira os refs e devolve a promessa que resolve quando o lote aplicar
+   * (ou quando o lote em voo do mesmo ref terminar).
+   */
+  const queueImageChildren = (requests: readonly ImageLoadRequest[]): Promise<void> => {
+    const waiting: Array<Promise<void>> = [];
+    for (const request of requests) {
+      const inFlight = inFlightImageLoads.get(request.ref);
+      if (inFlight) {
+        waiting.push(inFlight);
+        continue;
       }
-    } catch (error) {
-      patchNode(node.id, { loading: false, expandable: false });
-      sendErrorNotification(error);
-    } finally {
-      loadingImages.delete(node.id);
+      let pending = pendingImageLoads.get(request.ref);
+      if (!pending) {
+        pending = { ids: new Set<string>(), expand: false, waiters: [] };
+        pendingImageLoads.set(request.ref, pending);
+      }
+      const target = pending;
+      target.ids.add(request.node.id);
+      target.expand = target.expand || request.expand;
+      waiting.push(new Promise<void>((resolve) => target.waiters.push(resolve)));
     }
+    if (pendingImageLoads.size > 0 && imageLoadTimer === null) {
+      imageLoadTimer = setTimeout(() => {
+        void flushImageLoads();
+      }, IMAGE_LOAD_WINDOW_MS);
+    }
+    return Promise.all(waiting).then(() => undefined);
+  };
+
+  /** Um IPC para todos os refs da janela; um `setState` com todos os filhos. */
+  const flushImageLoads = async (): Promise<void> => {
+    imageLoadTimer = null;
+    const batch = [...pendingImageLoads.entries()];
+    pendingImageLoads.clear();
+    if (batch.length === 0) return;
+    const refs = batch.map(([ref]) => ref);
+    const ids = batch.flatMap(([, pending]) => [...pending.ids]);
+    const finish = batch.flatMap(([, pending]) => pending.waiters);
+    const loading = new Map<string, Partial<SideNode>>();
+    for (const id of ids) loading.set(id, { loading: true });
+    patchNodes(loading);
+
+    const run = (async () => {
+      try {
+        const listings = (await ListImageContainers(version, refs)) ?? [];
+        const byRef = new Map(listings.map((item) => [item.ref, item]));
+        const index = buildNodeIndex(
+          store.state.roots,
+          store.state.vbfRoots,
+          store.state.filelistRoots,
+        );
+        const patches = new Map<string, Partial<SideNode>>();
+        const expand: string[] = [];
+        const failures: string[] = [];
+        for (const [ref, pending] of batch) {
+          const listing = byRef.get(ref);
+          for (const id of pending.ids) {
+            const node = index.get(id);
+            if (!node) {
+              patches.set(id, { loading: false });
+              continue;
+            }
+            if (!listing || listing.error) {
+              patches.set(id, { loading: false, expandable: false });
+              if (listing?.error) failures.push(`${node.label}: ${listing.error}`);
+              continue;
+            }
+            const children = imageContainerChildren(
+              node,
+              (listing.nodes ?? []) as ImageContainerRecord[],
+            );
+            patches.set(id, { children, loading: false, expandable: children.length > 0 });
+            if (children.length > 0 && pending.expand) expand.push(id);
+          }
+        }
+        patchNodes(patches);
+        if (expand.length > 0) {
+          store.setState((prev) => ({
+            ...prev,
+            expanded: new Set([...prev.expanded, ...expand]),
+          }));
+        }
+        if (failures.length > 0) sendErrorNotificationWithMessage(failures[0]);
+      } catch (error) {
+        // Falha do IPC inteiro: não deixa nenhum nó preso no spinner.
+        const reset = new Map<string, Partial<SideNode>>();
+        for (const id of ids) reset.set(id, { loading: false, expandable: false });
+        patchNodes(reset);
+        sendErrorNotification(error);
+      } finally {
+        for (const ref of refs) inFlightImageLoads.delete(ref);
+        for (const resolve of finish) resolve();
+      }
+    })();
+    for (const ref of refs) inFlightImageLoads.set(ref, run);
+    return run;
+  };
+
+  /** Chevron/seleção do container: carrega e ABRE o nó. */
+  const loadImageChildren = async (node: SideNode): Promise<void> => {
+    const ref = imageRefOf(node);
+    if (!ref) return;
+    await queueImageChildren([{ node, ref, expand: true }]);
+  };
+
+  /**
+   * Carga de containers SEM alternar a expansão — o checkbox de grupo usa
+   * esta via para ter as folhas antes de marcar.
+   */
+  const loadImageContainers = async (nodes: readonly SideNode[]): Promise<void> => {
+    const requests: ImageLoadRequest[] = [];
+    for (const node of nodes) {
+      const ref = imageRefOf(node);
+      if (!ref || (node.children?.length ?? 0) > 0) continue;
+      requests.push({ node, ref, expand: false });
+    }
+    if (requests.length === 0) return;
+    if (requests.length > IMAGE_LOAD_MAX_REFS) {
+      loggedToast.warning(
+        `Esta pasta tem ${requests.length} containers; carregando os ${IMAGE_LOAD_MAX_REFS} primeiros. Expanda o restante para marcar.`,
+      );
+      requests.length = IMAGE_LOAD_MAX_REFS;
+    }
+    await queueImageChildren(requests);
   };
 
   /** Carga da aba: marca todos os principais como loading e carrega. */
@@ -1196,7 +1376,8 @@ export function createEntryView(version: GameVersionId): EntryView {
     if (node.loading || (node.children && node.children.length > 0)) return;
     if (!node.expandable) return;
     if (node.imageContainer && node.imageRef) {
-      await loadImageChildren(node);
+      // Sem expandir: o checkbox não deve abrir a árvore ao marcar.
+      await loadImageContainers([node]);
       return;
     }
     if (node.filelist) {
@@ -1365,6 +1546,7 @@ export function createEntryView(version: GameVersionId): EntryView {
     },
     toggleNode,
     loadNodeChildren,
+    loadImageContainers,
     requestTableFocus: () => patch({ pendingTableFocus: true }),
     consumeTableFocus: () => patch({ pendingTableFocus: false }),
     consumeTableRowFocus: () => patch({ pendingTableRowFocus: null }),

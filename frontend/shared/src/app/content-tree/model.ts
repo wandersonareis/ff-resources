@@ -141,6 +141,56 @@ function hasUnloadedGroupChildren(node: SideNode): boolean {
 }
 
 /**
+ * Próximo estado do checkbox ao clicar no nó.
+ *
+ * O Radix pede `true` SEMPRE que o estado visual é `indeterminate` (ver
+ * `requestedChecked` no pacote react-checkbox). Num grupo com subárvore ainda
+ * não listada — que `entryCheckStateByKind` mantém `indeterminate` de
+ * propósito — isso prende o checkbox: cada clique re-marca e o usuário não
+ * consegue desmarcar. A regra aqui é a INTENÇÃO do clique: quando tudo o que
+ * está listado abaixo do nó já está marcado, o próximo clique remove; senão
+ * ele completa o que está listado.
+ */
+export function nextCheckState(
+  node: SideNode,
+  selectedByKind: ReadonlyMap<EntryKind, ReadonlySet<string>>,
+): boolean {
+  const entries = nodeEntries(node);
+  if (entries.length === 0) return true;
+  const allSelected = entries.every((entry) => selectedByKind.get(entry.kind)?.has(entry.id));
+  return !allSelected;
+}
+
+/**
+ * Containers de imagem (WPD/TRB) abaixo do nó cujos filhos ainda NÃO foram
+ * listados. O checkbox de grupo usa a lista para carregar tudo num lote só
+ * antes de marcar — sem isso, marcar uma pasta deixaria de fora todo registro
+ * dentro de um container fechado (o container só existe como nó expansível,
+ * sem `entry`).
+ *
+ * Nó que TEM `entry` e também é container (WPD de texto do filelist) fica de
+ * fora: a seleção dele é a própria unidade, não os registros internos.
+ */
+export function unloadedImageContainers(node: SideNode): SideNode[] {
+  const out: SideNode[] = [];
+  const walk = (current: SideNode): void => {
+    if (
+      !current.entry &&
+      current.imageContainer &&
+      current.imageRef &&
+      (current.children?.length ?? 0) === 0
+    ) {
+      out.push(current);
+      // Filhos de container só existem depois de carregados: nada a descer.
+      return;
+    }
+    current.children?.forEach(walk);
+  };
+  walk(node);
+  return out;
+}
+
+/**
  * Id estável de uma folha da árvore. Folhas de .vbf são identificadas pelo
  * CAMINHO no container (o mesmo id de data/ pode existir nos dois lados e
  * em dois containers diferentes).

@@ -35,6 +35,25 @@ export function ListImageContainer(version: unknown, ref: string): Promise<any[]
   return svc.ListImageContainer(partOf(version), ref);
 }
 
+/** Filhos de UMA entrada da carga em lote (`ListImageContainers`). */
+export interface ImageContainerListing {
+  ref: string;
+  nodes: any[] | null;
+  error?: string;
+}
+
+/**
+ * Carga em lote de containers (WPD/TRB): o checkbox de grupo precisa das
+ * folhas de todos os containers fechados abaixo do nó numa chamada só, em vez
+ * de um IPC por container.
+ */
+export function ListImageContainers(
+  version: unknown,
+  refs: string[],
+): Promise<ImageContainerListing[]> {
+  return svc.ListImageContainers(partOf(version), refs);
+}
+
 export function SaveImage(
   version: unknown,
   ref: string,

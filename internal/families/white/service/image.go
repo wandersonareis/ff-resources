@@ -679,3 +679,34 @@ func (Service) ListImageContainer(part, ref string) ([]common.ImageNode, error) 
 	}
 	return nodes, nil
 }
+
+// ImageContainerListing é UMA entrada da carga em lote: o ref pedido, os
+// filhos (quando deu certo) ou o erro daquele container. O erro é por item
+// para um container corrompido não derrubar o lote inteiro.
+type ImageContainerListing struct {
+	Ref   string             `json:"ref"`
+	Nodes []common.ImageNode `json:"nodes"`
+	Error string             `json:"error,omitempty"`
+}
+
+// ListImageContainers lista os filhos de VÁRIOS containers numa chamada só —
+// é o que o checkbox de grupo usa para marcar uma pasta de imagens sem pagar
+// um IPC por WPD/TRB. Sequencial de propósito: o custo é leitura + parse
+// local e a ordem das respostas acompanha a dos refs pedidos.
+func (Service) ListImageContainers(part string, refs []string) []ImageContainerListing {
+	out := make([]ImageContainerListing, 0, len(refs))
+	for _, ref := range refs {
+		nodes, err := (Service{}).ListImageContainer(part, ref)
+		listing := ImageContainerListing{Ref: ref, Nodes: []common.ImageNode{}}
+		if err != nil {
+			listing.Error = err.Error()
+			out = append(out, listing)
+			continue
+		}
+		if nodes != nil {
+			listing.Nodes = nodes
+		}
+		out = append(out, listing)
+	}
+	return out
+}

@@ -67,6 +67,11 @@ func TestImagePreviewRealData(t *testing.T) {
 	if len(nodes) == 0 {
 		t.Fatal("container sem filhos")
 	}
+	// Lote (checkbox de grupo) devolve os mesmos filhos do pedido individual.
+	batch := (Service{}).ListImageContainers("part1", []string{ref})
+	if len(batch) != 1 || len(batch[0].Nodes) != len(nodes) || batch[0].Error != "" {
+		t.Fatalf("ListImageContainers divergiu do individual: %+v", batch)
+	}
 	var imageNode string
 	for _, n := range nodes {
 		if n.Kind == "image" {
