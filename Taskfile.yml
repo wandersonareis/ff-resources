@@ -80,6 +80,23 @@ tasks:
       - task: build:ff13
       - task: build:launcher
 
+  # Server mode (HTTP, sem GUI): binarios apps/<app>/bin/<app>-server.exe.
+  # `build:server` gera o binario de producao (-tags server,production);
+  # `run:server` ja faz o build DEV=true como dependencia e sobe o server.
+  # A raiz nao e projeto Wails: despachamos via `task --dir` para o Taskfile
+  # do app, onde o wails3 (generate bindings etc.) e invocado no lugar certo.
+  build:server:ffx:
+    desc: "build:server do FFX via Taskfile do app (HTTP server)"
+    run: once
+    cmds:
+      - task --dir apps/ffx build:server
+
+  build:server:ff13:
+    desc: "build:server do FF13 via Taskfile do app (HTTP server)"
+    run: once
+    cmds:
+      - task --dir apps/ff13 build:server
+
   # `wails3 dev` nao tem -dir: cada task entra na pasta do app. O dev nao
   # rebuilda os jogos - stage:launcher so exige que os builds existam.
   dev:ffx:
@@ -100,6 +117,18 @@ tasks:
       - task: stage:launcher
       - wails3 dev
     dir: apps/launcher
+
+  # `task --dir` carrega o Taskfile do app (a raiz nao tem projeto Wails);
+  # la o run:server faz o build DEV=true e sobe o HTTP server, sem janela/stage.
+  run:server:ffx:
+    desc: "run:server do FFX via Taskfile do app (HTTP server, sem GUI)"
+    cmds:
+      - task --dir apps/ffx run:server
+
+  run:server:ff13:
+    desc: "run:server do FF13 via Taskfile do app (HTTP server, sem GUI)"
+    cmds:
+      - task --dir apps/ff13 run:server
 
   bundle:
     desc: "monta dist/ com launcher + spira + pulse + manifest + assets"
