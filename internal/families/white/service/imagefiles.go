@@ -239,8 +239,12 @@ func normalizeImageRel(rel string) string {
 	return strings.TrimPrefix(rel, "/")
 }
 
-// ResolveImageFile resolve a tabela/arquivo da ref. Para filelist usa o
-// índice indicado (e cai para data/mods/white bin quando preciso).
+// ResolveImageFile resolve a tabela/arquivo da ref.
+//
+// Para uma ref vinda do FILELIST a base é o próprio índice/white bin: mods é
+// só overlay (quando "Exibir mods" está ligado) e data/ NUNCA entra. É isso
+// que faz o navegador de filelist mostrar o que está no filelist — inclusive
+// o que foi inserido — enquanto /data continua mostrando o extraído.
 func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 	part = config.NormalizePart(part)
 	if r.Source == "filelist" && r.Root != "" {
@@ -248,11 +252,13 @@ func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 		idx, zone, err := ResolveFilelistIndex(p, r.Root)
 		if err == nil {
 			rel := FilelistDataPath(zone, r.Path)
-			// mods-first/data-first + white bin, a mesma régua de ResolveRelFile.
-			if f, ok := ResolveRelFile(part, rel); ok {
-				return f, nil
+			// Mods continua sendo overlay opcional (a flag da config).
+			if config.EnableModsEnabled() {
+				if f, ok := resolveDiskRel(part, "mods", rel); ok {
+					return f, nil
+				}
 			}
-			if idx.Container != "" {
+			if idx.Container != "" && idx.Coll != nil {
 				return ImageFile{
 					Part:  part,
 					Rel:   rel,
@@ -260,6 +266,11 @@ func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 					Coll:  idx.Coll,
 					VPath: r.Path,
 				}, nil
+			}
+			// Índice sem white bin (cópia extraída sem o jogo): cai no
+			// resolver normal, que ainda pode achar mods/data.
+			if f, ok := ResolveRelFile(part, rel); ok {
+				return f, nil
 			}
 			return ImageFile{}, fmt.Errorf("imagem: arquivo não encontrado no índice (%s)", r.Path)
 		}
@@ -271,13 +282,64 @@ func ResolveImageFile(part string, r ImageRef) (ImageFile, error) {
 }
 
 // ResolveImagePayload resolve o .imgb pareado com a tabela.
+//
+// Numa ref de FILELIST o payload é procurado no MESMO índice/container
+// primeiro (é onde a inserção grava); mods continua como overlay opcional.
 func ResolveImagePayload(part string, r ImageRef, tableRel string) (ImageFile, error) {
+	part = config.NormalizePart(part)
 	pairRel := r.Payload
 	if pairRel == "" {
 		pairRel = ImagePairPath(tableRel)
+	}
+	pairRel = normalizeImageRel(pairRel)
+	if r.Source == "filelist" && r.Root != "" {
+		if config.EnableModsEnabled() {
+			if f, ok := resolveDiskRel(part, "mods", pairRel); ok {
+				return f, nil
+			}
+		}
+		if idx, zone, err := ResolveFilelistIndex(parts.Get(part), r.Root); err == nil &&
+			idx.Container != "" && idx.Coll != nil {
+			if vpath, ok := indexVirtualPathForRel(idx, zone, pairRel); ok {
+				return ImageFile{
+					Part:  part,
+					Rel:   pairRel,
+					Bin:   idx.Container,
+					Coll:  idx.Coll,
+					VPath: vpath,
+				}, nil
+			}
+		}
+		// Payload declarado em OUTRO índice (ex.: tabela numa zona e o .imgb
+		// no índice global): procura em todos os filelists antes de cair no
+		// resolver data/mods.
+		if f, ok := ImageFileIndexFor(parts.Get(part))[pairRel]; ok && f.Exists() {
+			return f, nil
+		}
 	}
 	if f, ok := ResolveRelFile(part, pairRel); ok {
 		return f, nil
 	}
 	return ImageFile{}, fmt.Errorf("imagem: binário .imgb não encontrado (%s)", pairRel)
+}
+
+// indexVirtualPathForRel procura, no índice, o caminho cujo data-path
+// (com o prefixo de zona) casa com rel. Devolve o caminho ORIGINAL do índice.
+func indexVirtualPathForRel(idx *FilelistIndex, zone, rel string) (string, bool) {
+	if idx == nil || idx.Coll == nil {
+		return "", false
+	}
+	want := normalizeImageRel(rel)
+	if want == "" {
+		return "", false
+	}
+	for ci := range idx.Coll.Chunks {
+		for ei := range idx.Coll.Chunks[ci].Entries {
+			entryPath := fl.EntryPath(idx.Coll.Chunks[ci].Entries[ei].FileInfo)
+			if normalizeImageRel(FilelistDataPath(zone, entryPath)) == want {
+				return entryPath, true
+			}
+		}
+	}
+	return "", false
 }

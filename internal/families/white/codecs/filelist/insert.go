@@ -3,6 +3,7 @@ package filelist
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // O formato filelist não permite adicionar nem remover entradas: só é
@@ -55,6 +56,77 @@ func (c *Collection) SetAddressByPath(path string, posSectors uint64, uncmpSize,
 		e.FileInfo = FormatFileInfo(loc)
 	}
 	return len(refs), nil
+}
+
+// normalizePathFold normaliza um caminho de entry para comparação
+// insensível a caixa e a separador ("\" e "/" são o mesmo caminho).
+//
+// O caminho ORIGINAL nunca é reescrito: só é usado para casar a entrada. É
+// essa a regra do importador (o filelist pode ter casing misto; a árvore de
+// dados do app é toda minúscula).
+func normalizePathFold(path string) string {
+	p := strings.ReplaceAll(strings.TrimSpace(path), "\\", "/")
+	return strings.ToLower(p)
+}
+
+// FindByPathFold devolve todas as referências cujo caminho casa com path sem
+// diferenciar caixa nem separador.
+func (c *Collection) FindByPathFold(path string) []EntryRef {
+	want := normalizePathFold(path)
+	if want == "" {
+		return nil
+	}
+	var refs []EntryRef
+	for ci := range c.Chunks {
+		for ei := range c.Chunks[ci].Entries {
+			if normalizePathFold(EntryPath(c.Chunks[ci].Entries[ei].FileInfo)) == want {
+				refs = append(refs, EntryRef{ci, ei})
+			}
+		}
+	}
+	return refs
+}
+
+// SetAddressByPathFold é a versão insensível a caixa/separador de
+// SetAddressByPath: reaponta TODAS as ocorrências do caminho para o endereço
+// novo, preservando o texto do caminho como está no arquivo.
+func (c *Collection) SetAddressByPathFold(path string, posSectors uint64, uncmpSize, cmpSize uint32) (int, error) {
+	refs := c.FindByPathFold(path)
+	if len(refs) == 0 {
+		return 0, fmt.Errorf("caminho não encontrado no filelist: %s", path)
+	}
+	for _, ref := range refs {
+		e := &c.Chunks[ref.Chunk].Entries[ref.Entry]
+		loc, err := ParseFileInfo(e.FileInfo)
+		if err != nil {
+			return 0, fmt.Errorf("entrada com fileInfo inválido (%q): %w", e.FileInfo, err)
+		}
+		loc.PosSectors = posSectors
+		loc.UncmpSize = uncmpSize
+		loc.CmpSize = cmpSize
+		e.FileInfo = FormatFileInfo(loc)
+	}
+	return len(refs), nil
+}
+
+// PathCompressionFold informa se o caminho existe e se a entrada original
+// indicava compressão zlib no white bin (tamanho comprimido != descomprimido).
+//
+// Quando há ocorrências com estados diferentes, o "comprimido" vence: o novo
+// arquivo é gravado comprimido e todas as ocorrências passam a apontar para o
+// mesmo endereço (o formato aceita os dois estados).
+func (c *Collection) PathCompressionFold(path string) (found, compressed bool) {
+	for _, ref := range c.FindByPathFold(path) {
+		loc, err := ParseFileInfo(c.Chunks[ref.Chunk].Entries[ref.Entry].FileInfo)
+		if err != nil {
+			continue
+		}
+		found = true
+		if loc.IsCompressed() {
+			return true, true
+		}
+	}
+	return found, false
 }
 
 // DuplicatedPaths devolve os caminhos que aparecem em mais de uma entrada,

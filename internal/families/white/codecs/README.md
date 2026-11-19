@@ -23,10 +23,10 @@ Os CLIs (`cmd/*`), scripts, binários e o código C# **não** foram trazidos.
 ## Pacotes
 
 - **`filelist`** — leitura/decrypt, escrita, JSON, texto e rebuild do filelist
-  (FF13 + KEL.DAT do Dirge). O app usa **somente leitura**; o writer existe
-  para ferramentas/testes.
-- **`whitebin`** — extração de arquivos do white bin referenciado pelo
-  filelist (cópia ou descompressão zlib).
+  (FF13 + KEL.DAT do Dirge). O writer sustenta a **inserção de mods** do app
+  (append no white bin + reapontamento), além das ferramentas/testes.
+- **`whitebin`** — extração e inserção de arquivos no white bin referenciado
+  pelo filelist (cópia, descompressão zlib e append alinhado a 2048).
 - **`ztr`** — container ZTR padrão: header, chunks, line info, modos
   comprimido/não comprimido e as regras de desempate (`TieFirst`/`TieMinLast`).
 - **`ztr/encoding`** — camada de texto do ZTR: codepage física, dicionários de
@@ -60,5 +60,12 @@ Cobrem:
   `system`.
 - O `RepackIMGB` é a parte mais frágil do `imgbgo`; validar com `veffs` e
   `c001` antes de liberar a edição de imagens.
-- O filelist é lido do jogo/`/data`; o app não escreve nele. O writer do codec
-  não deve ser exposto na UI sem uma decisão explícita.
+- O app escreve no filelist **somente** pelo fluxo explícito de inserção de
+  mods (import com "Inserir"): o arquivo vai para o fim do white bin e todas as
+  ocorrências do caminho são reapontadas. A leitura do navegador de filelist é
+  source-aware — mostra o que está no filelist (com overlay de `mods/` quando
+  ligado), nunca o snapshot de `data/`.
+- A inserção mantém um manifesto em `mods/partN/filelist-inserts.json` (tamanho
+  original dos bins + backup dos filelists) para o "Reverter inserções". Um
+  crash entre o append e a gravação do filelist deixa dados órfãos no fim do
+  bin, mas os ponteiros antigos continuam válidos.

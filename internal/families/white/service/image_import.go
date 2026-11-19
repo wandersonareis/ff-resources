@@ -36,6 +36,7 @@ import (
 	"ffresources/internal/families/white/profile/config"
 	"ffresources/internal/families/white/profile/parts"
 	"ffresources/internal/shared/dto"
+	loggingService "ffresources/internal/shared/logging"
 	"ffresources/internal/shared/progress"
 )
 
@@ -400,34 +401,166 @@ func payloadMatches(target *imageImportTarget, chunks [][]byte) bool {
 	return true
 }
 
-// writeImagePayload grava o payload com os mips novos em mods/partN. O
-// container não é tocado: o header GTEX e a tabela de mips não mudam (mesmas
-// dimensões, formato e mipmaps) e uma cópia do container pristine apagaria
-// traduções de texto do mesmo WPD.
-func writeImagePayload(part string, target *imageImportTarget, chunks [][]byte) error {
-	if target.payloadRel == "" || strings.Contains(target.payloadRel, "..") {
-		return fmt.Errorf("caminho do payload inválido: %s", target.payloadRel)
-	}
-	patched := make([]byte, len(target.payload))
-	copy(patched, target.payload)
-	for i, m := range target.mips {
+// patchPayload devolve uma CÓPIA do payload com os mips novos nas posições
+// da tabela. O container não é tocado: o header GTEX e a tabela de mips não
+// mudam (mesmas dimensões, formato e mipmaps).
+//
+// base pode ser o payload pristine ou o acumulado do lote (várias imagens no
+// MESMO .imgb): cada registro só sobrescreve os seus mips.
+func patchPayload(base []byte, mips []imgbcore.MipInfo, chunks [][]byte) ([]byte, error) {
+	patched := make([]byte, len(base))
+	copy(patched, base)
+	for i, m := range mips {
 		start := int(m.Offset)
 		end := start + int(m.Size)
+		if i >= len(chunks) {
+			return nil, fmt.Errorf("mip %d sem bytes para gravar", i)
+		}
 		if start < 0 || end > len(patched) {
-			return fmt.Errorf("mip %d fora do payload (offset %d, tamanho %d, payload %d)",
+			return nil, fmt.Errorf("mip %d fora do payload (offset %d, tamanho %d, payload %d)",
 				i, start, m.Size, len(patched))
 		}
 		copy(patched[start:end], chunks[i])
 	}
-	mods, err := config.PartRoot("mods", part)
+	return patched, nil
+}
+
+// normalizeImageImportOptions garante que uma importação sempre tem destino.
+// A UI manda os dois flags explicitamente; chamadas antigas (sem opções)
+// continuam gravando em mods/, o comportamento de antes.
+func normalizeImageImportOptions(opts dto.ImageImportOptions) dto.ImageImportOptions {
+	if !opts.WriteMods && !opts.InsertFilelist {
+		opts.WriteMods = true
+	}
+	return opts
+}
+
+// pendingImage é o payload acumulado de um arquivo binário (o .imgb pode
+// conter vários registros: um lote com duas imagens do MESMO container
+// precisa aplicar as duas no mesmo buffer antes de gravar).
+type pendingImage struct {
+	rel      string
+	data     []byte
+	displays []string
+}
+
+// imageImportBatch acumula o que será entregue (mods e/ou filelist) no fim
+// do lote.
+type imageImportBatch struct {
+	order []string
+	byRel map[string]*pendingImage
+}
+
+func newImageImportBatch() *imageImportBatch {
+	return &imageImportBatch{byRel: map[string]*pendingImage{}}
+}
+
+// addPatch aplica os mips de UM registro sobre o payload já acumulado do
+// arquivo (ou sobre o pristine, na primeira vez).
+func (b *imageImportBatch) addPatch(rel string, base []byte, mips []imgbcore.MipInfo, chunks [][]byte, display string) error {
+	if rel == "" || strings.Contains(rel, "..") {
+		return fmt.Errorf("caminho do payload inválido: %s", rel)
+	}
+	if prev, ok := b.byRel[rel]; ok {
+		base = prev.data
+	}
+	patched, err := patchPayload(base, mips, chunks)
 	if err != nil {
 		return err
 	}
-	dst := filepath.Join(mods, filepath.FromSlash(target.payloadRel))
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return err
+	b.put(rel, patched, display)
+	return nil
+}
+
+// addDirect registra um arquivo que já é o binário final (imagem direta).
+func (b *imageImportBatch) addDirect(rel string, blob []byte, display string) error {
+	if rel == "" || strings.Contains(rel, "..") {
+		return fmt.Errorf("caminho da imagem inválido: %s", rel)
 	}
-	return os.WriteFile(dst, patched, 0o644)
+	b.put(rel, blob, display)
+	return nil
+}
+
+func (b *imageImportBatch) put(rel string, data []byte, display string) {
+	p, ok := b.byRel[rel]
+	if !ok {
+		p = &pendingImage{rel: rel}
+		b.order = append(b.order, rel)
+		b.byRel[rel] = p
+	}
+	p.data = data
+	if display != "" && !containsString(p.displays, display) {
+		p.displays = append(p.displays, display)
+	}
+}
+
+func containsString(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+// deliver grava os payloads acumulados nos destinos escolhidos. Os dois
+// destinos são independentes; um item que não existe no filelist vira aviso
+// quando o mods também foi gravado (a importação não ficou sem destino) e
+// erro quando "Inserir" era o único destino.
+func (b *imageImportBatch) deliver(s *Service, part string, opts dto.ImageImportOptions) (updated, failed, warnings []string) {
+	updated = []string{}
+	failed = []string{}
+	warnings = []string{}
+	if len(b.order) == 0 {
+		return updated, failed, warnings
+	}
+
+	okRels := map[string]bool{}
+	wroteMods := map[string]bool{}
+	var insertItems []InsertItem
+	for _, rel := range b.order {
+		p := b.byRel[rel]
+		if opts.WriteMods {
+			// Falha ao gravar em mods/ não impede o destino independente:
+			// o "Inserir" ainda é tentado para este arquivo.
+			if err := writeModsFile(part, rel, p.data); err != nil {
+				failed = append(failed, rel+": "+err.Error())
+			} else {
+				okRels[rel] = true
+				wroteMods[rel] = true
+			}
+		}
+		if opts.InsertFilelist {
+			insertItems = append(insertItems, InsertItem{RelPath: rel, Data: p.data})
+		}
+	}
+
+	if opts.InsertFilelist && len(insertItems) > 0 {
+		outcomes, err := s.InsertBlobs(part, insertItems)
+		if err != nil {
+			failed = append(failed, "filelist: "+err.Error())
+		}
+		for _, o := range outcomes {
+			if o.Inserted {
+				okRels[o.RelPath] = true
+				continue
+			}
+			msg := o.RelPath + ": " + o.Reason
+			if wroteMods[o.RelPath] {
+				warnings = append(warnings, msg)
+			} else {
+				failed = append(failed, msg)
+			}
+		}
+	}
+
+	for _, rel := range b.order {
+		if !okRels[rel] {
+			continue
+		}
+		updated = append(updated, b.byRel[rel].displays...)
+	}
+	return updated, failed, warnings
 }
 
 // normalizeTranslatedRel normaliza o caminho relativo à raiz traduzida.
@@ -538,7 +671,11 @@ func (s *Service) PreviewImportImages(part string) (dto.ImageImportPreview, erro
 func (s *Service) ImportImages(part string, selection dto.ImageImportSelection) (dto.ImageImportResult, error) {
 	part = config.NormalizePart(part)
 	root := TranslatedImagesRoot(part)
-	res := dto.ImageImportResult{Updated: []string{}, Failed: []string{}}
+	opts := normalizeImageImportOptions(dto.ImageImportOptions{
+		WriteMods:      selection.WriteMods,
+		InsertFilelist: selection.InsertFilelist,
+	})
+	res := dto.ImageImportResult{Updated: []string{}, Failed: []string{}, Warnings: []string{}}
 	for _, e := range selection.Entries {
 		if e.ID != "" && e.Image {
 			res.Total++
@@ -555,6 +692,7 @@ func (s *Service) ImportImages(part string, selection dto.ImageImportSelection) 
 	}
 	step.Begin("Imagens", res.Total)
 
+	acc := newImageImportBatch()
 	for _, e := range selection.Entries {
 		if e.ID == "" || !e.Image {
 			continue
@@ -591,13 +729,19 @@ func (s *Service) ImportImages(part string, selection dto.ImageImportSelection) 
 			fail(err.Error())
 			continue
 		}
-		if err := writeImagePayload(part, target, chunks); err != nil {
+		if err := acc.addPatch(target.payloadRel, target.payload, target.mips, chunks, display); err != nil {
 			fail(err.Error())
 			continue
 		}
-		res.Updated = append(res.Updated, display)
 		step.Step(display)
 	}
+
+	// A entrega (mods e/ou filelist) é feita uma vez por ARQUIVO binário:
+	// várias imagens do mesmo .imgb não se sobrescrevem.
+	updated, failed, warnings := acc.deliver(s, part, opts)
+	res.Updated = updated
+	res.Failed = append(res.Failed, failed...)
+	res.Warnings = append(res.Warnings, warnings...)
 
 	step.End()
 	batch.SetSummary(len(res.Updated), root)
@@ -619,72 +763,109 @@ func pathInside(root, path string) bool {
 
 // ImportImage aplica UM .dds na imagem ABERTA. O nome/caminho do arquivo não
 // é usado para localizar nada: o alvo é a própria ref.
-func (s *Service) ImportImage(part, ref, ddsPath string) error {
-	part = config.NormalizePart(part)
-	r, err := DecodeImageRef(ref)
+func (s *Service) ImportImage(part, ref, ddsPath string, opts dto.ImageImportOptions) error {
+	res, err := s.importImageRefs(part, []string{ref}, ddsPath, opts)
 	if err != nil {
 		return err
 	}
-	dds, err := os.ReadFile(ddsPath)
-	if err != nil {
-		return fmt.Errorf("lendo %s: %w", filepath.Base(ddsPath), err)
+	if len(res.Failed) > 0 {
+		return fmt.Errorf("%s", res.Failed[0])
 	}
-	if r.Entry == "" && !IsContainerExt(r.Path) {
-		return importDirectImage(part, r, dds)
+	for _, w := range res.Warnings {
+		loggingService.Warn("%s", w)
 	}
-	if r.Entry == "" {
-		return fmt.Errorf("selecione uma imagem dentro do container")
-	}
-	target, err := imageImportTargetFromRef(part, r)
-	if err != nil {
-		return err
-	}
-	chunks, err := prepareImageMips(target, dds)
-	if err != nil {
-		return err
-	}
-	if err := writeImagePayload(part, target, chunks); err != nil {
-		return err
-	}
-	InvalidateImageFileIndex(part)
-	InvalidateImageContainerIndex(part)
-	invalidateCollection(part)
 	return nil
 }
 
 // ImportImageGroup aplica o mesmo .dds na imagem e nos alvos extras. No FF13
 // ainda não há índice de duplicatas, então a UI não abre o diálogo de
 // alcance; a função fica pronta para quando o índice existir.
-func (s *Service) ImportImageGroup(part, ref, ddsPath string, targets []string) (dto.ImageImportResult, error) {
-	part = config.NormalizePart(part)
+func (s *Service) ImportImageGroup(part, ref, ddsPath string, targets []string, opts dto.ImageImportOptions) (dto.ImageImportResult, error) {
 	all := make([]string, 0, len(targets)+1)
-	all = append(all, ref)
-	all = append(all, targets...)
-	res := dto.ImageImportResult{Updated: []string{}, Failed: []string{}, Total: len(all)}
-	for _, target := range all {
-		if strings.TrimSpace(target) == "" {
-			continue
-		}
-		if err := s.ImportImage(part, target, ddsPath); err != nil {
-			res.Failed = append(res.Failed, target+": "+err.Error())
-			continue
-		}
-		res.Updated = append(res.Updated, target)
+	if strings.TrimSpace(ref) != "" {
+		all = append(all, ref)
 	}
+	all = append(all, targets...)
+	return s.importImageRefs(part, all, ddsPath, opts)
+}
+
+// importImageRefs é o miolo do import avulso/grupo: resolve cada ref, separa
+// os registros de container dos arquivos diretos, acumula os patches por
+// ARQUIVO binário e entrega uma vez em cada destino escolhido.
+func (s *Service) importImageRefs(part string, refs []string, ddsPath string, opts dto.ImageImportOptions) (dto.ImageImportResult, error) {
+	part = config.NormalizePart(part)
+	opts = normalizeImageImportOptions(opts)
+	res := dto.ImageImportResult{Updated: []string{}, Failed: []string{}, Warnings: []string{}, Total: len(refs)}
+	if len(refs) == 0 {
+		return res, nil
+	}
+	dds, err := os.ReadFile(ddsPath)
+	if err != nil {
+		return res, fmt.Errorf("lendo %s: %w", filepath.Base(ddsPath), err)
+	}
+
+	acc := newImageImportBatch()
+	for _, ref := range refs {
+		if strings.TrimSpace(ref) == "" {
+			continue
+		}
+		r, derr := DecodeImageRef(ref)
+		if derr != nil {
+			res.Failed = append(res.Failed, ref+": "+derr.Error())
+			continue
+		}
+		if r.Entry == "" && !IsContainerExt(r.Path) {
+			rel, blob, perr := prepareDirectImage(part, r, dds)
+			if perr != nil {
+				res.Failed = append(res.Failed, ref+": "+perr.Error())
+				continue
+			}
+			if aerr := acc.addDirect(rel, blob, ref); aerr != nil {
+				res.Failed = append(res.Failed, ref+": "+aerr.Error())
+			}
+			continue
+		}
+		if r.Entry == "" {
+			res.Failed = append(res.Failed, ref+": selecione uma imagem dentro do container")
+			continue
+		}
+		target, terr := imageImportTargetFromRef(part, r)
+		if terr != nil {
+			res.Failed = append(res.Failed, ref+": "+terr.Error())
+			continue
+		}
+		chunks, cerr := prepareImageMips(target, dds)
+		if cerr != nil {
+			res.Failed = append(res.Failed, ref+": "+cerr.Error())
+			continue
+		}
+		if aerr := acc.addPatch(target.payloadRel, target.payload, target.mips, chunks, ref); aerr != nil {
+			res.Failed = append(res.Failed, ref+": "+aerr.Error())
+		}
+	}
+
+	updated, failed, warnings := acc.deliver(s, part, opts)
+	res.Updated = append(res.Updated, updated...)
+	res.Failed = append(res.Failed, failed...)
+	res.Warnings = append(res.Warnings, warnings...)
+	InvalidateImageFileIndex(part)
+	InvalidateImageContainerIndex(part)
+	invalidateCollection(part)
 	return res, nil
 }
 
-// importDirectImage cobre as imagens que não estão dentro de um container:
-// .dds/.png diretos e as faces residentes (.imgb sem tabela).
-func importDirectImage(part string, r ImageRef, dds []byte) error {
+// prepareDirectImage cobre as imagens que não estão dentro de um container:
+// .dds/.png diretos e as faces residentes (.imgb sem tabela). Devolve o
+// caminho interno e o binário que será entregue em mods/ e/ou no filelist.
+func prepareDirectImage(part string, r ImageRef, dds []byte) (string, []byte, error) {
 	rel := canonicalImageRel(part, r)
 	if rel == "" {
-		return fmt.Errorf("caminho da imagem vazio")
+		return "", nil, fmt.Errorf("caminho da imagem vazio")
 	}
 	if IsResidentFaceImage(r.Path) {
 		info, err := imagery.ParseDDSHeader(dds)
 		if err != nil {
-			return err
+			return "", nil, err
 		}
 		var diffs []string
 		if info.Width != ResidentFaceWidth || info.Height != ResidentFaceHeight {
@@ -698,30 +879,30 @@ func importDirectImage(part string, r ImageRef, dds []byte) error {
 			diffs = append(diffs, fmt.Sprintf("mipmaps: container 1, arquivo %d", info.MipMapCount))
 		}
 		if len(diffs) > 0 {
-			return imageMismatchError(diffs)
+			return "", nil, imageMismatchError(diffs)
 		}
 		if len(dds) != ddsHeaderSize+ResidentFaceRawSize {
-			return imageMismatchError([]string{fmt.Sprintf(
+			return "", nil, imageMismatchError([]string{fmt.Sprintf(
 				"tamanho do payload: container %d bytes, arquivo %d bytes",
 				ResidentFaceRawSize, len(dds)-ddsHeaderSize)})
 		}
-		return writeModsFile(part, rel, dds[ddsHeaderSize:])
+		return rel, dds[ddsHeaderSize:], nil
 	}
 
 	ext := strings.ToLower(filepath.Ext(r.Path))
 	info, err := imagery.ParseDDSHeader(dds)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 	switch ext {
 	case ".dds":
 		cur, rerr := (Service{}).readImageBytes(part, r)
 		if rerr != nil {
-			return rerr
+			return "", nil, rerr
 		}
 		curInfo, cerr := imagery.ParseDDSHeader(cur)
 		if cerr != nil {
-			return fmt.Errorf("imagem atual: %w", cerr)
+			return "", nil, fmt.Errorf("imagem atual: %w", cerr)
 		}
 		var diffs []string
 		if info.Width != curInfo.Width || info.Height != curInfo.Height {
@@ -737,30 +918,30 @@ func importDirectImage(part string, r ImageRef, dds []byte) error {
 				curInfo.MipMapCount, info.MipMapCount))
 		}
 		if len(diffs) > 0 {
-			return imageMismatchError(diffs)
+			return "", nil, imageMismatchError(diffs)
 		}
-		return writeModsFile(part, rel, dds)
+		return rel, dds, nil
 	case ".png":
 		cur, rerr := (Service{}).readImageBytes(part, r)
 		if rerr != nil {
-			return rerr
+			return "", nil, rerr
 		}
 		cfg, _, derr := image.DecodeConfig(bytes.NewReader(cur))
 		if derr != nil {
-			return fmt.Errorf("imagem atual: %w", derr)
+			return "", nil, fmt.Errorf("imagem atual: %w", derr)
 		}
 		if uint32(cfg.Width) != info.Width || uint32(cfg.Height) != info.Height {
-			return imageMismatchError([]string{fmt.Sprintf(
+			return "", nil, imageMismatchError([]string{fmt.Sprintf(
 				"dimensões: container %dx%d, arquivo %dx%d",
 				cfg.Width, cfg.Height, info.Width, info.Height)})
 		}
 		png, perr := imagery.DDSToPNG(dds)
 		if perr != nil {
-			return perr
+			return "", nil, perr
 		}
-		return writeModsFile(part, rel, png)
+		return rel, png, nil
 	default:
-		return fmt.Errorf("import de imagem: extensão não suportada (%s)", ext)
+		return "", nil, fmt.Errorf("import de imagem: extensão não suportada (%s)", ext)
 	}
 }
 

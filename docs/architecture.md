@@ -237,6 +237,17 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   lidos em memória sob demanda (`whitebin.ExtractBytes`) — nada é gravado em
   `data/`. Sem o jogo instalado, o fallback não existe e vale o comportamento
   antigo (erro "unidade de texto não encontrada").
+- **Inserção no filelist (import com "Inserir")**: o binário convertido vai
+  para o FIM do white bin (alinhado a 2048) e todas as ocorrências do caminho
+  nos índices são reapontadas. A cadeia embutida é regravada de baixo para
+  cima (`filelist_z000u` → `white_imgu` → `filelistu`), e os filelists de disco
+  são gravados por último, de forma atômica. O navegador de filelist passa a
+  mostrar o conteúdo inserido; `/data` continua intocado. O manifesto em
+  `mods/partN/filelist-inserts.json` guarda o tamanho original dos bins e o
+  backup dos filelists para "Reverter inserções". No import de imagens os dois
+  destinos são independentes: **Comprimir** (marcado por padrão) converte e
+  grava em `mods/`; **Inserir** (desmarcado por padrão, com ajuda em popover)
+  grava no filelist. Sem nenhum dos dois o botão Importar fica desabilitado.
 - **Seleção na árvore (checkbox de exportação/extração)**: o estado é tri-state
   por kind; grupo com subárvore ainda não listada fica `indeterminate` de
   propósito (só o que foi listado está marcado). Como o Radix pede `true` em

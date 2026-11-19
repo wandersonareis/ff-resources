@@ -161,16 +161,25 @@ export interface GameApi {
   extractImage(kind: string, id: string, version: string): Promise<string[]>;
   extractImageGroup(kind: string, id: string, targets: string[], version: string): Promise<any>;
   extractImageSelection(kind: string, ids: string[], version: string): Promise<any>;
-  importImage(kind: string, id: string, ddsPath: string, version: string): Promise<void>;
+  importImage(
+    kind: string,
+    id: string,
+    ddsPath: string,
+    version: string,
+    options?: any,
+  ): Promise<void>;
   importImageGroup(
     kind: string,
     id: string,
     ddsPath: string,
     targets: string[],
     version: string,
+    options?: any,
   ): Promise<any>;
   importImages(version: string, selection: any): Promise<any>;
   previewImportImages(version: string): Promise<any>;
+  /** FF13: desfaz as inserções no filelist (bins truncados + índices restaurados). */
+  restoreFilelistInserts?(version: string): Promise<any>;
   refreshImageDuplicates(kind: string, version: string): Promise<void>;
   replicateImage(kind: string, id: string, targets: string[], version: string): Promise<any>;
   deleteImages(

@@ -110,8 +110,16 @@ export function SelectImageSavePath(
   );
 }
 
-export function ImportImage(version: unknown, ref: string, ddsPath: string): Promise<void> {
-  return svc.ImportImage(partOf(version), ref, ddsPath);
+/** Destino padrão do import: converte para mods/ (comportamento de sempre). */
+const defaultImportOptions = { write_mods: true, insert_filelist: false };
+
+export function ImportImage(
+  version: unknown,
+  ref: string,
+  ddsPath: string,
+  options?: any,
+): Promise<void> {
+  return svc.ImportImage(partOf(version), ref, ddsPath, options ?? defaultImportOptions);
 }
 
 export function ImportImageGroup(
@@ -119,8 +127,15 @@ export function ImportImageGroup(
   ref: string,
   ddsPath: string,
   targets: string[],
+  options?: any,
 ): Promise<any> {
-  return svc.ImportImageGroup(partOf(version), ref, ddsPath, targets ?? null);
+  return svc.ImportImageGroup(
+    partOf(version),
+    ref,
+    ddsPath,
+    targets ?? null,
+    options ?? defaultImportOptions,
+  );
 }
 
 export function PreviewImportImages(version: unknown): Promise<any> {
@@ -129,6 +144,11 @@ export function PreviewImportImages(version: unknown): Promise<any> {
 
 export function ImportImages(version: unknown, selection: any): Promise<any> {
   return svc.ImportImages(partOf(version), selection);
+}
+
+/** Desfaz as inserções no filelist (trunca os bins e restaura os índices). */
+export function RestoreFilelistInserts(version: unknown): Promise<any> {
+  return svc.RestoreFilelistInserts(partOf(version));
 }
 
 export function RefreshImageDuplicates(): Promise<void> {

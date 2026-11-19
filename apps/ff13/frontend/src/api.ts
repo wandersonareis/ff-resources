@@ -133,11 +133,13 @@ export const ff13Api: GameApi = {
     image.ExtractImageSelection(version, [id, ...(targets ?? [])], '') as Promise<any>,
   extractImageSelection: (_kind, ids, version) =>
     image.ExtractImageSelection(version, ids, '') as Promise<any>,
-  importImage: (_kind, id, ddsPath, version) => image.ImportImage(version, id, ddsPath),
-  importImageGroup: (_kind, id, ddsPath, targets, version) =>
-    image.ImportImageGroup(version, id, ddsPath, targets),
+  importImage: (_kind, id, ddsPath, version, options) =>
+    image.ImportImage(version, id, ddsPath, options),
+  importImageGroup: (_kind, id, ddsPath, targets, version, options) =>
+    image.ImportImageGroup(version, id, ddsPath, targets, options),
   importImages: (version, selection) => image.ImportImages(version, selection),
   previewImportImages: (version) => image.PreviewImportImages(version),
+  restoreFilelistInserts: (version) => image.RestoreFilelistInserts(version),
   refreshImageDuplicates: async () => {},
   replicateImage: async () => emptyBatchResult,
   deleteImages: (_kind, id, targets, scope, version) =>

@@ -72,12 +72,30 @@ type ImageDuplicate struct {
 	Identical bool `json:"identical"`
 }
 
+// ImageImportOptions escolhe os DESTINOS da importação de imagem. Os dois são
+// independentes:
+//
+//	WriteMods      → grava o binário convertido em mods/partN (o destino que a
+//	                 UI chama de "Comprimir");
+//	InsertFilelist → insere o binário na cadeia filelist/white bin (append no
+//	                 fim do white bin + reaponta os ponteiros). Não toca em
+//	                 data/.
+//
+// Sem nenhum dos dois a importação não tem destino: o backend assume
+// WriteMods (compatibilidade com chamadas antigas e com o import de antes).
+type ImageImportOptions struct {
+	WriteMods      bool `json:"write_mods"`
+	InsertFilelist bool `json:"insert_filelist"`
+}
+
 // ImageImportResult é o resultado de uma importação em lote: o que entrou,
-// o que falhou (id: motivo) e o total considerado.
+// o que falhou (id: motivo), os avisos (não indexado no filelist, jogo não
+// configurado…) e o total considerado.
 type ImageImportResult struct {
-	Updated []string `json:"updated"`
-	Failed  []string `json:"failed"`
-	Total   int      `json:"total"`
+	Updated  []string `json:"updated"`
+	Failed   []string `json:"failed"`
+	Warnings []string `json:"warnings"`
+	Total    int      `json:"total"`
 }
 
 // BatchResult é o resultado genérico de uma operação em lote sobre imagens
@@ -180,7 +198,10 @@ type ImageImportSelectionEntry struct {
 }
 
 // ImageImportSelection é a seleção do modal: só o que está aqui é
-// aplicado — nunca a pasta traduzida inteira.
+// aplicado — nunca a pasta traduzida inteira. Os destinos seguem
+// ImageImportOptions: os dois independentes.
 type ImageImportSelection struct {
-	Entries []ImageImportSelectionEntry `json:"entries"`
+	Entries        []ImageImportSelectionEntry `json:"entries"`
+	WriteMods      bool                        `json:"write_mods"`
+	InsertFilelist bool                        `json:"insert_filelist"`
 }

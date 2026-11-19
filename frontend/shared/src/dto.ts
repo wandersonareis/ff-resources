@@ -125,9 +125,22 @@ export interface ImageImportPreview {
   errors: string[];
 }
 
+/**
+ * Destinos do import de imagem. Os dois são independentes:
+ * `write_mods` grava o binário convertido em mods/ ("Comprimir") e
+ * `insert_filelist` insere na cadeia filelist/white bin ("Inserir").
+ */
+export interface ImageImportOptions {
+  write_mods: boolean;
+  insert_filelist: boolean;
+}
+
 export interface ImageImportResult {
   updated: string[];
   failed: string[];
+  /** Avisos do import (não indexado no filelist etc.). Opcional para os apps
+   *  que ainda não devolvem o campo. */
+  warnings?: string[];
   total: number;
 }
 
@@ -137,8 +150,23 @@ export interface ImageImportSelectionEntry {
   copies?: string[];
 }
 
+/**
+ * Seleção do lote. Os destinos são opcionais no tipo compartilhado para os
+ * apps que não usam inserção; o FF13 sempre envia os dois.
+ */
 export interface ImageImportSelection {
   entries: ImageImportSelectionEntry[];
+  write_mods?: boolean;
+  insert_filelist?: boolean;
+}
+
+/** Retrato de "reverter inserções do filelist". */
+export interface FilelistRestoreResult {
+  applied: number;
+  bins: number;
+  filelists: number;
+  bytes: number;
+  warnings: string[];
 }
 
 export interface BatchResult {

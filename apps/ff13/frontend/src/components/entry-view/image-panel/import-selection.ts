@@ -53,9 +53,10 @@ export function allSelectedState(preview: dto.ImageImportPreview): boolean | 'in
   return noneMarked ? false : 'indeterminate';
 }
 
-/** Monta o payload do apply a partir do estado do modal. */
+/** Monta o payload do apply a partir do estado do modal + destinos. */
 export function buildImageImportSelection(
   preview: dto.ImageImportPreview,
+  options: dto.ImageImportOptions,
 ): dto.ImageImportSelection {
   const entries: dto.ImageImportSelectionEntry[] = [];
   for (const entry of preview.entries) {
@@ -65,7 +66,7 @@ export function buildImageImportSelection(
     if (!image && copies.length === 0) continue;
     entries.push({ id: entry.id, image, copies });
   }
-  return { entries };
+  return { entries, ...options };
 }
 
 /**

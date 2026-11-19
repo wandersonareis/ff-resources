@@ -96,14 +96,20 @@ describe('plannedWrites / buildImageImportSelection', () => {
       entry('b', { selected: false }),
       entry('bad', { error: 'formato inválido' }),
     ]);
-    expect(buildImageImportSelection(p)).toEqual({
+    expect(
+      buildImageImportSelection(p, { write_mods: true, insert_filelist: true }),
+    ).toEqual({
       entries: [{ id: 'a', image: true, copies: ['a1'] }],
+      write_mods: true,
+      insert_filelist: true,
     });
   });
 
   it('seleção vazia quando nada está marcado', () => {
     const p = preview([entry('a', { selected: false }), entry('b', { selected: false })]);
-    expect(buildImageImportSelection(p)).toEqual({ entries: [] });
+    expect(
+      buildImageImportSelection(p, { write_mods: true, insert_filelist: false }),
+    ).toEqual({ entries: [], write_mods: true, insert_filelist: false });
     expect(plannedWrites(p)).toBe(0);
   });
 });

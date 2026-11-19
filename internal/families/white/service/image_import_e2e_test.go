@@ -189,7 +189,7 @@ func TestImportImageStandaloneEndToEnd(t *testing.T) {
 	if err := os.WriteFile(picked, dds, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.ImportImage(part, imageRef, picked); err != nil {
+	if err := svc.ImportImage(part, imageRef, picked, dto.ImageImportOptions{WriteMods: true}); err != nil {
 		t.Fatalf("ImportImage: %v", err)
 	}
 	payloadRel := ImagePairPath(containerRel)
@@ -213,7 +213,7 @@ func TestImportImageStandaloneEndToEnd(t *testing.T) {
 	}
 	mods2 := t.TempDir()
 	t.Setenv("FF_RESOURCES_MODS", mods2)
-	err = svc.ImportImage(part, imageRef, badPath)
+	err = svc.ImportImage(part, imageRef, badPath, dto.ImageImportOptions{WriteMods: true})
 	if err == nil || !strings.Contains(err.Error(), "dimensões") {
 		t.Fatalf("esperava erro de dimensões, veio %v", err)
 	}

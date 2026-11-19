@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type * as dto from '@ff-resources/ui/dto';
 import type { EntryView } from '@/components/entry-view/entry-view-store';
 import { parseError } from '@/lib/ffx/error-handler';
+import { invalidateFilelistCache } from '@/lib/ffx/filelist';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';
 import type { EntryRow } from '@/lib/ffx/tree-data';
 import {
@@ -13,6 +14,7 @@ import {
   importImages,
   previewImportImages,
   refreshImageDuplicates,
+  restoreFilelistInserts,
   saveImage,
   saveImageTo,
   selectImageExportDir,
@@ -70,6 +72,30 @@ export function useImageActions({
    * payload montado por buildImageImportSelection.
    */
   const [pendingPreview, setPendingPreview] = useState<dto.ImageImportPreview | null>(null);
+
+  /**
+   * Destinos do import (Comprimir/Inserir). Compartilhado entre o menu do
+   * import avulso e o modal do lote: "Comprimir" nasce ligado (é a conversão
+   * para mods/, o comportamento de sempre) e "Inserir" desligado (modifica a
+   * instalação do jogo).
+   */
+  const [importOptions, setImportOptions] = useState<dto.ImageImportOptions>({
+    write_mods: true,
+    insert_filelist: false,
+  });
+
+  const destinationLabel = (opts: dto.ImageImportOptions): string => {
+    const dests: string[] = [];
+    if (opts.write_mods) dests.push('mods/');
+    if (opts.insert_filelist) dests.push('filelist');
+    return dests.length === 0 ? 'nenhum destino' : dests.join(' e ');
+  };
+
+  const afterImportReload = async (opts: dto.ImageImportOptions) => {
+    // O filelist mudou em disco: o cache do frontend também precisa cair.
+    if (opts.insert_filelist) invalidateFilelistCache();
+    await actions.reload();
+  };
 
   /**
    * Textura aberta pelo navegador de .vbf: o container é somente leitura;
@@ -220,21 +246,31 @@ export function useImageActions({
         return;
       }
       if (!all) {
-        await importImage(entry.id, path, version);
-        toast.success(`Textura importada: ${path}`);
+        await importImage(entry.id, path, version, importOptions);
+        toast.success(
+          `Textura importada (${destinationLabel(importOptions)}): ${path}`,
+        );
       } else {
         const targets = duplicates.map((d) => d.id);
-        const result = await importImageGroup(entry.id, path, targets, version);
+        const result = await importImageGroup(entry.id, path, targets, version, importOptions);
+        const warnings = result.warnings ?? [];
         if (result.failed.length > 0) {
           toast.warning(`Importadas ${result.updated.length} de ${result.total} texturas.`, {
             description: result.failed.slice(0, 3).join('; '),
           });
+        } else if (warnings.length > 0) {
+          toast.warning(
+            `Importadas ${result.updated.length} de ${result.total} texturas (${warnings.length} aviso(s)).`,
+            { description: warnings.slice(0, 3).join('; ') },
+          );
         } else {
-          toast.success(`Textura importada em ${result.updated.length} textura(s) idêntica(s).`);
+          toast.success(
+            `Textura importada em ${result.updated.length} textura(s) idêntica(s) (${destinationLabel(importOptions)}).`,
+          );
         }
       }
-      // Recarrega árvore + textura: o payload em mods/ mudou.
-      await actions.reload();
+      // Recarrega árvore + textura: o payload em mods/ e/ou filelist mudou.
+      await afterImportReload(importOptions);
       await actions.selectEntry(entry);
     } catch (error) {
       toast.error(parseError(error));
@@ -248,6 +284,10 @@ export function useImageActions({
 
   const onImport = async () => {
     if (!entry) return;
+    if (!importOptions.write_mods && !importOptions.insert_filelist) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
     try {
       const path = await selectImageFile(entry.id, version);
       if (!path) return;
@@ -288,6 +328,10 @@ export function useImageActions({
    * (imagens e cópias) — nada regrava o binário aqui.
    */
   const openImportImages = async () => {
+    if (!importOptions.write_mods && !importOptions.insert_filelist) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
     try {
       setPendingPreview(await previewImportImages(version));
     } catch (error) {
@@ -302,30 +346,68 @@ export function useImageActions({
    */
   const confirmImportImages = async () => {
     if (!pendingPreview) return;
-    const selection = buildImageImportSelection(pendingPreview);
+    const options = importOptions;
+    const selection = buildImageImportSelection(pendingPreview, options);
     setBusy('importBatch');
     const toastId = 'importImages';
     toast.loading('Importando imagens…', { id: toastId });
     try {
       const result = await importImages(version, selection);
       setPendingPreview(null);
+      const dest = destinationLabel(options);
       if (result.updated.length === 0) {
         const motivo = result.failed.length > 0 ? ` (${result.failed.length} falharam)` : '';
-        toast.info(`Nada foi gravado em mods/.${motivo}`, { id: toastId });
+        toast.info(`Nada foi gravado (${dest}).${motivo}`, { id: toastId });
         return;
       }
+      const warnings = result.warnings ?? [];
       const falhas = result.failed.length > 0 ? ` (${result.failed.length} falharam)` : '';
+      const avisos = warnings.length > 0 ? ` (${warnings.length} aviso(s))` : '';
+      const details = [...result.failed, ...warnings].slice(0, 3).join('; ');
       toast.success(
-        `${result.updated.length} de ${result.total} imagem(ns) gravada(s) em mods/.${falhas}`,
+        `${result.updated.length} de ${result.total} imagem(ns) processada(s) em ${dest}.${falhas}${avisos}`,
         {
           id: toastId,
-          ...(result.failed.length > 0
-            ? { description: result.failed.slice(0, 3).join('; ') }
+          ...(details ? { description: details } : {}),
+        },
+      );
+      await afterImportReload(options);
+      if (entry) await actions.selectEntry(entry);
+    } catch (error) {
+      toast.error(parseError(error), { id: toastId });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /**
+   * Desfaz TODAS as inserções da part: o backend restaura os filelists do
+   * backup e trunca os white bins ao tamanho original. Funciona mesmo depois
+   * de fechar e reabrir o app (o manifesto fica em mods/partN).
+   */
+  const onRestoreInserts = async () => {
+    const toastId = 'restoreFilelist';
+    setBusy('import');
+    toast.loading('Revertendo inserções no filelist…', { id: toastId });
+    try {
+      const result = await restoreFilelistInserts(version);
+      if (result.applied === 0 && result.warnings.length === 0) {
+        toast.info('Nenhuma inserção no filelist para reverter.', { id: toastId });
+        return;
+      }
+      invalidateFilelistCache();
+      await actions.reload();
+      const avisos = result.warnings.length > 0 ? ` (${result.warnings.length} aviso(s))` : '';
+      toast.success(
+        `Inserções revertidas: ${result.bins} white bin(s), ${result.filelists} filelist(s), ` +
+          `${result.bytes} byte(s) devolvidos.${avisos}`,
+        {
+          id: toastId,
+          ...(result.warnings.length > 0
+            ? { description: result.warnings.slice(0, 3).join('; ') }
             : {}),
         },
       );
-      await actions.reload();
-      if (entry) await actions.selectEntry(entry);
     } catch (error) {
       toast.error(parseError(error), { id: toastId });
     } finally {
@@ -394,6 +476,8 @@ export function useImageActions({
     pendingImport,
     setPendingImport,
     pendingPreview,
+    importOptions,
+    setImportOptions,
     openImportImages,
     confirmImportImages,
     closeImportImages: () => setPendingPreview(null),
@@ -403,6 +487,7 @@ export function useImageActions({
     onImport,
     runImport,
     onRefresh,
+    onRestoreInserts,
     toggleAllEntries,
     toggleEntry,
     toggleCopy,

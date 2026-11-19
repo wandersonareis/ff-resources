@@ -1,5 +1,6 @@
 'use client';
 
+import type * as dto from '@ff-resources/ui/dto';
 import { Copy, FlipVertical, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SHORTCUTS, shortcutTip } from '@/lib/ffx/shortcuts';
@@ -26,6 +27,9 @@ export function ImageToolbar({
   onExtractTo,
   onImport,
   onImportTranslated,
+  importOptions,
+  onImportOptionsChange,
+  onRestoreInserts,
   onReplicate,
   onToggleFlip,
   onToggleInfo,
@@ -49,6 +53,10 @@ export function ImageToolbar({
   onExtractTo: (format: 'dds' | 'png' | 'dds+png') => void;
   onImport: () => void;
   onImportTranslated: () => void;
+  importOptions: dto.ImageImportOptions;
+  onImportOptionsChange: (next: dto.ImageImportOptions) => void;
+  /** Desfaz as inserções no filelist (baixa o manifesto de rollback). */
+  onRestoreInserts: () => void;
   onReplicate: () => void;
   onToggleFlip: () => void;
   /** Oculta/exibe a coluna de informações ao lado da prévia. */
@@ -68,6 +76,9 @@ export function ImageToolbar({
             disabled={busy !== null}
             onImportFile={onImport}
             onImportTranslated={onImportTranslated}
+            options={importOptions}
+            onOptionsChange={onImportOptionsChange}
+            onRestoreInserts={onRestoreInserts}
             busy={busy}
           />
         ) : null}

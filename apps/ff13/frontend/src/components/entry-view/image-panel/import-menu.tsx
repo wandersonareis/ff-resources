@@ -1,27 +1,37 @@
 'use client';
 
-import { ChevronDown, FolderInput, Images, Upload } from 'lucide-react';
+import type * as dto from '@ff-resources/ui/dto';
+import { ChevronDown, FolderInput, Images, Undo2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ImportDestinationOptions } from './import-destination-options';
 import type { ImageBusy } from './use-image-actions';
 
 export function ImageImportMenu({
   disabled,
   onImportFile,
   onImportTranslated,
+  options,
+  onOptionsChange,
+  onRestoreInserts,
   busy,
 }: {
   disabled: boolean;
   onImportFile: () => void;
   onImportTranslated: () => void;
+  options: dto.ImageImportOptions;
+  onOptionsChange: (next: dto.ImageImportOptions) => void;
+  onRestoreInserts: () => void;
   busy: ImageBusy;
 }) {
   const isBusy = busy === 'import' || busy === 'importBatch';
+  const noDestination = !options.write_mods && !options.insert_filelist;
 
   return (
     <DropdownMenu>
@@ -38,11 +48,24 @@ export function ImageImportMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-70">
+        <ImportDestinationOptions
+          options={options}
+          onChange={onOptionsChange}
+          disabled={isBusy}
+          compact
+          idPrefix="menu-import-dest"
+        />
+        <DropdownMenuSeparator />
+
         {/* 1. Padrão = mods/translated/images (primeiro item, como no texto) */}
         <DropdownMenuItem
           onSelect={() => onImportTranslated()}
-          title="Importa os .dds de mods/translated/images/<part> — pasta = caminho do container, arquivo = nome do registro"
-          disabled={isBusy}
+          title={
+            noDestination
+              ? 'Marque Comprimir ou Inserir antes de importar'
+              : 'Importa os .dds de mods/translated/images/<part> — pasta = caminho do container, arquivo = nome do registro'
+          }
+          disabled={isBusy || noDestination}
         >
           <Images size={14} />
           Importar
@@ -51,14 +74,30 @@ export function ImageImportMenu({
         {/* 2. Importar de arquivo .dds */}
         <DropdownMenuItem
           onSelect={() => onImportFile()}
-          title="Aplica um .dds escolhido na imagem ABERTA — o caminho e o nome do arquivo não importam"
-          disabled={isBusy}
+          title={
+            noDestination
+              ? 'Marque Comprimir ou Inserir antes de importar'
+              : 'Aplica um .dds escolhido na imagem ABERTA — o caminho e o nome do arquivo não importam'
+          }
+          disabled={isBusy || noDestination}
         >
           <FolderInput size={14} />
           Importar de…
           <span className="ml-auto pl-3 text-xs opacity-60">arquivo</span>
         </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => onRestoreInserts()}
+          title="Restaura os filelists do backup e trunca os white bins ao tamanho original"
+          disabled={isBusy}
+        >
+          <Undo2 size={14} />
+          Reverter inserções
+          <span className="ml-auto pl-3 text-xs opacity-60">filelist</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+

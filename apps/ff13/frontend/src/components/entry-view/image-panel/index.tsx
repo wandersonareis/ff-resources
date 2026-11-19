@@ -65,6 +65,8 @@ export function ImagePanel({ view }: { view: EntryView }) {
     pendingImport,
     setPendingImport,
     pendingPreview,
+    importOptions,
+    setImportOptions,
     openImportImages,
     confirmImportImages,
     closeImportImages,
@@ -74,6 +76,7 @@ export function ImagePanel({ view }: { view: EntryView }) {
     onExtractTo,
     runImport,
     onRefresh,
+    onRestoreInserts,
     toggleAllEntries,
     toggleEntry,
     toggleCopy,
@@ -150,6 +153,9 @@ export function ImagePanel({ view }: { view: EntryView }) {
           onExtractTo={(format) => void onExtractTo(format)}
           onImport={() => void onImport()}
           onImportTranslated={() => void openImportImages()}
+          importOptions={importOptions}
+          onImportOptionsChange={setImportOptions}
+          onRestoreInserts={() => void onRestoreInserts()}
           onReplicate={() => openAction('replicate')}
           onToggleFlip={preview.toggleFlip}
           onToggleInfo={toggleImageInfo}
@@ -233,6 +239,8 @@ export function ImagePanel({ view }: { view: EntryView }) {
           open={pendingPreview !== null}
           preview={pendingPreview}
           busy={busy === 'importBatch'}
+          options={importOptions}
+          onOptionsChange={setImportOptions}
           onOpenChange={(open) => {
             if (!open) closeImportImages();
           }}

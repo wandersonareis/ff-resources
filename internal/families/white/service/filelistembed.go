@@ -35,8 +35,16 @@ type FilelistIndex struct {
 	Parent string
 	// Virtual: caminho virtual do índice dentro do container do pai.
 	Virtual string
-	// Container: white bin onde o ARQUIVO do índice mora.
+	// Container: white bin que este índice DESCREVE (onde moram os dados
+	// das entradas dele).
 	Container string
+	// IndexBin: white bin onde o ARQUIVO deste índice mora. Vazio nos
+	// índices de disco; nos embutidos é o Container do índice pai (o
+	// filelist de zona mora dentro do bin global).
+	IndexBin string
+	// ParentIndex: o índice que contém o ARQUIVO deste índice. Nil nos de
+	// disco. É a cadeia usada para regravar um índice embutido.
+	ParentIndex *FilelistIndex
 	// Level: 0 = índice em disco, 1+ = índice embutido.
 	Level int
 	// Coll: a coleção já parseada.
@@ -152,12 +160,14 @@ func DiscoverFilelists(p parts.Part, roots []common.FilelistRoot, bins map[strin
 			}
 			seen[id] = true
 			child := &FilelistIndex{
-				Path:      id,
-				Parent:    cur.Path,
-				Virtual:   ep,
-				Container: container,
-				Level:     cur.Level + 1,
-				Coll:      coll,
+				Path:        id,
+				Parent:      cur.Path,
+				Virtual:     ep,
+				Container:   container,
+				IndexBin:    cur.Container,
+				ParentIndex: cur,
+				Level:       cur.Level + 1,
+				Coll:        coll,
 			}
 			queue = append(queue, child)
 			out = append(out, child)
@@ -194,12 +204,14 @@ func EmbeddedRoot(p parts.Part, root string) (*FilelistIndex, error) {
 		container = PartBins(p)[key]
 	}
 	return &FilelistIndex{
-		Path:      root,
-		Parent:    parentPath,
-		Virtual:   virtual,
-		Container: container,
-		Level:     parentIndex.Level + 1,
-		Coll:      embedded,
+		Path:        root,
+		Parent:      parentPath,
+		Virtual:     virtual,
+		Container:   container,
+		IndexBin:    parentIndex.Container,
+		ParentIndex: parentIndex,
+		Level:       parentIndex.Level + 1,
+		Coll:        embedded,
 	}, nil
 }
 

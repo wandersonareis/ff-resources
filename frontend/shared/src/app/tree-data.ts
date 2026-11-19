@@ -203,9 +203,17 @@ export async function applyYkdText(
   return api.applyYkdText('ykd', id, version, patch);
 }
 
-/** Reempacota um .dds sobre o container pristine e grava em mods/. */
-export function importImage(id: string, ddsPath: string, version: GameVersionId): Promise<void> {
-  return api().importImage('images', id, ddsPath, version);
+/**
+ * Reempacota um .dds sobre o container pristine e entrega nos destinos
+ * escolhidos (mods/ e/ou filelist).
+ */
+export function importImage(
+  id: string,
+  ddsPath: string,
+  version: GameVersionId,
+  options?: dto.ImageImportOptions,
+): Promise<void> {
+  return api().importImage('images', id, ddsPath, version, options);
 }
 
 /**
@@ -232,6 +240,7 @@ export function importImageGroup(
   ddsPath: string,
   targets: string[],
   version: GameVersionId,
+  options?: dto.ImageImportOptions,
 ): Promise<dto.ImageImportResult> {
   return api().importImageGroup(
     'images',
@@ -239,6 +248,7 @@ export function importImageGroup(
     ddsPath,
     targets,
     version,
+    options,
   );
 }
 
@@ -261,6 +271,18 @@ export function importImages(
   selection: dto.ImageImportSelection,
 ): Promise<dto.ImageImportResult> {
   return api().importImages(version, selection);
+}
+
+/** Desfaz as inserções no filelist da part (razão: truncar bins + restaurar). */
+export async function restoreFilelistInserts(
+  version: GameVersionId,
+): Promise<dto.FilelistRestoreResult> {
+  const api = getCurrentApi();
+  if (!api.restoreFilelistInserts) {
+    throw new Error('Este jogo não oferece inserção no filelist.');
+  }
+  const result = await api.restoreFilelistInserts(version);
+  return { ...result, warnings: result?.warnings ?? [] };
 }
 
 /**

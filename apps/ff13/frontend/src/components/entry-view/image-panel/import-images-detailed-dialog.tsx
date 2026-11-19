@@ -18,12 +18,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ImportDestinationOptions } from './import-destination-options';
 import { allSelectedState, plannedWrites } from './import-selection';
 
 interface ImportImagesDetailedDialogProps {
   open: boolean;
   preview: dto.ImageImportPreview | null;
   busy: boolean;
+  options: dto.ImageImportOptions;
+  onOptionsChange: (next: dto.ImageImportOptions) => void;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   onToggleAll: () => void;
@@ -171,6 +174,8 @@ export function ImportImagesDetailedDialog({
   open,
   preview,
   busy,
+  options,
+  onOptionsChange,
   onOpenChange,
   onConfirm,
   onToggleAll,
@@ -178,6 +183,7 @@ export function ImportImagesDetailedDialog({
   onToggleCopy,
 }: ImportImagesDetailedDialogProps) {
   const planned = preview ? plannedWrites(preview) : 0;
+  const hasDestination = options.write_mods || options.insert_filelist;
 
   if (!preview) {
     return (
@@ -218,13 +224,20 @@ export function ImportImagesDetailedDialog({
         <DialogHeader>
           <DialogTitle>Importar imagens traduzidas</DialogTitle>
           <DialogDescription>
-            Confira o que será importado: só as imagens marcadas são gravadas em mods/. Os caminhos
-            são relativos a mods/translated/images/&lt;part&gt; (pasta = caminho do container,
-            arquivo = nome do registro).
+            Confira o que será importado: só as imagens marcadas são convertidas. Escolha abaixo se
+            o binário vai para mods/ (Comprimir) e/ou para o filelist (Inserir). Os caminhos são
+            relativos a mods/translated/images/&lt;part&gt; (pasta = caminho do container, arquivo =
+            nome do registro).
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+          <ImportDestinationOptions
+            options={options}
+            onChange={onOptionsChange}
+            disabled={busy}
+          />
+
           {/* Origem — exibida uma vez, completa; as linhas ficam relativas. */}
           <div className="rounded-md border border-muted bg-muted/40 p-2 text-sm">
             <p className="font-medium text-muted-foreground">Origem:</p>
@@ -338,7 +351,7 @@ export function ImportImagesDetailedDialog({
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button disabled={busy || planned === 0} onClick={onConfirm}>
+          <Button disabled={busy || planned === 0 || !hasDestination} onClick={onConfirm}>
             {busy ? (
               'Importando…'
             ) : (
