@@ -400,6 +400,86 @@ func (Service) SaveImage(part, ref, format, destPath string) error {
 	return fmt.Errorf("formato %q inválido (esperado dds ou png)", format)
 }
 
+// ExtractImageFiles é o "Extrair binário" da imagem: copia o arquivo REAL do
+// filelist/white bin (payload .imgb para uma imagem; o container inteiro
+// quando o nó é um container) para destRoot/<caminho interno>. O Read da
+// fonte já descomprime o zlib do white bin. Existente = pulado, salvo force.
+//
+// Só aceita refs com Source == "filelist": data/ não tem o que extrair.
+func (Service) ExtractImageFiles(part string, refs []string, destRoot string, force bool) (dto.BatchResult, error) {
+	part = config.NormalizePart(part)
+	res := dto.BatchResult{Done: []string{}, Failed: []string{}, Skipped: []string{}, Total: len(refs)}
+	dest := strings.TrimSpace(destRoot)
+	if dest == "" {
+		d, err := config.PartRoot("data", part)
+		if err != nil {
+			return res, err
+		}
+		dest = d
+	}
+	for _, raw := range refs {
+		r, err := DecodeImageRef(raw)
+		if err != nil {
+			res.Failed = append(res.Failed, raw+": "+err.Error())
+			continue
+		}
+		if r.Source != "filelist" {
+			res.Failed = append(res.Failed, r.Path+": Extrair só vale para itens do filelist")
+			continue
+		}
+		var f ImageFile
+		var rel string
+		if r.Entry != "" {
+			// Imagem dentro de container: o arquivo é o payload .imgb.
+			_, table, serr := ImageSection(part, r)
+			if serr != nil {
+				res.Failed = append(res.Failed, r.Path+": "+serr.Error())
+				continue
+			}
+			pf, perr := ResolveImagePayload(part, r, table.Rel)
+			if perr != nil {
+				res.Failed = append(res.Failed, r.Path+": "+perr.Error())
+				continue
+			}
+			f, rel = pf, pf.Rel
+		} else {
+			// Arquivo direto ou container inteiro.
+			ff, ferr := ResolveImageFile(part, r)
+			if ferr != nil {
+				res.Failed = append(res.Failed, r.Path+": "+ferr.Error())
+				continue
+			}
+			f, rel = ff, canonicalImageRel(part, r)
+		}
+		if rel == "" || strings.Contains(rel, "..") {
+			res.Failed = append(res.Failed, r.Path+": caminho interno inválido")
+			continue
+		}
+		dst := filepath.Join(dest, filepath.FromSlash(rel))
+		if !force {
+			if _, serr := os.Stat(dst); serr == nil {
+				res.Skipped = append(res.Skipped, dst)
+				continue
+			}
+		}
+		data, rerr := f.Read()
+		if rerr != nil {
+			res.Failed = append(res.Failed, rel+": "+rerr.Error())
+			continue
+		}
+		if merr := os.MkdirAll(filepath.Dir(dst), 0o755); merr != nil {
+			res.Failed = append(res.Failed, rel+": "+merr.Error())
+			continue
+		}
+		if werr := os.WriteFile(dst, data, 0o644); werr != nil {
+			res.Failed = append(res.Failed, rel+": "+werr.Error())
+			continue
+		}
+		res.Done = append(res.Done, dst)
+	}
+	return res, nil
+}
+
 // ImageExportPath devolve o caminho padrão de exportação em mods/edits/images:
 // <part>/<container-rel>/<registro>.<fmt> para imagens de container (o mesmo
 // caminho que o import de translated/images espera) e o layout antigo com o

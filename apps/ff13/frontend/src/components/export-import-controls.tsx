@@ -4,6 +4,7 @@ import { Events } from '@wailsio/runtime';
 import { ChevronDown, Download, FileUp, FolderInput, ListChecks, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type * as dto from '@ff-resources/ui/dto';
+import { ExportOutputOptions } from '@/components/dialogs/export-output-options';
 import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import { ImportSummaryDialog } from '@/components/dialogs/import-summary-dialog';
 import { ImportTranslatedDialog } from '@/components/dialogs/import-translated-dialog';
@@ -21,6 +22,7 @@ import { type EntryKind, KIND_LABELS } from '@/lib/ffx/display-names';
 import { parseError } from '@/lib/ffx/error-handler';
 import { exportLangs } from '@/lib/ffx/export-langs';
 import { EXPORT_FORMAT_LABELS, useExportSelection } from '@/lib/ffx/export-selection';
+import { exportOutput, useExportOutput } from '@/lib/ffx/export-output';
 import { invalidateFilelistCache } from '@/lib/ffx/filelist';
 import { GAME_VERSIONS, type GameVersionId } from '@/lib/ffx/game-version';
 import { compareKindLabels, entryKindsAlpha } from '@/lib/ffx/kinds';
@@ -90,6 +92,11 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   // o popover do export não tem seletor próprio.
   const activeFormat = useExportSelection().format;
 
+  // Saídas do export (Descompactar/Extrair), compartilhadas com a imagem e
+  // com o menu de contexto.
+  const exportOutputState = useExportOutput();
+  const hasOutput = exportOutputState.decode || exportOutputState.extract;
+
   const toggleImportScope = (kind: EntryKind) => {
     setImportScopes((prev) => {
       const current = prev[version] ?? entryKindsAlpha(version);
@@ -121,17 +128,32 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   const runExport = useCallback(
     async (kinds: EntryKind[]) => {
       const format = activeFormat;
+      const options = exportOutput.getSnapshot();
+      if (!options.decode && !options.extract) {
+        toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+        return;
+      }
       if (kinds.length === 0) {
         toast.info('Nada para exportar — marque um tipo no escopo.');
         return;
       }
-      const items = [...kinds]
-        .sort(compareKindLabels)
-        .map((kind) => ({ kind, ids: [] as string[] }));
+      const items = [...kinds].sort(compareKindLabels).map((kind) => ({
+        kind,
+        ids: [] as string[],
+        // O header exporta a fonte VALIDADA (filelist); o backend cai em
+        // data/ quando o jogo não está configurado.
+        source: 'filelist',
+      }));
       try {
         // Idiomas: array do seletor do header (default + extras marcados);
-        // `[]` (pré-hidratação) = todos, o contrato do backend.
-        const paths = await exportArtifactBatch(items, version, exportLangs.langsOf(), format);
+        // do filelist o backend ignora o filtro e leva todos os idiomas.
+        const paths = await exportArtifactBatch(
+          items,
+          version,
+          exportLangs.langsOf(),
+          format,
+          options,
+        );
         if ((paths ?? []).length === 0) {
           toast.info('Nada para exportar.');
         }
@@ -260,7 +282,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
           <Button
             size="sm"
             variant="outline"
-            title={`Exportar textos — ${EXPORT_FORMAT_LABELS[activeFormat]} (formato do seletor ao lado das configurações): todos os tipos, ou só os tipos marcados no escopo`}
+            title={`Exportar — ${EXPORT_FORMAT_LABELS[activeFormat]} (Descompactar) e/ou binário do filelist (Extrair); todos os tipos ou só os marcados no escopo`}
           >
             <Download size={16} />
             <span className="hidden sm:inline">Exportar</span>
@@ -268,7 +290,9 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-70">
-          <DropdownMenuItem onSelect={() => void runExport(servedKinds)}>
+          <ExportOutputOptions compact idPrefix="header-export-out" />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => void runExport(servedKinds)} disabled={!hasOutput}>
             <Download size={14} />
             Exportar
             <span className="ml-auto pl-3 text-xs opacity-60">todos os tipos</span>
@@ -286,7 +310,10 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
             </DropdownMenuCheckboxItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void runExport(activeScope)}>
+          <DropdownMenuItem
+            onSelect={() => void runExport(activeScope)}
+            disabled={!hasOutput}
+          >
             <ListChecks size={14} />
             Exportar seleção
             <span className="ml-auto pl-3 text-xs opacity-60">tipos marcados</span>

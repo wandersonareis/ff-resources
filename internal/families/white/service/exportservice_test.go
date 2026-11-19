@@ -8,6 +8,7 @@ import (
 
 	"ffresources/internal/families/white/codecs/wpd"
 	fmtstrings "ffresources/internal/shared/artifact/strings"
+	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
 	"ffresources/internal/shared/progress"
 )
@@ -184,7 +185,7 @@ func TestExportArtifactBatchWritesFile(t *testing.T) {
 		testZtrBlob(t, ids, []string{"Ola"}))
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("ExportArtifactBatch: %v", err)
 	}
@@ -225,9 +226,9 @@ func TestExportArtifactBatchKindScopesUnidades(t *testing.T) {
 	var svc Service
 
 	// Só o kind `event`: o artefato tem o nome do kind e só a unidade event.
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "event"}}, "part1", nil, "json")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "event"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
-		t.Fatalf("ExportArtifactBatch(event): %v", err)
+		t.Fatalf("ExportArtifactBatch(event, dto.ExportOptions{}): %v", err)
 	}
 	want := filepath.Join(root, "mods", "edits", "event_all_localizations_part1.json")
 	if len(paths) != 1 || paths[0] != want {
@@ -245,9 +246,9 @@ func TestExportArtifactBatchKindScopesUnidades(t *testing.T) {
 	}
 
 	// Só o kind `resident`: artefato irmão, sem colidir.
-	paths, err = svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "resident"}}, "part1", nil, "json")
+	paths, err = svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "resident"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
-		t.Fatalf("ExportArtifactBatch(resident): %v", err)
+		t.Fatalf("ExportArtifactBatch(resident, dto.ExportOptions{}): %v", err)
 	}
 	want = filepath.Join(root, "mods", "edits", "resident_all_localizations_part1.json")
 	if len(paths) != 1 || paths[0] != want {
@@ -262,9 +263,9 @@ func TestExportArtifactBatchKindScopesUnidades(t *testing.T) {
 	}
 
 	// O kind legado "ztr" continua exportando TUDO (compatibilidade).
-	paths, err = svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json")
+	paths, err = svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
-		t.Fatalf("ExportArtifactBatch(ztr): %v", err)
+		t.Fatalf("ExportArtifactBatch(ztr, dto.ExportOptions{}): %v", err)
 	}
 	want = filepath.Join(root, "mods", "edits", "text_all_localizations_part1.json")
 	if len(paths) != 1 || paths[0] != want {
@@ -309,7 +310,7 @@ func TestExportSkipsEmptyUnits(t *testing.T) {
 		testZtrBlob(t, []string{"id1"}, []string{"Texto JP"}))
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("ExportArtifactBatch: %v", err)
 	}
@@ -344,7 +345,7 @@ func TestExportOnlyEmptyUnitsWritesNothing(t *testing.T) {
 		testEmptyZtrBlob())
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("lote só com unidade vazia deveria ser no-op, veio erro: %v", err)
 	}
@@ -390,15 +391,15 @@ func TestExportArtifactBatchRejectsKindOfOtherPart(t *testing.T) {
 		})
 
 	var svc Service
-	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ac"}}, "part3", nil, "json"); err == nil {
+	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ac"}}, "part3", nil, "json", dto.ExportOptions{}); err == nil {
 		t.Error("part3 não tem `ac`: deveria falhar")
 	}
-	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "scenario"}}, "part1", nil, "json"); err == nil {
+	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "scenario"}}, "part1", nil, "json", dto.ExportOptions{}); err == nil {
 		t.Error("part1 não tem `scenario`: deveria falhar")
 	}
 	// Os kinds que a part serve passam.
 	for _, kind := range []string{"resident", "zone", "event", "scenario"} {
-		if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: kind}}, "part3", nil, "json"); err != nil {
+		if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: kind}}, "part3", nil, "json", dto.ExportOptions{}); err != nil {
 			t.Errorf("part3 deveria servir o kind %q: %v", kind, err)
 		}
 	}
@@ -426,7 +427,7 @@ func TestExportArtifactBatchMultiKindUmStepPorKind(t *testing.T) {
 		{Kind: "resident"},
 		{Kind: "event"},
 		{Kind: "scenario"},
-	}, "part3", nil, "json")
+	}, "part3", nil, "json", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("ExportArtifactBatch: %v", err)
 	}
@@ -481,13 +482,13 @@ func TestExportStepSpecsDeclaresTotals(t *testing.T) {
 // batch (o erro vira toast no frontend).
 func TestExportArtifactBatchRejectsUnknownFormat(t *testing.T) {
 	var svc Service
-	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "xml"); err == nil {
+	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "xml", dto.ExportOptions{}); err == nil {
 		t.Fatal("formato desconhecido deveria falhar")
 	}
-	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "events"}}, "part1", nil, "json"); err == nil {
+	if _, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "events"}}, "part1", nil, "json", dto.ExportOptions{}); err == nil {
 		t.Fatal("kind desconhecido deveria falhar")
 	}
-	if _, err := svc.ExportArtifactBatch(nil, "part1", nil, "json"); err == nil {
+	if _, err := svc.ExportArtifactBatch(nil, "part1", nil, "json", dto.ExportOptions{}); err == nil {
 		t.Fatal("lote vazio deveria falhar")
 	}
 }
@@ -540,9 +541,9 @@ func TestExportArtifactBatchStringsV2(t *testing.T) {
 		testZtrBlob(t, ids, []string{"Ola"}))
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "strings")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "strings", dto.ExportOptions{})
 	if err != nil {
-		t.Fatalf("ExportArtifactBatch(strings): %v", err)
+		t.Fatalf("ExportArtifactBatch(strings, dto.ExportOptions{}): %v", err)
 	}
 	if len(paths) != 1 {
 		t.Fatalf("paths: %v, quer 1 arquivo", paths)
@@ -627,7 +628,7 @@ func TestExportWritesIntoDataModsEdits(t *testing.T) {
 		testZtrBlob(t, ids, []string{"Hello"}))
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("ExportArtifactBatch: %v", err)
 	}

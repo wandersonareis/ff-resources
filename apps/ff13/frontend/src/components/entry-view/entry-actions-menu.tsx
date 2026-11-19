@@ -39,6 +39,7 @@ export function EntryActionsMenu({
   initialId,
   initialDuplicates,
   onExport,
+  onFilelistExtract,
   onVbfExtract,
   onVbfExtractImages,
   onVbfExport,
@@ -55,6 +56,8 @@ export function EntryActionsMenu({
   initialDuplicates?: dto.ImageDuplicate[] | null;
   /** Exportar de TEXTO — a lógica de seleção/formato fica no chamador. */
   onExport?: () => void;
+  /** Extrair binário REAL de um nó do filelist para data/. */
+  onFilelistExtract?: () => void;
   /** Extrai os caminhos marcados do container em data/ ou pasta escolhida. */
   onVbfExtract?: (mode: 'data' | 'choose') => void;
   /** Extrai DDS/PNG das imagens VBF selecionadas. */
@@ -182,6 +185,12 @@ export function EntryActionsMenu({
               >
                 <Download size={16} />
                 Exportar
+              </ContextMenuItem>
+            ) : null}
+            {target?.filelistRoot && target.kind ? (
+              <ContextMenuItem onSelect={() => onFilelistExtract?.()}>
+                <HardDriveDownload size={16} />
+                Extrair binário em data/
               </ContextMenuItem>
             ) : null}
             {!isYkd ? (

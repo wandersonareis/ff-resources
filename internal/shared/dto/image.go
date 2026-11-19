@@ -100,11 +100,12 @@ type ImageImportResult struct {
 
 // BatchResult é o resultado genérico de uma operação em lote sobre imagens
 // (extrair / replicar / deletar): o que deu certo, o que falhou (id:
-// motivo) e o total considerado.
+// motivo), o que foi pulado (já existe) e o total considerado.
 type BatchResult struct {
-	Done   []string `json:"done"`
-	Failed []string `json:"failed"`
-	Total  int      `json:"total"`
+	Done    []string `json:"done"`
+	Failed  []string `json:"failed"`
+	Skipped []string `json:"skipped,omitempty"`
+	Total   int      `json:"total"`
 }
 
 // ImageDuplicates é o resultado do binding leve das cópias — sem a imagem

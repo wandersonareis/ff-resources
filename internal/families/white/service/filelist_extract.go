@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"ffresources/internal/families/white/codecs/whitebin"
+	"ffresources/internal/families/white/profile/config"
 	"ffresources/internal/families/white/profile/parts"
+	"ffresources/internal/shared/dto"
 )
 
 // EXTRAÇÃO do filelist para data/.
@@ -25,12 +27,14 @@ import (
 
 // FilelistExtractResult é o retrato de uma extração.
 type FilelistExtractResult struct {
-	Root      string   `json:"root"`
-	Zone      string   `json:"zone,omitempty"`
-	Requested int      `json:"requested"`
-	Written   int      `json:"written"`
-	Skipped   int      `json:"skipped"`
-	Errors    []string `json:"errors,omitempty"`
+	Root         string   `json:"root"`
+	Zone         string   `json:"zone,omitempty"`
+	Requested    int      `json:"requested"`
+	Written      int      `json:"written"`
+	Skipped      int      `json:"skipped"`
+	Done         []string `json:"done,omitempty"`
+	SkippedFiles []string `json:"skipped_files,omitempty"`
+	Errors       []string `json:"errors,omitempty"`
 }
 
 // ExtractIndexEntriesToData é o miolo testável: recebe o índice já resolvido
@@ -47,6 +51,7 @@ func ExtractIndexEntriesToData(dataDir, zone string, idx *FilelistIndex, selecte
 		if !force {
 			if _, serr := os.Stat(dst); serr == nil {
 				result.Skipped++
+				result.SkippedFiles = append(result.SkippedFiles, dst)
 				continue
 			}
 		}
@@ -65,8 +70,44 @@ func ExtractIndexEntriesToData(dataDir, zone string, idx *FilelistIndex, selecte
 			continue
 		}
 		result.Written++
+		result.Done = append(result.Done, dst)
 	}
 	return result
+}
+
+// ExtractFilelistEntries é o "Extrair binário em data/" do filelist: resolve
+// o índice da raiz, seleciona os caminhos (arquivo ou diretório) e grava os
+// arquivos REAIS (descomprimindo o zlib do white bin) em data/partN, no
+// caminho interno. Existente = pulado, salvo force.
+func (Service) ExtractFilelistEntries(part, root string, paths []string, force bool) (dto.BatchResult, error) {
+	part = config.NormalizePart(part)
+	p := parts.Get(part)
+	idx, zone, err := ResolveFilelistIndex(p, root)
+	if err != nil {
+		return dto.BatchResult{Done: []string{}, Failed: []string{}}, err
+	}
+	selected := SelectExtractEntries(IndexEntries(p, idx, nil), paths)
+	if len(selected) == 0 {
+		return dto.BatchResult{Done: []string{}, Failed: []string{}}, nil
+	}
+	dataDir, err := config.PartRoot("data", part)
+	if err != nil {
+		return dto.BatchResult{Done: []string{}, Failed: []string{}}, err
+	}
+	res := ExtractIndexEntriesToData(dataDir, zone, idx, selected, force)
+	out := dto.BatchResult{
+		Done:    res.Done,
+		Failed:  res.Errors,
+		Skipped: res.SkippedFiles,
+		Total:   res.Requested,
+	}
+	if out.Done == nil {
+		out.Done = []string{}
+	}
+	if out.Failed == nil {
+		out.Failed = []string{}
+	}
+	return out, nil
 }
 
 // ResolveFilelistIndex resolve a raiz do filelist para o índice e a zona.

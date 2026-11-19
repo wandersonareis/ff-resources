@@ -280,6 +280,19 @@ export function importImages(
   return api().importImages(version, selection);
 }
 
+/** Extrai o binário REAL de imagens do filelist para data/ (ou destRoot). */
+export function extractImageFiles(
+  version: GameVersionId,
+  refs: string[],
+  destRoot = '',
+): Promise<dto.BatchResult> {
+  const call = api().extractImageFiles;
+  if (!call) {
+    return Promise.reject(new Error('Este jogo não oferece extração do filelist.'));
+  }
+  return call(version, refs, destRoot);
+}
+
 /** Desfaz as inserções no filelist da part (razão: truncar bins + restaurar). */
 export async function restoreFilelistInserts(
   version: GameVersionId,
@@ -474,20 +487,23 @@ export async function importEntry(
  * árvore): o backend devolve o artefato bulk ÚNICO com prefixo `tree_`,
  * em vez de um arquivo por entrada. */
 export async function exportArtifactBatch(
-  items: { kind: EntryKind; ids: string[]; complete?: boolean }[],
+  items: { kind: EntryKind; ids: string[]; complete?: boolean; source?: string }[],
   version: GameVersionId,
   langs: string[] = [],
   format: ExportFormat,
+  options?: dto.ExportOptions,
 ): Promise<string[]> {
   return api().exportArtifact(
     items.map((it) => ({
       kind: it.kind,
       ids: it.ids,
       complete: it.complete ?? false,
+      source: it.source,
     })),
     version,
     langs,
     format,
+    options,
   );
 }
 

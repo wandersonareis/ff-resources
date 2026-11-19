@@ -111,6 +111,8 @@ export interface ExportItem {
   kind: string;
   ids: string[];
   complete: boolean;
+  /** "filelist" (validado) | "data" | vazio = data (compatibilidade). */
+  source?: string;
 }
 
 export interface Language {
@@ -139,6 +141,7 @@ export interface GameApi {
     version: string,
     langs: string[],
     format: string,
+    options?: any,
   ): Promise<string[]>;
   importEntry(kind: string, id: string, version: string): Promise<string[]>;
   importFile(path: string, version: string, options?: any): Promise<number>;
@@ -184,6 +187,8 @@ export interface GameApi {
   ): Promise<any>;
   importImages(version: string, selection: any): Promise<any>;
   previewImportImages(version: string): Promise<any>;
+  /** FF13: extrai o binário real de imagens do filelist para data/. */
+  extractImageFiles?(version: string, refs: string[], destRoot: string): Promise<any>;
   /** FF13: desfaz as inserções no filelist (bins truncados + índices restaurados). */
   restoreFilelistInserts?(version: string): Promise<any>;
   refreshImageDuplicates(kind: string, version: string): Promise<void>;

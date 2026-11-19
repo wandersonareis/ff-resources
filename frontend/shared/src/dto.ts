@@ -140,6 +140,16 @@ export type ImageImportOptions = ImportDestination;
 /** Destinos do import de texto. */
 export type TextImportOptions = ImportDestination;
 
+/**
+ * Saídas do Exportar:
+ * `decode` = Descompactar (artefato de texto / DDS+PNG);
+ * `extract` = Extrair (binário real do filelist para data/).
+ */
+export interface ExportOptions {
+  decode: boolean;
+  extract: boolean;
+}
+
 export interface ImageImportResult {
   updated: string[];
   failed: string[];
@@ -237,6 +247,8 @@ export interface ImportBatch {
 export interface BatchResult {
   done: string[];
   failed: string[];
+  /** Arquivos pulados (já existiam no destino). */
+  skipped?: string[];
   total: number;
 }
 

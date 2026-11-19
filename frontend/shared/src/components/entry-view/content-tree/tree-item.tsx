@@ -103,10 +103,17 @@ export const TreeItem = memo(function TreeItem({ node, depth }: { node: SideNode
         data-node-label={node.label}
         data-node-readonly={node.readOnly ? 'true' : undefined}
         data-node-entry={node.entry ? 'true' : undefined}
+        data-node-entry-id={node.entry?.id}
         data-node-vbf={isVbf ? 'true' : undefined}
         data-node-vbf-file={isVbf && !hasChildren && !isVbfContainerRoot ? 'true' : undefined}
         data-node-vbf-root={vbfRoot}
         data-node-vbf-path={vbfPath}
+        data-node-filelist={node.filelistRoot ? 'true' : undefined}
+        data-node-filelist-root={node.filelistRoot}
+        data-node-filelist-path={node.filelistPath ?? ''}
+        data-node-filelist-file={
+          node.filelistRoot && !hasChildren && !isVbfContainerRoot ? 'true' : undefined
+        }
       >
         {node.loading ? (
           <span className="w-8 shrink-0 grid place-items-center opacity-60">

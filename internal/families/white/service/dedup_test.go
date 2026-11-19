@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"ffresources/internal/shared/dto"
 )
 
 // TestExportArtifactDedupAndMetadata confere que o FF13 usa o MESMO motor de
@@ -21,7 +23,7 @@ func TestExportArtifactDedupAndMetadata(t *testing.T) {
 	writeFile(t, filepath.Join(root, "data", "part1", "b", "txtres_us.ztr"), testZtrBlob(t, ids, texts))
 
 	var svc Service
-	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json")
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "ztr"}}, "part1", nil, "json", dto.ExportOptions{})
 	if err != nil {
 		t.Fatalf("ExportArtifactBatch: %v", err)
 	}

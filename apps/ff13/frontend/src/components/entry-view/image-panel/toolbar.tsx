@@ -30,6 +30,7 @@ export function ImageToolbar({
   importOptions,
   onImportOptionsChange,
   onRestoreInserts,
+  extractDisabled,
   onReplicate,
   onToggleFlip,
   onToggleInfo,
@@ -57,6 +58,8 @@ export function ImageToolbar({
   onImportOptionsChange: (next: dto.ImageImportOptions) => void;
   /** Desfaz as inserções no filelist (baixa o manifesto de rollback). */
   onRestoreInserts: () => void;
+  /** Extrair binário do filelist desabilitado (data/VBF). */
+  extractDisabled?: boolean;
   onReplicate: () => void;
   onToggleFlip: () => void;
   /** Oculta/exibe a coluna de informações ao lado da prévia. */
@@ -70,7 +73,12 @@ export function ImageToolbar({
     <div className="flex flex-wrap items-center justify-between gap-1">
       <div className="flex flex-wrap items-center gap-1">
         <ImageExportFormatMenu />
-        <ImageExportMenu disabled={busy !== null} onExport={onExport} onExtractTo={onExtractTo} />
+        <ImageExportMenu
+          disabled={busy !== null}
+          extractDisabled={extractDisabled}
+          onExport={onExport}
+          onExtractTo={onExtractTo}
+        />
         {showImport ? (
           <ImageImportMenu
             disabled={busy !== null}

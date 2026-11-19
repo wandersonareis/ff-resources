@@ -151,6 +151,19 @@ export function RestoreFilelistInserts(version: unknown): Promise<any> {
   return svc.RestoreFilelistInserts(partOf(version));
 }
 
+/**
+ * Extrai o binário REAL de imagens do filelist para data/ (ou destRoot).
+ * Ignora refs de data/ (o backend recusa com "só vale para o filelist").
+ */
+export function ExtractImageFiles(
+  version: unknown,
+  refs: string[],
+  destRoot: string,
+  force = false,
+): Promise<any> {
+  return svc.ExtractImageFiles(partOf(version), refs ?? [], destRoot ?? '', force);
+}
+
 export function RefreshImageDuplicates(): Promise<void> {
   return Promise.resolve();
 }

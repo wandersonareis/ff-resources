@@ -12,6 +12,12 @@ export interface TreeCtxNode {
   vbfRoot?: string;
   vbfPath?: string;
   selectedVbfPaths?: string[];
+  /** Id da entry (unidade/ref) da folha, quando houver. */
+  entryId?: string;
+  /** Raiz do índice quando o nó pertence ao navegador de filelist. */
+  filelistRoot?: string;
+  /** Caminho do nó dentro do índice. */
+  filelistPath?: string;
   /** Nó com operação destrutiva indisponível (.vbf é somente-leitura). */
   readOnly?: boolean;
 }
@@ -24,6 +30,9 @@ export interface EntryMenuTarget {
   /** Presente para nó do navegador .vbf. */
   vbfRoot?: string;
   vbfPath?: string;
+  /** Origem filelist (nó do navegador de filelist). */
+  filelistRoot?: string;
+  filelistPath?: string;
   /** Operação destrutiva indisponível (.vbf). */
   readOnly?: boolean;
 }
@@ -51,13 +60,17 @@ export function menuTargetOf(node: TreeCtxNode | null): EntryMenuTarget | null {
   // o alvo de imagem sai do id `imagecontainer:<ref>`.
   const prefix = node.kind ? `leaf:${node.kind}:` : null;
   const isLeaf = prefix ? node.id.startsWith(prefix) : false;
-  const id = isLeaf ? node.id.slice(prefix!.length) : null;
+  // Folhas do filelist têm id `filelist:<root>|<path>` e carregam a entry no
+  // DOM (`data-node-entry-id`): é dela que sai o id da unidade/ref.
+  const id = isLeaf ? node.id.slice(prefix!.length) : (node.entryId ?? null);
   return {
     kind: node.kind,
     id,
     // O rótulo exibido é o do NÓ (nome de arquivo/unidade). Nunca derive de
     // `id`: em imagens o id é a referência opaca em base64.
     label: node.label,
+    filelistRoot: node.filelistRoot,
+    filelistPath: node.filelistPath,
     readOnly: node.readOnly,
   };
 }

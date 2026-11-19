@@ -15,8 +15,10 @@ import (
 	_ "ffresources/internal/shared/artifact/xlsx"
 	"ffresources/internal/shared/dto"
 	"ffresources/internal/shared/hash"
+	logging "ffresources/internal/shared/logging"
 	"ffresources/internal/shared/progress"
 
+	"ffresources/internal/families/white/codecs/whitebin"
 	"ffresources/internal/families/white/profile/config"
 	"ffresources/internal/families/white/profile/parts"
 )
@@ -57,6 +59,9 @@ type ExportPlanItem struct {
 	Kind     string   `json:"kind"`
 	IDs      []string `json:"ids"`
 	Complete bool     `json:"complete"`
+	// Source força a origem: "filelist" (validada) ou "data". Vazio = auto
+	// (filelist quando o jogo está configurado, senão data).
+	Source string `json:"source,omitempty"`
 }
 
 // exportKindLabelOf devolve o rótulo do kind no modal de progresso (o nome
@@ -93,8 +98,9 @@ func validExportKind(p parts.Part, kind string) bool {
 // por kind no modal de progresso (eventos ProgressStart/Update/End). items:
 // [{kind, ids}] — ids vazio = tudo do kind; format: "json" | "strings" |
 // "csv" | "xlsx" | "po". Os caminhos escritos são devolvidos.
-func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs []string, format string) ([]string, error) {
+func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs []string, format string, options dto.ExportOptions) ([]string, error) {
 	// Validação ANTES do batch: erro daqui ainda é toast do frontend.
+	options = normalizeExportOptions(options)
 	format = strings.ToLower(strings.TrimSpace(format))
 	switch format {
 	case "json", "strings", "csv", "xlsx", "po":
@@ -125,7 +131,7 @@ func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs
 	var all []string
 	for i, it := range items {
 		kind := strings.ToLower(strings.TrimSpace(it.Kind))
-		paths, err := s.exportText(steps[i], part, kind, it.IDs, langs, format)
+		paths, err := s.exportText(steps[i], part, kind, it.IDs, langs, format, it.Source, options)
 		all = append(all, paths...)
 		if err != nil {
 			steps[i].Fail(err.Error())
@@ -148,14 +154,10 @@ func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs
 // 0: o step continua válido e o exportText/Fail relatam o erro de verdade.
 func exportStepSpecs(part string, items []ExportPlanItem) []progress.StepSpec {
 	specs := make([]progress.StepSpec, len(items))
-	coll, err := collectionFor(part)
 	for i, it := range items {
 		kind := strings.ToLower(strings.TrimSpace(it.Kind))
 		specs[i].Label = exportKindLabelOf(kind)
-		if err != nil || coll == nil {
-			continue
-		}
-		units, uerr := exportUnits(coll, part, kind, it.IDs)
+		units, _, uerr := exportUnitsSource(part, kind, it.IDs, it.Source)
 		if uerr != nil {
 			continue
 		}
@@ -194,43 +196,58 @@ func (s *Service) ExportEntry(part, id string, langs []string) ([]string, error)
 // kind filtra as unidades pela FAMILIA (a pasta): "ac", "resident", "zone",
 // "event", "scenario". O kind legado "ztr" (ou vazio) significa TODOS os
 // kinds da part.
-func (s *Service) exportText(r *progress.Step, part, kind string, ids []string, langs []string, format string) ([]string, error) {
-	coll, err := collectionFor(part)
-	if err != nil {
-		return nil, err
-	}
-	units, err := exportUnits(coll, part, kind, ids)
+func (s *Service) exportText(r *progress.Step, part, kind string, ids []string, langs []string, format, source string, options dto.ExportOptions) ([]string, error) {
+	units, filelistSource, err := exportUnitsSource(part, kind, ids, source)
 	if err != nil {
 		return nil, err
 	}
 	r.Begin(exportKindLabelOf(kind), len(units))
 	r.SetTotal(len(units))
+
+	var paths []string
 	c := dto.Collection{}
 	for _, unit := range units {
-		entry, err := exportEntryRows(part, unit)
-		if err != nil {
-			r.Issue(unit.ID, err.Error())
-			continue
+		if options.Decode {
+			entry, derr := exportEntryRows(part, unit)
+			if derr != nil {
+				r.Issue(unit.ID, derr.Error())
+			} else if len(entry.Rows) > 0 {
+				// Unidade sem NENHUMA linha (o primário "_us" é um ztr vazio: o
+				// jogo tem vários) NÃO vira bloco "row_count=0" no artefato.
+				c[unit.ID] = entry
+			}
 		}
-		// Unidade sem NENHUMA linha (o primário "_us" é um ztr vazio: o jogo
-		// tem vários) NÃO vira bloco "row_count=0" no artefato. Sem idioma
-		// fonte não há o que traduzir — e as referências dos outros idiomas
-		// não bastam, porque o export inteiro é ancorado nas linhas do fonte.
-		if len(entry.Rows) > 0 {
-			c[unit.ID] = entry
+		if options.Extract {
+			if !filelistSource {
+				logging.Warn("export: Extrair ignorado para %s — a fonte não é o filelist", unit.ID)
+			} else {
+				done, skipped, failed := extractTextUnit(part, unit, "", false)
+				paths = append(paths, done...)
+				for _, d := range skipped {
+					r.Issue(unit.ID, "já existe: "+filepath.Base(d))
+				}
+				for _, f := range failed {
+					r.Issue(unit.ID, f)
+				}
+			}
 		}
 		r.Step(unit.ID)
 	}
-	if len(c) == 0 {
-		// Todo o escopo era vazio: nada a escrever e NENHUM erro — o lote
-		// segue para os próximos kinds (um kind vazio não aborta os outros).
-		return nil, nil
+
+	if options.Decode && len(c) > 0 {
+		artifactLangs := langs
+		if filelistSource {
+			// Do filelist o artefato leva TODOS os idiomas da unidade; o
+			// seletor do header só limita a extração por kind em data/.
+			artifactLangs = nil
+		}
+		written, werr := writeArtifact(part, kind, ids, c, format, artifactLangs)
+		if werr != nil {
+			return paths, werr
+		}
+		paths = append(paths, written)
 	}
-	written, err := writeArtifact(part, kind, ids, c, format, langs)
-	if err != nil {
-		return nil, err
-	}
-	return []string{written}, nil
+	return paths, nil
 }
 
 // exportEntryPair exporta UMA unidade nos DOIS formatos do menu de contexto
@@ -303,6 +320,151 @@ func exportUnits(coll *dataCollection, part, kind string, ids []string) ([]*Text
 		units = append(units, unit)
 	}
 	return units, nil
+}
+
+// normalizeExportOptions mantém o contrato antigo: nenhuma opção = Decode.
+func normalizeExportOptions(o dto.ExportOptions) dto.ExportOptions {
+	if !o.Decode && !o.Extract {
+		o.Decode = true
+	}
+	return o
+}
+
+// exportUnitsSource resolve as unidades pela origem pedida:
+//
+//	"filelist" → índice/white bin (validado); erro se não houver jogo.
+//	"data"     → coleção de data/partN.
+//	""         → filelist quando disponível, senão data.
+//
+// O segundo retorno informa se a origem vencedora foi o filelist (o artefato
+// leva todos os idiomas; o seletor do header não filtra).
+func exportUnitsSource(part, kind string, ids []string, source string) ([]*TextUnit, bool, error) {
+	source = strings.ToLower(strings.TrimSpace(source))
+	if source == "filelist" {
+		if units, ok := filelistTextUnits(part, kind, ids); ok {
+			return units, true, nil
+		}
+		// Header export sem o jogo instalado: cai em data/ (a extração do
+		// binário fica indisponível e o chamador avisa).
+		logging.Warn("export: filelist indisponível para %s — usando data/", part)
+	}
+	coll, err := collectionFor(part)
+	if err != nil {
+		return nil, false, err
+	}
+	units, err := exportUnits(coll, part, kind, ids)
+	return units, false, err
+}
+
+// filelistTextUnits monta as unidades a partir do índice de fontes validado
+// (white bins). IDs vazio = todas as unidades do kind.
+func filelistTextUnits(part, kind string, ids []string) ([]*TextUnit, bool) {
+	if config.GameRoot(part) == "" {
+		return nil, false
+	}
+	p := parts.Get(part)
+	src := PartSources(p)
+	if len(src.Units) == 0 {
+		return nil, false
+	}
+	build := func(id string) *TextUnit {
+		sources := src.UnitsOf(id)
+		if len(sources) == 0 {
+			return nil
+		}
+		dir, base, err := UnitScope(id)
+		if err != nil {
+			return nil
+		}
+		files := make(map[string]UnitFile, len(sources))
+		for lang, s := range sources {
+			files[lang] = UnitFile{
+				Rel:       s.Rel,
+				Container: ContainerOfExt(s.Rel),
+				Source:    s,
+			}
+		}
+		u := buildUnit(dir, base, files, "", p.TextKind(id))
+		if u.Primary == "" {
+			return nil
+		}
+		return u
+	}
+	matchesKind := func(id string) bool {
+		k := strings.ToLower(strings.TrimSpace(kind))
+		return k == "" || k == "ztr" || p.TextKind(id) == k
+	}
+	out := make([]*TextUnit, 0, len(src.Units))
+	if len(ids) == 0 {
+		for id := range src.Units {
+			if !matchesKind(id) {
+				continue
+			}
+			if u := build(id); u != nil {
+				out = append(out, u)
+			}
+		}
+	} else {
+		for _, raw := range ids {
+			id := config.NormalizeInternalPath(raw)
+			if id == "" || !matchesKind(id) {
+				continue
+			}
+			if u := build(id); u != nil {
+				out = append(out, u)
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, true
+}
+
+// extractTextUnit grava TODOS os arquivos da unidade (todos os idiomas) em
+// destRoot/<rel>, descomprimindo o zlib do white bin. Existente = skipped,
+// salvo force. destRoot vazio = data/partN.
+func extractTextUnit(part string, unit *TextUnit, destRoot string, force bool) (done, skipped, failed []string) {
+	dest := strings.TrimSpace(destRoot)
+	if dest == "" {
+		d, err := config.PartRoot("data", part)
+		if err != nil {
+			return nil, nil, []string{err.Error()}
+		}
+		dest = d
+	}
+	langs := make([]string, 0, len(unit.Sources))
+	for lang := range unit.Sources {
+		langs = append(langs, lang)
+	}
+	sort.Strings(langs)
+	for _, lang := range langs {
+		f := unit.Sources[lang]
+		src := f.Source
+		if src.Bin == "" || src.Coll == nil {
+			continue
+		}
+		dst := filepath.Join(dest, filepath.FromSlash(f.Rel))
+		if !force {
+			if _, err := os.Stat(dst); err == nil {
+				skipped = append(skipped, dst)
+				continue
+			}
+		}
+		raw, err := whitebin.ExtractBytes(src.Bin, src.VPath, src.Coll)
+		if err != nil {
+			failed = append(failed, f.Rel+": "+err.Error())
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			failed = append(failed, f.Rel+": "+err.Error())
+			continue
+		}
+		if err := os.WriteFile(dst, raw, 0o644); err != nil {
+			failed = append(failed, f.Rel+": "+err.Error())
+			continue
+		}
+		done = append(done, dst)
+	}
+	return done, skipped, failed
 }
 
 // exportEntryRows monta a entry DE EXPORTAÇÃO de uma unidade.

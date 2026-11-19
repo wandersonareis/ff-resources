@@ -96,14 +96,25 @@ export async function ExportEntry(
   return (await ff13.ExportEntry(partOf(version), id, langs ?? null)) ?? [];
 }
 
+const defaultExportOptions = { decode: true, extract: false };
+
 export async function ExportArtifactBatch(
   items: any,
   version: unknown,
   langs?: string[],
   format?: string,
+  options?: any,
   ..._args: any[]
 ): Promise<string[]> {
-  return (await ff13.ExportArtifactBatch(items ?? null, partOf(version), langs ?? null, String(format ?? ''))) ?? [];
+  return (
+    (await ff13.ExportArtifactBatch(
+      items ?? null,
+      partOf(version),
+      langs ?? null,
+      String(format ?? ''),
+      options ?? defaultExportOptions,
+    )) ?? []
+  );
 }
 
 /** Destino padrão do import de texto: converte para mods/. */

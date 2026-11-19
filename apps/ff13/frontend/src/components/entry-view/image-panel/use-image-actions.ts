@@ -4,10 +4,12 @@ import { useState } from 'react';
 import type * as dto from '@ff-resources/ui/dto';
 import type { EntryView } from '@/components/entry-view/entry-view-store';
 import { parseError } from '@/lib/ffx/error-handler';
+import { exportOutput } from '@/lib/ffx/export-output';
 import { invalidateFilelistCache } from '@/lib/ffx/filelist';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';
 import type { EntryRow } from '@/lib/ffx/tree-data';
 import {
+  extractImageFiles,
   imageExportPath,
   importImage,
   importImageGroup,
@@ -166,27 +168,66 @@ export function useImageActions({
 
   const onExport = async (format: 'dds' | 'png' | 'dds+png') => {
     if (!entry) return;
+    const opts = exportOutput.getSnapshot();
+    if (!opts.decode && !opts.extract) {
+      toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+      return;
+    }
     setBusy('export');
     try {
       const formats = format === 'dds+png' ? (['dds', 'png'] as const) : [format];
       const dests: string[] = [];
+      let extracted = 0;
+      let failed: string[] = [];
 
-      for (const fmt of formats) {
-        let dest: string;
-        if (entry.vbf) {
-          dest = await vbfImageExportPath(entry.vbf.root, entry.vbf.path, fmt);
-          await saveVbfImage(entry.vbf.root, entry.vbf.path, fmt, dest);
-        } else {
-          dest = await imageExportPath(entry.id, fmt, version);
-          await saveImage(entry.id, fmt, dest, version);
+      if (opts.decode) {
+        for (const fmt of formats) {
+          let dest: string;
+          if (entry.vbf) {
+            dest = await vbfImageExportPath(entry.vbf.root, entry.vbf.path, fmt);
+            await saveVbfImage(entry.vbf.root, entry.vbf.path, fmt, dest);
+          } else {
+            dest = await imageExportPath(entry.id, fmt, version);
+            await saveImage(entry.id, fmt, dest, version);
+          }
+          dests.push(dest);
         }
-        dests.push(dest);
       }
 
-      if (dests.length === 1) {
-        toast.success(`Imagem exportada: ${dests[0]}`);
+      if (opts.extract) {
+        if (entry.source !== 'filelist') {
+          toast.warning('Extrair só vale para imagens do filelist.');
+        } else {
+          const result = await extractImageFiles(version, [entry.id]);
+          extracted = result.done.length;
+          failed = result.failed;
+        }
+      }
+
+      if (opts.decode && opts.extract) {
+        toast.success(
+          `Imagem descompactada (${dests.length}) e binário extraído (${extracted}).` +
+            (failed.length > 0 ? ` ${failed.length} falha(s).` : ''),
+          { description: failed.slice(0, 3).join('; ') || undefined },
+        );
+      } else if (opts.decode) {
+        toast.success(
+          dests.length === 1
+            ? `Imagem exportada: ${dests[0]}`
+            : `Imagem exportada como DDS e PNG: ${dests.join(', ')}`,
+        );
       } else {
-        toast.success(`Imagem exportada como DDS e PNG: ${dests.join(', ')}`);
+        if (failed.length > 0) {
+          toast.warning(`Extraído ${extracted} binário(s).`, {
+            description: failed.slice(0, 3).join('; '),
+          });
+        } else {
+          toast.success(`Binário extraído para data/: ${extracted} arquivo(s).`);
+        }
+      }
+      if (extracted > 0) {
+        await actions.reload();
+        await actions.selectEntry(entry);
       }
     } catch (error) {
       toast.error(parseError(error));
@@ -197,16 +238,25 @@ export function useImageActions({
 
   const onExtractTo = async (format: 'dds' | 'png' | 'dds+png') => {
     if (!entry) return;
+    const opts = exportOutput.getSnapshot();
+    if (!opts.decode && !opts.extract) {
+      toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+      return;
+    }
     setBusy('extractTo');
     try {
-      const destRoot = entry.vbf
-        ? await selectVbfImageExtractDir()
-        : await selectImageExportDir(version);
-      if (!destRoot) return; // usuário cancelou
+      // "Exportar para…" escolhe a pasta dos FORMATOS (DDS/PNG). O binário
+      // do filelist sempre vai para data/partN (como os binários de data).
+      const destRoot = opts.decode
+        ? entry.vbf
+          ? await selectVbfImageExtractDir()
+          : await selectImageExportDir(version)
+        : '';
+      if (opts.decode && !destRoot) return; // usuário cancelou
       const fmtLabel = format === 'dds+png' ? '.dds e .png' : `.${format}`;
       if (entry.vbf) {
         // O extract do .vbf grava DDS e PNG juntos; o formato escolhido só
-        // rotula o resumo.
+        // rotula o resumo. Extrair binário do filelist não se aplica.
         const result = await extractVbfImagesSelection(entry.vbf.root, [entry.vbf.path], destRoot);
         if (result.failed.length > 0) {
           toast.warning(`Extraídas ${result.done.length} de ${result.total} imagens.`, {
@@ -217,12 +267,30 @@ export function useImageActions({
         }
         return;
       }
-      const formats = format === 'dds+png' ? (['dds', 'png'] as const) : [format];
-      const dests: string[] = [];
-      for (const fmt of formats) {
-        dests.push(await saveImageTo(entry.id, fmt, destRoot, version));
+      if (opts.decode) {
+        const formats = format === 'dds+png' ? (['dds', 'png'] as const) : [format];
+        const dests: string[] = [];
+        for (const fmt of formats) {
+          dests.push(await saveImageTo(entry.id, fmt, destRoot, version));
+        }
+        toast.success(`Imagem exportada como ${fmtLabel}: ${dests.join(', ')}`);
       }
-      toast.success(`Imagem exportada como ${fmtLabel}: ${dests.join(', ')}`);
+      if (opts.extract) {
+        if (entry.source !== 'filelist') {
+          toast.warning('Extrair só vale para imagens do filelist.');
+        } else {
+          const result = await extractImageFiles(version, [entry.id]);
+          if (result.failed.length > 0) {
+            toast.warning(`Extraído ${result.done.length} binário(s).`, {
+              description: result.failed.slice(0, 3).join('; '),
+            });
+          } else if (result.done.length > 0) {
+            toast.success(`Binário extraído: ${result.done[0]}`);
+          }
+          await actions.reload();
+          await actions.selectEntry(entry);
+        }
+      }
     } catch (error) {
       toast.error(parseError(error));
     } finally {

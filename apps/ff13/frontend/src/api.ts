@@ -87,8 +87,8 @@ export const ff13Api: GameApi = {
   applyVbfCollection: async () => {},
   exportEntry: (kind, id, version, langs) =>
     text.ExportEntry(kind, id, version, langs) as Promise<string[]>,
-  exportArtifact: (items, version, langs, format) =>
-    text.ExportArtifactBatch(items as never, version, langs, format) as Promise<string[]>,
+  exportArtifact: (items, version, langs, format, options) =>
+    text.ExportArtifactBatch(items as never, version, langs, format, options) as Promise<string[]>,
   importEntry: async () => [],
   importFile: (path, version, options) => text.ImportFile(path, version, options),
   importTranslated: (version, kinds, options) =>
@@ -134,6 +134,8 @@ export const ff13Api: GameApi = {
     image.ImportImageGroup(version, id, ddsPath, targets, options),
   importImages: (version, selection) => image.ImportImages(version, selection),
   previewImportImages: (version) => image.PreviewImportImages(version),
+  extractImageFiles: (version, refs, destRoot) =>
+    image.ExtractImageFiles(version, refs, destRoot),
   restoreFilelistInserts: (version) => image.RestoreFilelistInserts(version),
   refreshImageDuplicates: async () => {},
   replicateImage: async () => emptyBatchResult,

@@ -15,7 +15,12 @@ import { exportSelection } from '@/lib/ffx/export-selection';
 import { progressWasShown } from '@/lib/ffx/progress-store';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';
 import type { EntryRow } from '@/lib/ffx/tree-data';
-import { exportArtifactBatch, extractImageSelection } from '@/lib/ffx/tree-data';
+import { exportOutput } from '@/lib/ffx/export-output';
+import {
+  exportArtifactBatch,
+  extractImageFiles,
+  extractImageSelection,
+} from '@/lib/ffx/tree-data';
 import {
   exportVbfSelection,
   extractVbfImagesSelection,
@@ -113,14 +118,31 @@ export function useContentTreeActions({
       toast.message('Nenhuma imagem marcada para extrair.');
       return;
     }
+    const opts = exportOutput.getSnapshot();
+    if (!opts.decode && !opts.extract) {
+      toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+      return;
+    }
     try {
-      const result = await extractImageSelection(selectedImageIds, version);
-      if (result.failed.length > 0) {
-        toast.warning(`Extraídas ${result.done.length} de ${result.total} imagens.`, {
-          description: result.failed.slice(0, 3).join('; '),
-        });
-      } else {
-        toast.success(`Extraídas ${result.done.length} imagens selecionadas.`);
+      if (opts.decode) {
+        const result = await extractImageSelection(selectedImageIds, version);
+        if (result.failed.length > 0) {
+          toast.warning(`Extraídas ${result.done.length} de ${result.total} imagens.`, {
+            description: result.failed.slice(0, 3).join('; '),
+          });
+        } else {
+          toast.success(`Extraídas ${result.done.length} imagens selecionadas.`);
+        }
+      }
+      if (opts.extract) {
+        const result = await extractImageFiles(version, selectedImageIds);
+        if (result.failed.length > 0) {
+          toast.warning(`Extraído ${result.done.length} binário(s) do filelist.`, {
+            description: result.failed.slice(0, 3).join('; '),
+          });
+        } else if (result.done.length > 0) {
+          toast.success(`Extraído ${result.done.length} binário(s) para data/.`);
+        }
       }
       await actions.reload();
     } catch (error) {
@@ -145,22 +167,62 @@ export function useContentTreeActions({
   //
   // Seleção marcada pela RAIZ do kind (`complete`) deduplica para o
   // artefato bulk único (prefixo tree_ no backend): um arquivo em vez de N.
+  const idsForContext = useCallback((): string[] => {
+    const kind = ctxNode?.kind;
+    if (!kind) return [];
+    const marked = exportSelection.idsOf(version, kind);
+    if (marked.length > 0) return marked;
+    // Sem checkbox: o nó clicado é o alvo (um item).
+    if (ctxNode?.entryId) return [ctxNode.entryId];
+    if (kind === 'images') {
+      const container = ctxNode?.id?.startsWith('imagecontainer:')
+        ? ctxNode.id.slice('imagecontainer:'.length)
+        : '';
+      if (container) return [container];
+    }
+    return [];
+  }, [ctxNode, version]);
+
   const onCtxExport = useCallback(async () => {
     const kind = ctxNode?.kind;
     if (!kind) return;
-    const ids = exportSelection.idsOf(version, kind);
+    const opts = exportOutput.getSnapshot();
+    if (!opts.decode && !opts.extract) {
+      toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+      return;
+    }
+    const ids = idsForContext();
     if (ids.length === 0) {
       toast.message(`Nenhum arquivo marcado para exportar (${kind}).`);
       return;
     }
     const format = exportSelection.formatOf();
     const complete = exportSelection.completeOf(version, kind);
+    // A folha do filelist exporta a fonte validada; a de data/ usa a coleção
+    // de data/. O backend cai em data/ se o jogo não estiver configurado.
+    const source = ctxNode?.filelistRoot ? 'filelist' : 'data';
     try {
+      if (kind === 'images') {
+        if (opts.decode) {
+          const result = await extractImageSelection(ids, version);
+          if (result.total === 0) toast.info('A seleção não contém imagens compatíveis.');
+        }
+        if (opts.extract) {
+          const result = await extractImageFiles(version, ids);
+          if (result.failed.length > 0) {
+            toast.warning(`Extraído ${result.done.length} binário(s).`, {
+              description: result.failed.slice(0, 3).join('; '),
+            });
+          }
+        }
+        return;
+      }
       const paths = await exportArtifactBatch(
-        [{ kind, ids, complete }],
+        [{ kind, ids, complete, source }],
         version,
         exportLangs.langsOf(),
         format,
+        opts,
       );
       if ((paths ?? []).length === 0) {
         toast.info('Nada para exportar.');
@@ -169,7 +231,52 @@ export function useContentTreeActions({
     } catch (error) {
       if (!progressWasShown()) toast.error(parseError(error));
     }
-  }, [ctxNode, version]);
+  }, [ctxNode, idsForContext, version]);
+
+  /**
+   * "Extrair binário em data/" do menu de contexto: só filelist. Usa a
+   * seleção/entry do nó e a mesma régua de kinds do export.
+   */
+  const onCtxExtract = useCallback(async () => {
+    const kind = ctxNode?.kind;
+    if (!kind) return;
+    if (!ctxNode?.filelistRoot) {
+      toast.info('Extrair só vale para itens do filelist.');
+      return;
+    }
+    const ids = idsForContext();
+    if (ids.length === 0) return;
+    try {
+      if (kind === 'images') {
+        const result = await extractImageFiles(version, ids);
+        if (result.failed.length > 0) {
+          toast.warning(`Extraído ${result.done.length} binário(s).`, {
+            description: result.failed.slice(0, 3).join('; '),
+          });
+        } else if (result.done.length > 0) {
+          toast.success(`Extraído ${result.done.length} binário(s) para data/.`);
+        }
+        return;
+      }
+      const paths = await exportArtifactBatch(
+        [
+          {
+            kind,
+            ids,
+            complete: exportSelection.completeOf(version, kind),
+            source: 'filelist',
+          },
+        ],
+        version,
+        [],
+        exportSelection.formatOf(),
+        { decode: false, extract: true },
+      );
+      if ((paths ?? []).length === 0) toast.info('Nada para extrair.');
+    } catch (error) {
+      if (!progressWasShown()) toast.error(parseError(error));
+    }
+  }, [ctxNode, idsForContext, version]);
 
   const onVbfExtract = useCallback(
     (mode: 'data' | 'choose') => {
@@ -277,7 +384,14 @@ export function useContentTreeActions({
         );
         return;
       }
-      setCtxNode(kind ? { id, kind, label, readOnly } : null);
+      const entryId = row.getAttribute('data-node-entry-id') ?? undefined;
+      const filelistRoot = row.getAttribute('data-node-filelist-root') ?? undefined;
+      const filelistPath = row.getAttribute('data-node-filelist-path') ?? undefined;
+      setCtxNode(
+        kind
+          ? { id, kind, label, readOnly, entryId, filelistRoot, filelistPath }
+          : null,
+      );
     },
     [setCtxNode],
   );
@@ -285,6 +399,7 @@ export function useContentTreeActions({
   return {
     checkNode,
     onCtxExport,
+    onCtxExtract,
     onExtractSelectedImages,
     onDeleteSelectedImages,
     onVbfExtract,

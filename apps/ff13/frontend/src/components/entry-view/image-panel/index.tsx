@@ -156,6 +156,7 @@ export function ImagePanel({ view }: { view: EntryView }) {
           importOptions={importOptions}
           onImportOptionsChange={setImportOptions}
           onRestoreInserts={() => void onRestoreInserts()}
+          extractDisabled={entry.source !== 'filelist'}
           onReplicate={() => openAction('replicate')}
           onToggleFlip={preview.toggleFlip}
           onToggleInfo={toggleImageInfo}

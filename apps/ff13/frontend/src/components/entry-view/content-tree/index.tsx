@@ -187,6 +187,7 @@ export function ContentTree({ view }: { view: EntryView }) {
           if (!open) setCtxNode(null);
         }}
         onExport={() => void treeActions.onCtxExport()}
+        onFilelistExtract={() => void treeActions.onCtxExtract()}
         selectedImageCount={selectedImageIds.length}
         onExtractImageSelection={() => void treeActions.onExtractSelectedImages()}
         onDeleteImageSelection={treeActions.onDeleteSelectedImages}
