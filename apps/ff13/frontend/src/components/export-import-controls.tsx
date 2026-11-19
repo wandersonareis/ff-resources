@@ -21,7 +21,7 @@ import { parseError } from '@/lib/ffx/error-handler';
 import { exportLangs } from '@/lib/ffx/export-langs';
 import { EXPORT_FORMAT_LABELS, useExportSelection } from '@/lib/ffx/export-selection';
 import { GAME_VERSIONS, type GameVersionId } from '@/lib/ffx/game-version';
-import { entryKindsFor } from '@/lib/ffx/kinds';
+import { compareKindLabels, entryKindsAlpha } from '@/lib/ffx/kinds';
 import { progressWasShown } from '@/lib/ffx/progress-store';
 import { loggedToast as toast } from '@/lib/ffx/toast-logged';
 import {
@@ -40,19 +40,20 @@ import {
  */
 export function ExportImportControls({ version }: { version: GameVersionId }) {
   // Escopo de exportação por versão (kinds marcados no dropdown Exportar).
+  // Lista e escopo inicial em ordem alfabética de exibição (Eventos primeiro).
   const [scopes, setScopes] = useState<Record<string, EntryKind[]>>(() =>
-    Object.fromEntries(GAME_VERSIONS.map((tab) => [tab.id, entryKindsFor(tab.id)])),
+    Object.fromEntries(GAME_VERSIONS.map((tab) => [tab.id, entryKindsAlpha(tab.id)])),
   );
   const [importSummary, setImportSummary] = useState<dto.ImportSummary | null>(null);
   const [importing, setImporting] = useState(false);
 
-  const servedKinds = entryKindsFor(version);
+  const servedKinds = entryKindsAlpha(version);
   const activeScope = scopes[version] ?? servedKinds;
 
   // Escopo do import em lote (mods/translated), separado do de exportação:
   // escolher o que exportar não decide o que importar.
   const [importScopes, setImportScopes] = useState<Record<string, EntryKind[]>>(() =>
-    Object.fromEntries(GAME_VERSIONS.map((tab) => [tab.id, entryKindsFor(tab.id)])),
+    Object.fromEntries(GAME_VERSIONS.map((tab) => [tab.id, entryKindsAlpha(tab.id)])),
   );
   const [importBatch, setImportBatch] = useState<dto.ImportBatch | null>(null);
   const activeImportScope = importScopes[version] ?? servedKinds;
@@ -64,7 +65,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
 
   const toggleImportScope = (kind: EntryKind) => {
     setImportScopes((prev) => {
-      const current = prev[version] ?? entryKindsFor(version);
+      const current = prev[version] ?? entryKindsAlpha(version);
       const next = current.includes(kind) ? current.filter((k) => k !== kind) : [...current, kind];
       return { ...prev, [version]: next };
     });
@@ -72,7 +73,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
 
   const toggleScope = (kind: EntryKind) => {
     setScopes((prev) => {
-      const current = prev[version] ?? entryKindsFor(version);
+      const current = prev[version] ?? entryKindsAlpha(version);
       const next = current.includes(kind) ? current.filter((k) => k !== kind) : [...current, kind];
       return { ...prev, [version]: next };
     });
@@ -81,6 +82,10 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   // Exporta os kinds no FORMATO SELECIONADO como UMA operação agrupada:
   // o modal de progresso cuida de tudo (um step por kind com barra própria
   // + resumo de arquivos/destino no final) — nada de toast paralelo.
+  //
+  // O lote sai em ordem ALFABÉTICA de rótulo (Eventos, Habilidades...): a
+  // ordem dos items é a ordem dos steps no modal, e o escopo guardado pode
+  // estar fora de ordem depois de marcar/desmarcar checkboxes.
   //
   // O botão Exportar é SÓ DE ESCOPO DE TIPO: cada kind sai por inteiro
   // (ids = [], o contrato de "tudo do kind" do backend). A seleção de
@@ -93,7 +98,9 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
         toast.info('Nada para exportar — marque um tipo no escopo.');
         return;
       }
-      const items = kinds.map((kind) => ({ kind, ids: [] as string[] }));
+      const items = [...kinds]
+        .sort(compareKindLabels)
+        .map((kind) => ({ kind, ids: [] as string[] }));
       try {
         // Idiomas: array do seletor do header (default + extras marcados);
         // `[]` (pré-hidratação) = todos, o contrato do backend.

@@ -29,11 +29,27 @@ function stepCount(step: ProgressStep): string {
   return step.total > 0 ? `${fmt(step.processed)}/${fmt(step.total)}` : fmt(step.processed);
 }
 
+/**
+ * Maior texto que a contagem desta ação PODE assumir — é a largura
+ * reservada ("301/301" = os "000/000" de 3 dígitos). Com o total já
+ * declarado (ProgressStart leva o total), o espaço fica reservado desde o
+ * primeiro frame; como nada passa do total, a coluna nunca cresce. Ação
+ * sem total (indeterminada) reserva só o processado atual.
+ */
+function stepCountReserve(step: ProgressStep): string {
+  const max = Math.max(step.total, step.processed);
+  if (max <= 0) return '';
+  const n = fmt(max);
+  return step.total > 0 ? `${n}/${n}` : n;
+}
+
 /** Uma ação da lista: nome, barra e contagem usam as MESMAS colunas em todas
  *  as linhas (grid do pai + subgrid aqui), então a barra não muda de largura
  *  conforme o texto/contagem de cada ação. */
 function StepRow({ step }: { step: ProgressStep }) {
   const dim = step.state === 'pending';
+  const reserve = stepCountReserve(step);
+  const showCount = step.state !== 'pending';
   const icon =
     step.state === 'done' ? (
       step.issueCount > 0 ? (
@@ -63,8 +79,24 @@ function StepRow({ step }: { step: ProgressStep }) {
         <span aria-hidden="true" />
       )}
       <span className="flex items-center justify-end gap-1.5">
-        {step.state !== 'pending' ? (
-          <span className="text-xs tabular-nums text-muted-foreground">{stepCount(step)}</span>
+        {reserve || showCount ? (
+          // Fantasma invisível com o MAIOR valor da contagem: o inline-grid
+          // dá a largura ("000/000") e a contagem real fica sobreposta na
+          // mesma célula, alinhada à direita. A coluna auto do grid do pai
+          // assume a largura do maior step e não muda durante o run.
+          <span className="inline-grid text-xs tabular-nums text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="invisible col-start-1 row-start-1 whitespace-nowrap text-right"
+            >
+              {reserve}
+            </span>
+            {showCount ? (
+              <span className="col-start-1 row-start-1 whitespace-nowrap text-right">
+                {stepCount(step)}
+              </span>
+            ) : null}
+          </span>
         ) : null}
         {icon}
       </span>

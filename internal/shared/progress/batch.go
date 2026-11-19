@@ -80,26 +80,46 @@ type Batch struct {
 	destination string
 }
 
+// StepSpec declara UMA ação do batch com o total JÁ conhecido. O número sai
+// no ProgressStart (antes de a ação começar), então o modal reserva a largura
+// da contagem ("000/000") e o layout não muda quando os valores chegam. Total
+// só conhecido depois de começar continua indo por SetTotal no Reporter.
+type StepSpec struct {
+	Label string
+	Total int
+}
+
 // Steps declara as ações do batch NA ORDEM de execução e devolve os
 // canais. A declaração publica o snapshot com a lista — na PRIMEIRA vai
 // como ProgressStart (o modal abre com tudo) e nas seguintes como update.
 // Após End() é no-op (devolve canais soltos que não publicam nada).
 func (b *Batch) Steps(labels ...string) []*Step {
+	specs := make([]StepSpec, len(labels))
+	for i, label := range labels {
+		specs[i] = StepSpec{Label: label}
+	}
+	return b.StepsWithTotals(specs...)
+}
+
+// StepsWithTotals é Steps com o total de cada ação já declarado: o
+// ProgressStart leva os números (não só os rótulos), então o modal reserva a
+// largura da contagem desde o primeiro frame. Mesma ordem, mesmo contrato.
+func (b *Batch) StepsWithTotals(specs ...StepSpec) []*Step {
 	if b == nil {
 		return nil
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	out := make([]*Step, 0, len(labels))
-	for _, label := range labels {
+	out := make([]*Step, 0, len(specs))
+	for _, spec := range specs {
 		if b.ended {
 			out = append(out, &Step{})
 			continue
 		}
-		b.steps = append(b.steps, &stepState{label: label, state: StepPending})
+		b.steps = append(b.steps, &stepState{label: spec.Label, total: spec.Total, state: StepPending})
 		out = append(out, &Step{b: b, idx: len(b.steps) - 1})
 	}
-	if !b.ended && len(labels) > 0 {
+	if !b.ended && len(specs) > 0 {
 		event := "ProgressUpdate"
 		if !b.started {
 			event = "ProgressStart"

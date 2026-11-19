@@ -9,6 +9,7 @@ import (
 	"ffresources/internal/families/white/codecs/wpd"
 	fmtstrings "ffresources/internal/shared/artifact/strings"
 	"ffresources/internal/shared/hash"
+	"ffresources/internal/shared/progress"
 )
 
 // TestExportRowsSourceFromDataTargetFromMods confere o contrato do export
@@ -355,6 +356,37 @@ func TestExportArtifactBatchMultiKindUmStepPorKind(t *testing.T) {
 	for _, w := range want {
 		if _, serr := os.Stat(w); serr != nil {
 			t.Errorf("artefato ausente %q: %v", filepath.Base(w), serr)
+		}
+	}
+}
+
+// TestExportStepSpecsDeclaresTotals confere que os steps do lote saem com o
+// rótulo da família e o total de UNIDADES já contado — é o número que o
+// ProgressStart leva para o modal reservar a largura da contagem.
+func TestExportStepSpecsDeclaresTotals(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("FF_RESOURCES_DATA", filepath.Join(root, "data"))
+	t.Setenv("FF_RESOURCES_MODS", filepath.Join(root, "mods"))
+
+	blob := testZtrBlob(t, []string{"id1"}, []string{"texto"})
+	writeFile(t, filepath.Join(root, "data", "part3", "txtres", "resident", "book", "txtres_us.ztr"), blob)
+	writeFile(t, filepath.Join(root, "data", "part3", "txtres", "resident", "book2", "txtres_us.ztr"), blob)
+	writeFile(t, filepath.Join(root, "data", "part3", "txtres", "event", "ev_a", "txtres_us.ztr"), blob)
+
+	specs := exportStepSpecs("part3", []ExportPlanItem{
+		{Kind: "resident"},
+		{Kind: "event"},
+	})
+	want := []progress.StepSpec{
+		{Label: "Residentes", Total: 2},
+		{Label: "Eventos", Total: 1},
+	}
+	if len(specs) != len(want) {
+		t.Fatalf("steps: %v, quer %v", specs, want)
+	}
+	for i := range want {
+		if specs[i] != want[i] {
+			t.Errorf("step %d: %+v, quer %+v", i, specs[i], want[i])
 		}
 	}
 }

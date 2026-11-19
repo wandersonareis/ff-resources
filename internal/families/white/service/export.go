@@ -110,7 +110,9 @@ func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs
 
 	batch := s.progress.NewBatch(fmt.Sprintf("Exportando textos (%s)…", exportFormatLabel(format)))
 	// UM step por kind: o rótulo de cada família (Residentes, Eventos…).
-	steps := batch.Steps(kindSteps(items)...)
+	// Os totais vão junto no ProgressStart (StepsWithTotals): o modal abre
+	// já com a largura da contagem reservada ("301/301") e não reflui.
+	steps := batch.StepsWithTotals(exportStepSpecs(part, items)...)
 	// Sem emitter (testes/CLI): batch nil — o step vira no-op.
 	if steps == nil {
 		steps = make([]*progress.Step, len(items))
@@ -132,14 +134,30 @@ func (s *Service) ExportArtifactBatch(items []ExportPlanItem, part string, langs
 	return all, nil
 }
 
-// kindSteps devolve os rótulos dos steps — um por item do lote, na mesma
-// ordem. O rótulo é o nome da família do texto, não o nome do kind.
-func kindSteps(items []ExportPlanItem) []string {
-	out := make([]string, 0, len(items))
-	for _, it := range items {
-		out = append(out, exportKindLabelOf(strings.ToLower(strings.TrimSpace(it.Kind))))
+// exportStepSpecs devolve os steps do lote — um por item, na mesma ordem —
+// com o rótulo da família e o total JÁ contado. Contar antes do
+// ProgressStart é o que permite ao modal reservar a largura da contagem; a
+// contagem usa o MESMO exportUnits do exportText, então o número declarado
+// aqui é exatamente o que a barra vai percorrer.
+//
+// Erro na contagem (coleção indisponível, id desconhecido) deixa o total em
+// 0: o step continua válido e o exportText/Fail relatam o erro de verdade.
+func exportStepSpecs(part string, items []ExportPlanItem) []progress.StepSpec {
+	specs := make([]progress.StepSpec, len(items))
+	coll, err := collectionFor(part)
+	for i, it := range items {
+		kind := strings.ToLower(strings.TrimSpace(it.Kind))
+		specs[i].Label = exportKindLabelOf(kind)
+		if err != nil || coll == nil {
+			continue
+		}
+		units, uerr := exportUnits(coll, part, kind, it.IDs)
+		if uerr != nil {
+			continue
+		}
+		specs[i].Total = len(units)
 	}
-	return out
+	return specs
 }
 
 // ExportEntry exporta UMA unidade de texto: o mesmo caminho do lote, com

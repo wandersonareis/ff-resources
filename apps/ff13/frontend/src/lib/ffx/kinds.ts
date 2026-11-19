@@ -1,4 +1,4 @@
-import type { EntryKind } from '@/lib/ffx/display-names';
+import { type EntryKind, KIND_LABELS } from '@/lib/ffx/display-names';
 import type { GameVersionId } from '@/lib/ffx/game-version';
 
 /**
@@ -30,6 +30,24 @@ export const ALL_FF13_KINDS: EntryKind[] = [
 
 export function entryKindsFor(version: GameVersionId): EntryKind[] {
   return [...(KINDS_BY_PART[version] ?? KINDS_BY_PART.part1)];
+}
+
+/**
+ * Comparador da ordem de EXIBIÇÃO dos kinds: alfabética pelo rótulo PT-BR
+ * ("Eventos", "Habilidades", "Residentes", "Zonas"...). A régua é o rótulo,
+ * não a chave: o primeiro item do dropdown/modal é o que o usuário lê.
+ */
+export function compareKindLabels(a: EntryKind, b: EntryKind): number {
+  return KIND_LABELS[a].localeCompare(KIND_LABELS[b], 'pt-BR');
+}
+
+/**
+ * Kinds da part na ordem alfabética de exibição — usada nos menus
+ * Exportar/Importar e no lote do export (ordem dos steps do modal).
+ * `entryKindsFor` continua sendo a ordem canônica (raízes da árvore).
+ */
+export function entryKindsAlpha(version: GameVersionId): EntryKind[] {
+  return entryKindsFor(version).sort(compareKindLabels);
 }
 
 export function imageKindsFor(_version: GameVersionId): EntryKind[] {

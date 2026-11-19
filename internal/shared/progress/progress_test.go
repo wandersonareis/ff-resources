@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"ffresources/testdata/ffx/tempdir"
 	"ffresources/internal/shared/logging"
+	"ffresources/testdata/ffx/tempdir"
 )
 
 // captured é a seam de publicação: grava (evento, snapshot) sem tocar no
@@ -115,6 +115,43 @@ func TestBatchCycle(t *testing.T) {
 	}
 }
 
+// StepsWithTotals: o ProgressStart leva os TOTAIS já declarados (o modal
+// reserva a largura da contagem antes de a ação começar), com os steps
+// ainda pendentes; a condução (Begin/Step/End) segue igual à de Steps.
+func TestStepsWithTotalsStartCarriesTotals(t *testing.T) {
+	em, cap := newTestEmitter(nil)
+	batch := em.NewBatch("Exportando textos (JSON)…")
+	steps := batch.StepsWithTotals(
+		StepSpec{Label: "Eventos", Total: 301},
+		StepSpec{Label: "Habilidades", Total: 42},
+		StepSpec{Label: "Residentes"}, // total ainda desconhecido
+	)
+	if len(steps) != 3 {
+		t.Fatalf("steps declarados: %d, esperado 3", len(steps))
+	}
+	if got := cap.count("ProgressStart"); got != 1 {
+		t.Fatalf("ProgressStart: %d, esperado 1", got)
+	}
+	start := cap.last()
+	wantTotals := []int{301, 42, 0}
+	for i, st := range start.Steps {
+		if st.State != StepPending {
+			t.Fatalf("step %q deveria abrir pendente, veio %q", st.Label, st.State)
+		}
+		if st.Total != wantTotals[i] {
+			t.Fatalf("step %q total %d, esperado %d", st.Label, st.Total, wantTotals[i])
+		}
+	}
+
+	// O Begin do export não zera o total declarado (repete o mesmo valor).
+	steps[0].Begin("Eventos", 301)
+	steps[0].Step("ev")
+	steps[0].End()
+	if snap := cap.last(); snap.Steps[0].Processed != 1 || snap.Steps[0].Total != 301 {
+		t.Fatalf("step 1: %+v", snap.Steps[0])
+	}
+}
+
 // O throttle: rajada de ticks no mesmo instante não re-renderiza a UI —
 // só transições (Begin/End) publicam; o End do step leva o estado CHEIO.
 func TestBatchThrottle(t *testing.T) {
@@ -192,6 +229,9 @@ func TestNilSafety(t *testing.T) {
 	}
 	if steps := batch.Steps("A", "B"); steps != nil {
 		t.Fatal("steps de batch nil deveria ser nil")
+	}
+	if steps := batch.StepsWithTotals(StepSpec{Label: "A", Total: 1}); steps != nil {
+		t.Fatal("steps com total de batch nil deveria ser nil")
 	}
 	if step := batch.Step("A"); step != nil {
 		t.Fatal("step de batch nil deveria ser nil")
