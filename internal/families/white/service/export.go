@@ -39,6 +39,10 @@ import (
 //
 // O export é INDEPENDENTE da flag enableMods: Text/Source vêm sempre de
 // data/ e só o Target lê mods/ direto.
+//
+// Unidade cujo idioma fonte ("us") não tem NENHUMA linha (ztr vazio) fica
+// FORA do artefato: sem fonte não há row, e as referências dos outros
+// idiomas não são exportadas sozinhas. Nada de bloco "row_count=0".
 
 // exportKindLabel é o rótulo do step no modal de progresso.
 const exportKindLabel = "Textos"
@@ -208,11 +212,19 @@ func (s *Service) exportText(r *progress.Step, part, kind string, ids []string, 
 			r.Issue(unit.ID, err.Error())
 			continue
 		}
-		c[unit.ID] = entry
+		// Unidade sem NENHUMA linha (o primário "_us" é um ztr vazio: o jogo
+		// tem vários) NÃO vira bloco "row_count=0" no artefato. Sem idioma
+		// fonte não há o que traduzir — e as referências dos outros idiomas
+		// não bastam, porque o export inteiro é ancorado nas linhas do fonte.
+		if len(entry.Rows) > 0 {
+			c[unit.ID] = entry
+		}
 		r.Step(unit.ID)
 	}
 	if len(c) == 0 {
-		return nil, fmt.Errorf("nenhuma unidade exportável em %s", part)
+		// Todo o escopo era vazio: nada a escrever e NENHUM erro — o lote
+		// segue para os próximos kinds (um kind vazio não aborta os outros).
+		return nil, nil
 	}
 	written, err := writeArtifact(part, kind, ids, c, format, langs)
 	if err != nil {
@@ -223,6 +235,9 @@ func (s *Service) exportText(r *progress.Step, part, kind string, ids []string, 
 
 // exportEntryPair exporta UMA unidade nos DOIS formatos do menu de contexto
 // (json + strings): a Collection é a mesma, muda só a extensão.
+//
+// Unidade sem linhas no idioma fonte (ztr vazio) não gera artefato: devolve
+// vazio e nenhum erro — o chamador mostra "Nada para exportar".
 func (s *Service) exportEntryPair(part, id string, langs []string) ([]string, error) {
 	coll, err := collectionFor(part)
 	if err != nil {
@@ -235,6 +250,9 @@ func (s *Service) exportEntryPair(part, id string, langs []string) ([]string, er
 	entry, err := exportEntryRows(part, unit)
 	if err != nil {
 		return nil, err
+	}
+	if len(entry.Rows) == 0 {
+		return nil, nil
 	}
 	c := dto.Collection{unit.ID: entry}
 	jsonPath, err := writeArtifact(part, unit.Kind, []string{id}, c, "json", langs)

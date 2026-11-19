@@ -279,6 +279,92 @@ func TestExportArtifactBatchKindScopesUnidades(t *testing.T) {
 	}
 }
 
+// testEmptyZtrBlob devolve o .ztr VAZIO do jogo (só o header de 24 bytes) —
+// o mesmo formato dos arquivos "sem conteúdo" de data/partN. O writer do
+// codec recusa montar arquivo sem linhas, então o blob real vai literal.
+func testEmptyZtrBlob() []byte {
+	return []byte{
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+	}
+}
+
+// TestExportSkipsEmptyUnits confere que a unidade cujo idioma fonte é um
+// ztr vazio NÃO entra no artefato: sem linhas de fonte não há row para
+// traduzir (e as referências dos outros idiomas não são exportadas sozinhas).
+func TestExportSkipsEmptyUnits(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("FF_RESOURCES_DATA", filepath.Join(root, "data"))
+	t.Setenv("FF_RESOURCES_MODS", filepath.Join(root, "mods"))
+
+	// z001 com texto; z002 com o _us vazio (o caso real do jogo).
+	writeFile(t, filepath.Join(root, "data", "part1", "txtres", "zone", "z001", "txtres_us.ztr"),
+		testZtrBlob(t, []string{"id1"}, []string{"Com texto"}))
+	writeFile(t, filepath.Join(root, "data", "part1", "txtres", "zone", "z002", "txtres_us.ztr"),
+		testEmptyZtrBlob())
+	// Referência de outro idioma na unidade vazia: não deve puxá-la para o
+	// artefato (sem fonte, referência não serve).
+	writeFile(t, filepath.Join(root, "data", "part1", "txtres", "zone", "z002", "txtres_jp.ztr"),
+		testZtrBlob(t, []string{"id1"}, []string{"Texto JP"}))
+
+	var svc Service
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings")
+	if err != nil {
+		t.Fatalf("ExportArtifactBatch: %v", err)
+	}
+	if len(paths) != 1 {
+		t.Fatalf("caminhos: %v, quer 1 artefato", paths)
+	}
+	raw, rerr := os.ReadFile(paths[0])
+	if rerr != nil {
+		t.Fatalf("leitura: %v", rerr)
+	}
+	text := string(raw)
+	if !strings.Contains(text, "txtres/zone/z001/txtres") {
+		t.Errorf("o artefato deveria trazer a unidade com texto: %s", text)
+	}
+	if strings.Contains(text, "z002") {
+		t.Errorf("a unidade vazia NÃO deveria entrar no artefato: %s", text)
+	}
+	if strings.Contains(text, "row_count=0") {
+		t.Errorf("o artefato não deveria ter bloco vazio: %s", text)
+	}
+}
+
+// TestExportOnlyEmptyUnitsWritesNothing confere o escopo 100% vazio: nenhum
+// arquivo, nenhum erro (o lote segue para os outros kinds) — tanto no bulk
+// quanto no export de uma entrada.
+func TestExportOnlyEmptyUnitsWritesNothing(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("FF_RESOURCES_DATA", filepath.Join(root, "data"))
+	t.Setenv("FF_RESOURCES_MODS", filepath.Join(root, "mods"))
+
+	writeFile(t, filepath.Join(root, "data", "part1", "txtres", "zone", "z001", "txtres_us.ztr"),
+		testEmptyZtrBlob())
+
+	var svc Service
+	paths, err := svc.ExportArtifactBatch([]ExportPlanItem{{Kind: "zone"}}, "part1", nil, "strings")
+	if err != nil {
+		t.Fatalf("lote só com unidade vazia deveria ser no-op, veio erro: %v", err)
+	}
+	if len(paths) != 0 {
+		t.Fatalf("lote só com unidade vazia não deveria escrever arquivo: %v", paths)
+	}
+	if _, serr := os.Stat(filepath.Join(root, "mods", "edits", "zone_all_localizations_part1.strings")); serr == nil {
+		t.Error("nenhum artefato deveria existir para o kind vazio")
+	}
+
+	// Export de UMA entrada vazia: também no-op.
+	entryPaths, err := svc.ExportEntry("part1", "txtres/zone/z001/txtres", nil)
+	if err != nil {
+		t.Fatalf("ExportEntry de unidade vazia deveria ser no-op: %v", err)
+	}
+	if len(entryPaths) != 0 {
+		t.Fatalf("ExportEntry de unidade vazia não deveria escrever: %v", entryPaths)
+	}
+}
+
 // TestExportArtifactBatchRejectsKindOfOtherPart confere que um kind que a
 // part NÃO serve é recusado: o part3 não tem `ac`, o part1 não tem
 // `scenario`.
