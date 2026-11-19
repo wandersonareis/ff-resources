@@ -262,14 +262,15 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   Com "Exibir mods" desligado, o filelist mostra o conteúdo do filelist
   (inclusive o inserido) e `/data` mostra o extraído.
 - **Exportar com Descompactar/Extrair**: duas saídas independentes. O header
-  exporta o escopo por kind a partir do **filelist validado** (fallback
-  `data/`): *Descompactar* gera o artefato de texto (todos os idiomas da
-  unidade; o seletor de idiomas só filtra a extração por kind em `data/`) ou
-  DDS/PNG; *Extrair* grava o binário **real** do white bin, descomprimido,
-  em `data/partN/<caminho interno>` (existente = pulado, sem sobrescrever).
-  O contexto da árvore e o painel de imagem usam as mesmas opções; itens de
-  `data/` não têm Extrair. O menu de contexto do filelist também oferece
-  "Extrair binário em data/" direto para o nó/seleção.
+  **Exportar tudo/seleção é limitado a `data/`**: *Descompactar* gera o
+  artefato de texto (ou DDS/PNG no painel de imagem), com o filtro de idiomas
+  do header. O **filelist** entra pelo menu de contexto/painel de imagem e
+  sempre pela **seleção** (nunca “tudo” por kind): *Descompactar* os formatos
+  úteis da unidade (todos os idiomas) e/ou *Extrair* o binário **real** do
+  white bin, descomprimido, em `data/partN/<caminho interno>` (existente =
+  pulado, sem sobrescrever). Itens de `data/` não têm Extrair. O menu de
+  contexto do filelist também oferece "Extrair binário em data/" direto para
+  o nó/seleção.
 - **Seleção na árvore (checkbox de exportação/extração)**: o estado é tri-state
   por kind; grupo com subárvore ainda não listada fica `indeterminate` de
   propósito (só o que foi listado está marcado). Como o Radix pede `true` em

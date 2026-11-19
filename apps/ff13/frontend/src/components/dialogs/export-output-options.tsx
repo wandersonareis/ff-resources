@@ -22,17 +22,20 @@ export function ExportOutputOptions({
   disabled,
   extractDisabled,
   compact = false,
+  showExtract = true,
   idPrefix = 'export-out',
 }: {
   disabled?: boolean;
   extractDisabled?: boolean;
   /** Versão curta para menus (header, imagem). */
   compact?: boolean;
+  /** Header "Exportar tudo" é só data/: esconde a opção Extrair. */
+  showExtract?: boolean;
   /** Prefixo dos ids dos checkboxes (menu e modal podem coexistir). */
   idPrefix?: string;
 }) {
   const options = useExportOutput();
-  const none = !options.decode && !options.extract;
+  const none = showExtract ? !options.decode && !options.extract : !options.decode;
   const decodeId = `${idPrefix}-decode`;
   const extractId = `${idPrefix}-extract`;
 
@@ -60,6 +63,7 @@ export function ExportOutputOptions({
         </div>
       </div>
 
+      {showExtract ? (
       <div className="flex items-start gap-2">
         <Checkbox
           id={extractId}
@@ -102,8 +106,13 @@ export function ExportOutputOptions({
           </p>
         </div>
       </div>
+      ) : null}
 
-      {none ? <p className="text-xs text-destructive">Marque Descompactar ou Extrair.</p> : null}
+      {none ? (
+        <p className="text-xs text-destructive">
+          {showExtract ? 'Marque Descompactar ou Extrair.' : 'Marque Descompactar.'}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -92,10 +92,11 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   // o popover do export não tem seletor próprio.
   const activeFormat = useExportSelection().format;
 
-  // Saídas do export (Descompactar/Extrair), compartilhadas com a imagem e
-  // com o menu de contexto.
+  // O header "Exportar tudo" é limitado a data/: só Descompactar. O Extrair
+  // (binário do filelist) vive no painel de imagem e no menu de contexto da
+  // seleção do filelist.
   const exportOutputState = useExportOutput();
-  const hasOutput = exportOutputState.decode || exportOutputState.extract;
+  const hasOutput = exportOutputState.decode;
 
   const toggleImportScope = (kind: EntryKind) => {
     setImportScopes((prev) => {
@@ -128,9 +129,9 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   const runExport = useCallback(
     async (kinds: EntryKind[]) => {
       const format = activeFormat;
-      const options = exportOutput.getSnapshot();
-      if (!options.decode && !options.extract) {
-        toast.info('Marque Descompactar ou Extrair para escolher a saída.');
+      const options = { decode: exportOutput.getSnapshot().decode, extract: false };
+      if (!options.decode) {
+        toast.info('Marque Descompactar para exportar pelo header.');
         return;
       }
       if (kinds.length === 0) {
@@ -140,13 +141,12 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
       const items = [...kinds].sort(compareKindLabels).map((kind) => ({
         kind,
         ids: [] as string[],
-        // O header exporta a fonte VALIDADA (filelist); o backend cai em
-        // data/ quando o jogo não está configurado.
-        source: 'filelist',
+        // O header é limitado a /data; o filelist extrai só a seleção (menu de
+        // contexto/painel de imagem).
+        source: 'data',
       }));
       try {
-        // Idiomas: array do seletor do header (default + extras marcados);
-        // do filelist o backend ignora o filtro e leva todos os idiomas.
+        // Idiomas: array do seletor do header (default + extras marcados).
         const paths = await exportArtifactBatch(
           items,
           version,
@@ -282,7 +282,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
           <Button
             size="sm"
             variant="outline"
-            title={`Exportar — ${EXPORT_FORMAT_LABELS[activeFormat]} (Descompactar) e/ou binário do filelist (Extrair); todos os tipos ou só os marcados no escopo`}
+            title={`Exportar textos de /data — ${EXPORT_FORMAT_LABELS[activeFormat]} (Descompactar). Extrair o binário do filelist é só pela seleção no menu de contexto/painel de imagem.`}
           >
             <Download size={16} />
             <span className="hidden sm:inline">Exportar</span>
@@ -290,7 +290,11 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-70">
-          <ExportOutputOptions compact idPrefix="header-export-out" />
+          <ExportOutputOptions
+            compact
+            showExtract={false}
+            idPrefix="header-export-out"
+          />
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => void runExport(servedKinds)} disabled={!hasOutput}>
             <Download size={14} />
