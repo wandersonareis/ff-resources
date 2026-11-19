@@ -39,9 +39,16 @@ export async function GetTextEntry(
   id: string,
   version: unknown,
   lang?: string,
+  origin?: { root?: string; path?: string } | null,
   ..._args: any[]
 ): Promise<any> {
-  return ff13.GetTextEntry(partOf(version), id, String(lang ?? ''));
+  return ff13.GetTextEntry(
+    partOf(version),
+    id,
+    String(lang ?? ''),
+    String(origin?.root ?? ''),
+    String(origin?.path ?? ''),
+  );
 }
 
 export async function ApplyTextCollection(
@@ -99,24 +106,51 @@ export async function ExportArtifactBatch(
   return (await ff13.ExportArtifactBatch(items ?? null, partOf(version), langs ?? null, String(format ?? ''))) ?? [];
 }
 
-export async function PreviewImport(..._args: any[]): Promise<any> {
-  return { entryCount: 0, changedTexts: 0, warnings: [], errors: [] };
+/** Destino padrão do import de texto: converte para mods/. */
+const defaultTextImportOptions = { write_mods: true, insert_filelist: false };
+
+/** Seleciona UM artefato de texto (json/strings/csv/xlsx/po). */
+export async function SelectImportFile(version: unknown, ..._args: any[]): Promise<string> {
+  return ff13.SelectImportFile(partOf(version));
 }
 
-export async function ImportFile(..._args: any[]): Promise<number> {
-  return 0;
+export async function PreviewImport(
+  path: string,
+  version: unknown,
+  options?: any,
+  ..._args: any[]
+): Promise<any> {
+  return ff13.PreviewImport(partOf(version), path, options ?? defaultTextImportOptions);
+}
+
+export async function ImportFile(
+  path: string,
+  version: unknown,
+  options?: any,
+  ..._args: any[]
+): Promise<number> {
+  return ff13.ImportFile(partOf(version), path, options ?? defaultTextImportOptions);
 }
 
 export async function ImportEntry(..._args: any[]): Promise<string[]> {
   return [];
 }
 
-export async function PreviewImportTranslated(..._args: any[]): Promise<any> {
-  return { root: '', files: [], entryCount: 0, changedTexts: 0, warnings: [], errors: [] };
+export async function PreviewImportTranslated(
+  version: unknown,
+  kinds: string[],
+  ..._args: any[]
+): Promise<any> {
+  return ff13.PreviewImportTranslated(partOf(version), kinds ?? []);
 }
 
-export async function ImportTranslated(..._args: any[]): Promise<any> {
-  return { root: '', files: [], entryCount: 0, changedTexts: 0, warnings: [], errors: [] };
+export async function ImportTranslated(
+  version: unknown,
+  kinds: string[],
+  options?: any,
+  ..._args: any[]
+): Promise<any> {
+  return ff13.ImportTranslated(partOf(version), kinds ?? [], options ?? defaultTextImportOptions);
 }
 
 export async function PreviewSavePrune(..._args: any[]): Promise<any[]> {
@@ -136,3 +170,4 @@ export async function GetMetadata(query: string, ..._args: any[]): Promise<any> 
 export async function GetTextCollection(..._args: any[]): Promise<any> {
   return {};
 }
+

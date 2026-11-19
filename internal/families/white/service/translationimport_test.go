@@ -161,7 +161,7 @@ func TestTranslationImport(t *testing.T) {
 	// árvore os mostra igualmente; só a EDIÇÃO deles espera o codec.
 	opened := 0
 	for target := range ztrTargets {
-		if _, err := svc.GetTextEntry(part, unitOfTarget(target), ""); err != nil {
+		if _, err := svc.GetTextEntry(part, unitOfTarget(target), "", "", ""); err != nil {
 			continue
 		}
 		opened++

@@ -193,6 +193,11 @@ describe('filelist-tree — filhos', () => {
       key: 'part1/txtres/resident/book/txtres',
       label: 'txtres',
       container: 'ztr',
+      source: 'filelist',
+      filelist: {
+        root: 'C:/game/white_data/sys/filelistu.win32.bin',
+        path: 'txtres/resident/book/txtres_us.ztr',
+      },
     });
   });
 

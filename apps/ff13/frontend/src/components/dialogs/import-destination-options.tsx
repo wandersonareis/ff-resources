@@ -26,8 +26,8 @@ export function ImportDestinationOptions({
   compact = false,
   idPrefix = 'import-dest',
 }: {
-  options: dto.ImageImportOptions;
-  onChange: (next: dto.ImageImportOptions) => void;
+  options: dto.ImportDestination;
+  onChange: (next: dto.ImportDestination) => void;
   disabled?: boolean;
   /** Versão curta para o dropdown do menu. */
   compact?: boolean;
@@ -117,3 +117,4 @@ export function ImportDestinationOptions({
     </div>
   );
 }
+

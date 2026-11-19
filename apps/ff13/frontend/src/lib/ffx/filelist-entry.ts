@@ -56,7 +56,11 @@ export function filelistImageEntryOf(node: FilelistNode): EntryRow | undefined {
  * O idioma entra em `lang`: é ele que faz a tabela mostrar o idioma pedido e
  * a edição ficar bloqueada fora do default.
  */
-export function filelistEntryOf(node: FilelistNode, version: string): EntryRow | undefined {
+export function filelistEntryOf(
+  node: FilelistNode,
+  version: string,
+  root: string,
+): EntryRow | undefined {
   const unitId = node.unitId;
   if (!isFilelistTextLeaf(node) || !unitId) return undefined;
   return {
@@ -71,6 +75,10 @@ export function filelistEntryOf(node: FilelistNode, version: string): EntryRow |
     container: node.container,
     // O idioma do ARQUIVO ("us"/"jp"/…): vazio quando o nome não diz.
     lang: node.unitLang || undefined,
+    // A ORIGEM separada: a leitura do texto tem de vir deste índice/white
+    // bin, não do snapshot de data/.
+    source: 'filelist',
+    filelist: { root, path: node.path },
   };
 }
 

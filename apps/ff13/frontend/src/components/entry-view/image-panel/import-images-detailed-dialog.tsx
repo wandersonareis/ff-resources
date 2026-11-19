@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ImportDestinationOptions } from './import-destination-options';
+import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import { allSelectedState, plannedWrites } from './import-selection';
 
 interface ImportImagesDetailedDialogProps {

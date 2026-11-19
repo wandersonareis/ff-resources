@@ -41,7 +41,7 @@ func TestTextServiceSmoke(t *testing.T) {
 			// alcance do codec).
 			var opened int
 			for _, unit := range units {
-				entry, err := svc.GetTextEntry(part, unit.ID, "")
+				entry, err := svc.GetTextEntry(part, unit.ID, "", "", "")
 				if err != nil {
 					continue
 				}
@@ -82,7 +82,7 @@ func TestGetTextEntryWithReferences(t *testing.T) {
 		testZtrBlob(t, ids, []string{"Hi", "World"}))
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "")
+	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestGetTextEntryWithLittleEndianTranslation(t *testing.T) {
 	writeFile(t, filepath.Join(root, "mods", "part1", "txtres", "resident", "book", "txtres_us.ztr"), le)
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "")
+	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestGetTextEntryOtherLanguage(t *testing.T) {
 		testZtrBlob(t, ids, []string{"Hi", "World"}))
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "fr")
+	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "fr", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}

@@ -4,6 +4,7 @@ import { Events } from '@wailsio/runtime';
 import { ChevronDown, Download, FileUp, FolderInput, ListChecks, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type * as dto from '@ff-resources/ui/dto';
+import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import { ImportSummaryDialog } from '@/components/dialogs/import-summary-dialog';
 import { ImportTranslatedDialog } from '@/components/dialogs/import-translated-dialog';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { type EntryKind, KIND_LABELS } from '@/lib/ffx/display-names';
 import { parseError } from '@/lib/ffx/error-handler';
 import { exportLangs } from '@/lib/ffx/export-langs';
 import { EXPORT_FORMAT_LABELS, useExportSelection } from '@/lib/ffx/export-selection';
+import { invalidateFilelistCache } from '@/lib/ffx/filelist';
 import { GAME_VERSIONS, type GameVersionId } from '@/lib/ffx/game-version';
 import { compareKindLabels, entryKindsAlpha } from '@/lib/ffx/kinds';
 import { progressWasShown } from '@/lib/ffx/progress-store';
@@ -57,6 +59,31 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   );
   const [importBatch, setImportBatch] = useState<dto.ImportBatch | null>(null);
   const activeImportScope = importScopes[version] ?? servedKinds;
+
+  /**
+   * Destinos do import de TEXTO. Comprimir (mods/) nasce ligado; Inserir
+   * (filelist) desligado. Os dois são independentes; sem nenhum o import
+   * fica desabilitado.
+   */
+  const [importOptions, setImportOptions] = useState<dto.ImportDestination>({
+    write_mods: true,
+    insert_filelist: false,
+  });
+  const hasDestination = importOptions.write_mods || importOptions.insert_filelist;
+  const destinationLabel = (opts: dto.ImportDestination): string => {
+    const dests: string[] = [];
+    if (opts.write_mods) dests.push('mods/');
+    if (opts.insert_filelist) dests.push('filelist');
+    return dests.length === 0 ? 'nenhum destino' : dests.join(' e ');
+  };
+  const afterTextImport = (opts: dto.ImportDestination) => {
+    if (opts.insert_filelist) invalidateFilelistCache();
+    try {
+      Events.Emit('ImportDone');
+    } catch {
+      // sem runtime Wails (dev no browser) — segue sem recarga automática
+    }
+  };
 
   // Formato de exportação vem do BOTÃO DE FORMATO do header (direita do
   // botão de configurações) — a store `exportSelection` é a única fonte;
@@ -119,18 +146,26 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
   );
 
   const onImportClick = useCallback(async () => {
+    if (!hasDestination) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
     try {
-      const path = await selectImportFile();
+      const path = await selectImportFile(version);
       if (!path) return;
-      setImportSummary(await previewImport(path, version));
+      setImportSummary(await previewImport(path, version, importOptions));
     } catch (error) {
       toast.error(parseError(error));
     }
-  }, [version]);
+  }, [version, hasDestination, importOptions]);
 
   // Import em lote de mods/translated/text: primeiro o resumo (sem aplicar)
   // para o diálogo de confirmação, depois a aplicação arquivo a arquivo.
   const onImportTranslatedClick = useCallback(async () => {
+    if (!hasDestination) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
     if (activeImportScope.length === 0) {
       toast.info('Marque pelo menos um tipo para importar.');
       return;
@@ -140,76 +175,83 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
     } catch (error) {
       toast.error(parseError(error));
     }
-  }, [version, activeImportScope]);
+  }, [version, activeImportScope, hasDestination]);
 
   const onConfirmImportTranslated = useCallback(async () => {
     if (!importBatch) return;
+    if (!hasDestination) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
+    const options = importOptions;
     setImporting(true);
     const toastId = 'import';
     toast.loading('Importando...', { id: toastId });
     try {
-      const result = await importTranslated(version, activeImportScope);
+      const result = await importTranslated(version, activeImportScope, options);
       setImportBatch(null);
       if (result.changed_texts === 0) {
-        toast.info('Nada a importar.', { id: toastId });
+        const motivo =
+          result.errors.length > 0
+            ? ` (${result.errors.length} erro(s))`
+            : result.warnings.length > 0
+              ? ` (${result.warnings.length} aviso(s))`
+              : '';
+        toast.info(`Nada a importar.${motivo}`, { id: toastId });
       } else {
         const arquivos =
           result.errors.length > 0 ? ` (${result.errors.length} arquivo(s) pulado(s))` : '';
-        const entradas =
-          result.warnings.length > 0 ? ` (${result.warnings.length} entrada(s) ignorada(s))` : '';
+        const avisos =
+          result.warnings.length > 0 ? ` (${result.warnings.length} aviso(s))` : '';
         toast.success(
-          `Importado: ${result.changed_texts} texto(s) alterado(s) em ` +
-            `${result.files.length} arquivo(s).${arquivos}${entradas}`,
+          `Importado: ${result.changed_texts} texto(s) em ${result.files.length} arquivo(s) → ` +
+            `${destinationLabel(options)}.${arquivos}${avisos}`,
           { id: toastId },
         );
-        // Avisa a aba ativa para recarregar árvore/tabela (rascunhos preservados).
-        try {
-          Events.Emit('ImportDone');
-        } catch {
-          // sem runtime Wails (dev no browser) — segue sem recarga automática
-        }
+        afterTextImport(options);
       }
     } catch (error) {
       toast.error(parseError(error), { id: toastId });
     } finally {
       setImporting(false);
     }
-  }, [importBatch, version, activeImportScope]);
+  }, [importBatch, version, activeImportScope, importOptions, hasDestination]);
 
   const onConfirmImport = useCallback(async () => {
     const current = importSummary;
     if (!current) return;
+    if (!hasDestination) {
+      toast.info('Marque Comprimir ou Inserir para escolher o destino do import.');
+      return;
+    }
+    const options = importOptions;
     setImporting(true);
     const toastId = 'import';
     toast.loading('Importando…', { id: toastId });
     try {
-      const changed = await importFile(current.path, version);
+      const changed = await importFile(current.path, version, options);
       setImportSummary(null);
       const ignored = current.warnings?.length ?? 0;
       const skippedRows = current.skipped?.length ?? 0;
       // Sucesso com asterisco: entrada ignorada (aviso) e/ou row pulada
-      // (hash stale / tag divergente) continuam existindo depois que o
-      // modal fecha — o toast carrega o mesmo número que o botão pulsante.
+      // continuam existindo depois que o modal fecha — o toast carrega o
+      // mesmo número que o botão pulsante.
       const parts: string[] = [];
       if (ignored > 0) parts.push(`${ignored} entrada(s) ignorada(s)`);
       if (skippedRows > 0) parts.push(`${skippedRows} row(s) ignorada(s)`);
       const suffix = parts.length > 0 ? ` (${parts.join(', ')})` : '';
       toast.success(
-        `Importação concluída — ${changed} texto(s) atualizado(s) e salvos em binário (mods/).${suffix}`,
+        `Importação concluída — ${changed} texto(s) atualizado(s) → ` +
+          `${destinationLabel(options)}.${suffix}`,
         { id: toastId },
       );
-      // Avisa a aba ativa para recarregar árvore/tabela (rascunhos preservados).
-      try {
-        Events.Emit('ImportDone');
-      } catch {
-        // sem runtime Wails (dev no browser) — segue sem recarga automática
-      }
+      afterTextImport(options);
     } catch (error) {
       toast.error(parseError(error), { id: toastId });
     } finally {
       setImporting(false);
     }
-  }, [importSummary, version]);
+  }, [importSummary, version, importOptions, hasDestination]);
 
   return (
     <>
@@ -256,7 +298,7 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
           <Button
             size="sm"
             variant="outline"
-            title="Importar textos — em lote de mods/translated ou de arquivo JSON/Strings"
+            title="Importar textos — em lote de mods/translated/text ou de um arquivo; Comprimir (mods/) e Inserir (filelist)"
           >
             <Upload size={16} />
             <span className="hidden sm:inline">Importar</span>
@@ -276,12 +318,23 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
             </DropdownMenuCheckboxItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void onImportTranslatedClick()}>
+          <ImportDestinationOptions
+            options={importOptions}
+            onChange={setImportOptions}
+            disabled={importing}
+            compact
+            idPrefix="text-import-dest"
+          />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => void onImportTranslatedClick()}
+            disabled={!hasDestination}
+          >
             <FolderInput size={14} />
             Importar
-            <span className="ml-auto pl-3 text-xs opacity-60">mods/translated</span>
+            <span className="ml-auto pl-3 text-xs opacity-60">translated/text</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => void onImportClick()}>
+          <DropdownMenuItem onSelect={() => void onImportClick()} disabled={!hasDestination}>
             <FileUp size={14} />
             Importar de…
             <span className="ml-auto pl-3 text-xs opacity-60">arquivo</span>
@@ -292,6 +345,8 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
         summary={importSummary}
         open={importSummary !== null}
         importing={importing}
+        options={importOptions}
+        onOptionsChange={setImportOptions}
         onOpenChange={(open) => {
           if (!open && !importing) setImportSummary(null);
         }}
@@ -301,6 +356,8 @@ export function ExportImportControls({ version }: { version: GameVersionId }) {
         batch={importBatch}
         open={importBatch !== null}
         importing={importing}
+        options={importOptions}
+        onOptionsChange={setImportOptions}
         onOpenChange={(open) => {
           if (!open && !importing) setImportBatch(null);
         }}

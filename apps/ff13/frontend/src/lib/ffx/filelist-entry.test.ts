@@ -29,7 +29,7 @@ describe('filelist-entry — folha de texto', () => {
   });
 
   it('a entry abre a MESMA unidade da árvore /data, com o idioma do arquivo', () => {
-    const entry = filelistEntryOf(node(), 'part1');
+    const entry = filelistEntryOf(node(), 'part1', 'root-1');
 
     expect(entry).toBeDefined();
     // O kind sai do DIRETÓRIO da unidade (a família do texto): `resident`
@@ -40,6 +40,12 @@ describe('filelist-entry — folha de texto', () => {
     expect(entry?.label).toBe('txtres');
     expect(entry?.lang).toBe('us');
     expect(entry?.container).toBe('ztr');
+    // A origem separada: o texto é lido do filelist, não de data/.
+    expect(entry?.source).toBe('filelist');
+    expect(entry?.filelist).toEqual({
+      root: 'root-1',
+      path: 'txtres/resident/book/txtres_us.ztr',
+    });
   });
 
   it('o kind da entry casa com o kind da árvore /data para a MESMA unidade', () => {
@@ -59,19 +65,20 @@ describe('filelist-entry — folha de texto', () => {
           container: want === 'scenario' ? 'wpd' : 'ztr',
         }),
         'part3',
+        'root-1',
       );
       expect(entry?.kind).toBe(want);
     }
   });
 
   it('o idioma fora do catálogo (nome que não diz) fica sem lang', () => {
-    const entry = filelistEntryOf(node({ unitLang: '' }), 'part1');
+    const entry = filelistEntryOf(node({ unitLang: '' }), 'part1', 'root-1');
     expect(entry?.lang).toBeUndefined();
   });
 
   it('nó sem texto não abre entry', () => {
-    expect(filelistEntryOf(node({ text: false }), 'part1')).toBeUndefined();
-    expect(filelistEntryOf(node({ unitId: '' }), 'part1')).toBeUndefined();
+    expect(filelistEntryOf(node({ text: false }), 'part1', 'root-1')).toBeUndefined();
+    expect(filelistEntryOf(node({ unitId: '' }), 'part1', 'root-1')).toBeUndefined();
   });
 
   it('rótulo da folha de texto: o nome do arquivo em minúsculas', () => {
@@ -83,3 +90,4 @@ describe('filelist-entry — folha de texto', () => {
     expect(filelistOpaqueLabel(node({ name: 'AUDIO_01.OGG' }))).toBe('audio_01.ogg');
   });
 });
+

@@ -12,12 +12,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import { type EntryKind, KIND_LABELS } from '@/lib/ffx/display-names';
 
 interface ImportTranslatedDialogProps {
   batch: dto.ImportBatch | null;
   open: boolean;
   importing: boolean;
+  options: dto.ImportDestination;
+  onOptionsChange: (next: dto.ImportDestination) => void;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
@@ -26,6 +29,8 @@ export function ImportTranslatedDialog({
   batch,
   open,
   importing,
+  options,
+  onOptionsChange,
   onOpenChange,
   onConfirm,
 }: ImportTranslatedDialogProps) {
@@ -33,6 +38,7 @@ export function ImportTranslatedDialog({
   const files = batch?.files ?? [];
   const errors = batch?.errors ?? [];
   const warnings = batch?.warnings ?? [];
+  const hasDestination = options.write_mods || options.insert_filelist;
   const nada = open && batch !== null && kinds.length === 0 && errors.length === 0;
   return (
     <Dialog
@@ -46,10 +52,16 @@ export function ImportTranslatedDialog({
           <DialogTitle>Importar textos de mods/translated</DialogTitle>
           <DialogDescription>
             Confira os tipos que serão importados antes de aplicar. Somente o texto em inglês
-            (&quot;us&quot;) é importado; ao confirmar, os binários são reconstruídos e gravados em
-            mods/.
+            (&quot;us&quot;) é importado; escolha abaixo se os binários vão para mods/ (Comprimir)
+            e/ou para o filelist (Inserir).
           </DialogDescription>
         </DialogHeader>
+
+        <ImportDestinationOptions
+          options={options}
+          onChange={onOptionsChange}
+          disabled={importing}
+        />
 
         {batch ? (
           <div className="space-y-3 overflow-hidden">
@@ -115,7 +127,10 @@ export function ImportTranslatedDialog({
           <Button variant="outline" disabled={importing} onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button disabled={importing || !batch || batch.kinds.length === 0} onClick={onConfirm}>
+          <Button
+            disabled={importing || !batch || batch.kinds.length === 0 || !hasDestination}
+            onClick={onConfirm}
+          >
             {importing ? 'Importando...' : 'Importar'}
           </Button>
         </DialogFooter>

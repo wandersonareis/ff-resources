@@ -90,7 +90,7 @@ func TestGetTextEntryCodepagePerLanguage(t *testing.T) {
 		[]string{"On dirait que ca marche.", "Un cul-de-sac, non ?"}))
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part1", "zone/z002/txtres/ac/ac_hgcr_051/txtres", "")
+	entry, err := svc.GetTextEntry("part1", "zone/z002/txtres/ac/ac_hgcr_051/txtres", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}

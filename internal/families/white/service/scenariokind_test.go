@@ -87,7 +87,7 @@ func TestApplyTextCollectionScenarioContainer(t *testing.T) {
 	}
 
 	// E a leitura volta a tradução do slot "us".
-	entry, err := svc.GetTextEntry("part3", "db/ai/npc/pack/auto_c01", "")
+	entry, err := svc.GetTextEntry("part3", "db/ai/npc/pack/auto_c01", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}

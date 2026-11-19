@@ -18,11 +18,14 @@ func TestRealPart1TranslationLoads(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(data, "part1", filepath.FromSlash(unit)+"_us.ztr")); err != nil {
 		t.Skipf("sem fixture real do part1: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(data, "mods", "part1", filepath.FromSlash(unit)+"_us.ztr")); err != nil {
+		t.Skipf("sem tradução real do part1 em mods/: %v", err)
+	}
 	t.Setenv("FF_RESOURCES_DATA", mustAbs(t, data))
 	t.Setenv("FF_RESOURCES_MODS", mustAbs(t, filepath.Join(data, "mods")))
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part1", unit, "")
+	entry, err := svc.GetTextEntry("part1", unit, "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry(part1): %v", err)
 	}
@@ -43,11 +46,14 @@ func TestRealPart2TranslationLoads(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(data, "part2", "txtres", "ac", "ac_aaea_007", "txtres_us.ztr")); err != nil {
 		t.Skipf("sem fixture real do part2: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(data, "mods", "part2", "txtres", "ac", "ac_aaea_007", "txtres_us.ztr")); err != nil {
+		t.Skipf("sem tradução real do part2 em mods/: %v", err)
+	}
 	t.Setenv("FF_RESOURCES_DATA", mustAbs(t, data))
 	t.Setenv("FF_RESOURCES_MODS", mustAbs(t, filepath.Join(data, "mods")))
 
 	var svc Service
-	entry, err := svc.GetTextEntry("part2", "txtres/ac/ac_aaea_007/txtres", "")
+	entry, err := svc.GetTextEntry("part2", "txtres/ac/ac_aaea_007/txtres", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry(part2): %v", err)
 	}

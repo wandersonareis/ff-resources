@@ -233,7 +233,7 @@ func TestListDataEntriesAfterSave(t *testing.T) {
 	if !found {
 		t.Fatal("unidade ausente após o save")
 	}
-	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "")
+	entry, err := svc.GetTextEntry("part1", "txtres/resident/book/txtres", "", "", "")
 	if err != nil {
 		t.Fatalf("GetTextEntry: %v", err)
 	}

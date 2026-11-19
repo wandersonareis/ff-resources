@@ -122,7 +122,13 @@ export interface GameApi {
   /* ---- texto ---- */
   getTagCatalog(version: string, lang?: string): Promise<TagCatalog | null>;
   listEntries(kind: string, version: string): Promise<EntrySummary[]>;
-  getEntry(kind: string, id: string, version: string, lang?: string): Promise<FileEntry>;
+  getEntry(
+    kind: string,
+    id: string,
+    version: string,
+    lang?: string,
+    origin?: { root?: string; path?: string },
+  ): Promise<FileEntry>;
   getCollection(kind: string, ids: string[], version: string): Promise<Collection>;
   applyCollection(kind: string, c: Collection, version: string): Promise<void>;
   /** Aplica o lote de uma sessão .vbf (FFX; FF13 não usa). */
@@ -135,9 +141,9 @@ export interface GameApi {
     format: string,
   ): Promise<string[]>;
   importEntry(kind: string, id: string, version: string): Promise<string[]>;
-  importFile(path: string, version: string): Promise<number>;
-  importTranslated(version: string, kinds: string[]): Promise<any>;
-  previewImport(path: string, version: string): Promise<any>;
+  importFile(path: string, version: string, options?: any): Promise<number>;
+  importTranslated(version: string, kinds: string[], options?: any): Promise<any>;
+  previewImport(path: string, version: string, options?: any): Promise<any>;
   previewImportTranslated(version: string, kinds: string[]): Promise<any>;
   previewSavePrune(kind: string, version: string): Promise<any[]>;
   countChangedTexts(imported: Collection, store: Collection): Promise<number>;
@@ -145,7 +151,7 @@ export interface GameApi {
   warmTextSearch(version: string): Promise<void>;
   revealEntryFile(kind: string, id: string, version: string): Promise<void>;
   getMetadata(query: string): Promise<any>;
-  selectImportFile(): Promise<string>;
+  selectImportFile(version?: string): Promise<string>;
   listLanguages(): Promise<Language[]>;
 
   /* ---- imagens (DTO tipado numa fase posterior) ---- */

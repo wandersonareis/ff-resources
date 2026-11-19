@@ -248,6 +248,21 @@ A UI em `apps/ff13/frontend` é uma **cópia da UI do FFX** (Vite + React puro) 
   destinos são independentes: **Comprimir** (marcado por padrão) converte e
   grava em `mods/`; **Inserir** (desmarcado por padrão, com ajuda em popover)
   grava no filelist. Sem nenhum dos dois o botão Importar fica desabilitado.
+- **Import de texto**: lote de `mods/translated/text/<part>` (recursivo) ou um
+  arquivo avulso (`mods/edits`, JSON/Strings/CSV/XLSX/PO). O import é por
+  **chave do ZTR** (`Name`), então é parcial: linhas ausentes preservam a
+  tradução atual e linhas com `Source` divergente ainda são aplicadas (com um
+  aviso agregado por unidade) — diferente do FFX, que casa por índice. O
+  pristino vem da fonte **validada** (filelist/white bin), com `data/` só como
+  fallback quando a unidade não está indexada. Os destinos são os mesmos do
+  import de imagens: **Comprimir** e/ou **Inserir**.
+- **Fontes separadas no texto**: a folha do filelist carrega `filelist:
+  {root, path}` no `EntryRow`; `GetTextEntry` resolve a unidade no próprio
+  índice/white bin (e não no cache de `data/`). `mods/` continua como overlay.
+  Com "Exibir mods" desligado, o filelist mostra o conteúdo do filelist
+  (inclusive o inserido) e `/data` mostra o extraído. O export por kind ainda
+  enumerará `data/`; as opções Descompactar/Extrair do export ficam para um
+  plano separado.
 - **Seleção na árvore (checkbox de exportação/extração)**: o estado é tri-state
   por kind; grupo com subárvore ainda não listada fica `indeterminate` de
   propósito (só o que foi listado está marcado). Como o Radix pede `true` em

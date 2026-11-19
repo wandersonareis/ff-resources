@@ -51,6 +51,12 @@ export interface EntryRow {
   /** Origem da folha (FF13): data/ editável ou filelist somente leitura. */
   source?: 'data' | 'filelist';
   /**
+   * Origem FILELIST da folha de texto: o índice (`root`) e o caminho da
+   * entrada dentro dele. É o que faz o editor ler o conteúdo do filelist (e
+   * não o snapshot de data/) quando as fontes precisam ficar separadas.
+   */
+  filelist?: { root: string; path: string };
+  /**
    * true = arquivo já listado (descoberto) mas conteúdo ainda em carga no
    * backend. A folha mostra spinner; abrir espera em vez de falhar.
    */
@@ -168,8 +174,9 @@ export async function loadEntry(
   id: string,
   version: GameVersionId,
   lang?: string,
+  origin?: { root?: string; path?: string },
 ): Promise<dto.FileEntry> {
-  return api().getEntry(kind, id, version, lang);
+  return api().getEntry(kind, id, version, lang, origin);
 }
 
 // ---- Imagens (.dds.phyre) ----
@@ -497,21 +504,26 @@ export function exportDestination(paths: string[]): string {
 }
 
 /** Seletor nativo de arquivo (.json/.strings/.csv/.xlsx/.po). "" = cancelado. */
-export function selectImportFile(): Promise<string> {
-  return api().selectImportFile();
+export function selectImportFile(version?: GameVersionId): Promise<string> {
+  return api().selectImportFile(version);
 }
 
 /** Valida o arquivo e devolve o resumo do modal (sem aplicar nada). */
 export async function previewImport(
   path: string,
   version: GameVersionId,
+  options?: dto.TextImportOptions,
 ): Promise<dto.ImportSummary> {
-  return api().previewImport(path, version);
+  return api().previewImport(path, version, options);
 }
 
 /** Aplica o arquivo validado; devolve quantos textos 'us' mudaram. */
-export async function importFile(path: string, version: GameVersionId): Promise<number> {
-  return api().importFile(path, version);
+export async function importFile(
+  path: string,
+  version: GameVersionId,
+  options?: dto.TextImportOptions,
+): Promise<number> {
+  return api().importFile(path, version, options);
 }
 
 /**
@@ -532,6 +544,7 @@ export async function previewImportTranslated(
 export async function importTranslated(
   version: GameVersionId,
   kinds: EntryKind[],
+  options?: dto.TextImportOptions,
 ): Promise<dto.ImportBatch> {
-  return api().importTranslated(version, kinds);
+  return api().importTranslated(version, kinds, options);
 }

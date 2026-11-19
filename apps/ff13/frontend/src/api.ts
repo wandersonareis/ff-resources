@@ -5,15 +5,6 @@ import * as text from '@/bindings/ffxresources/textservice';
 import * as image from '@/bindings/ffxresources/imageservice';
 import type { GameApi } from '@ff-resources/ui/api/GameApi';
 
-const emptySummary = { entryCount: 0, changedTexts: 0, warnings: [], errors: [] };
-const emptyBatch = {
-  root: '',
-  files: [],
-  entryCount: 0,
-  changedTexts: 0,
-  warnings: [],
-  errors: [],
-};
 const emptyBatchResult = { ok: 0, failed: 0 };
 
 export const ff13Api: GameApi = {
@@ -88,7 +79,8 @@ export const ff13Api: GameApi = {
         }))
     );
   },
-  getEntry: (kind, id, version, lang) => text.GetTextEntry(kind, id, version, lang) as Promise<any>,
+  getEntry: (kind, id, version, lang, origin) =>
+    text.GetTextEntry(kind, id, version, lang, origin) as Promise<any>,
   getCollection: async () => ({}),
   applyCollection: (kind, c, version) =>
     text.ApplyTextCollection(kind, version, c as never) as Promise<void>,
@@ -98,10 +90,13 @@ export const ff13Api: GameApi = {
   exportArtifact: (items, version, langs, format) =>
     text.ExportArtifactBatch(items as never, version, langs, format) as Promise<string[]>,
   importEntry: async () => [],
-  importFile: async () => 0,
-  importTranslated: async () => emptyBatch,
-  previewImport: async () => emptySummary,
-  previewImportTranslated: async () => emptyBatch,
+  importFile: (path, version, options) => text.ImportFile(path, version, options),
+  importTranslated: (version, kinds, options) =>
+    text.ImportTranslated(version, kinds, options) as Promise<any>,
+  previewImport: (path, version, options) =>
+    text.PreviewImport(path, version, options) as Promise<any>,
+  previewImportTranslated: (version, kinds) =>
+    text.PreviewImportTranslated(version, kinds) as Promise<any>,
   previewSavePrune: async () => [],
   countChangedTexts: async () => 0,
   searchTextEntries: async (_version, query) => ({
@@ -114,7 +109,7 @@ export const ff13Api: GameApi = {
   warmTextSearch: async () => {},
   revealEntryFile: async () => {},
   getMetadata: async (query) => ({ key: query }),
-  selectImportFile: async () => '',
+  selectImportFile: (version) => text.SelectImportFile(version),
   listLanguages: () => text.ListLanguages() as Promise<any>,
 
   /* ---- imagens ---- */

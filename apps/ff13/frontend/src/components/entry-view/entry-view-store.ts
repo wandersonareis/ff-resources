@@ -894,7 +894,7 @@ export function createEntryView(version: GameVersionId): EntryView {
       patch({ image: null, ykd: null });
       const full = entry.vbf
         ? await loadVbfEntry(entry.vbf.root, entry.vbf.path, entry.id)
-        : await loadEntry(entry.kind, entry.id, version, entry.lang);
+        : await loadEntry(entry.kind, entry.id, version, entry.lang, entry.filelist);
       // Rascunho por fonte: data/ e o .vbf têm namespaces separados (o
       // mesmo id pode existir nos dois). A tabela aberta pelo .vbf alimenta
       // o rascunho do container: o salvar roteia ao binding de .vbf.

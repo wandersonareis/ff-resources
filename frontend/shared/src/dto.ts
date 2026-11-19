@@ -126,14 +126,19 @@ export interface ImageImportPreview {
 }
 
 /**
- * Destinos do import de imagem. Os dois são independentes:
+ * Destinos do import. Os dois são independentes:
  * `write_mods` grava o binário convertido em mods/ ("Comprimir") e
  * `insert_filelist` insere na cadeia filelist/white bin ("Inserir").
  */
-export interface ImageImportOptions {
+export interface ImportDestination {
   write_mods: boolean;
   insert_filelist: boolean;
 }
+
+/** Alias histórico do import de imagem. */
+export type ImageImportOptions = ImportDestination;
+/** Destinos do import de texto. */
+export type TextImportOptions = ImportDestination;
 
 export interface ImageImportResult {
   updated: string[];
@@ -166,6 +171,66 @@ export interface FilelistRestoreResult {
   bins: number;
   filelists: number;
   bytes: number;
+  warnings: string[];
+}
+
+/* ---- import de texto (espelha internal/shared/dto/import.go) ---- */
+
+/** Conferência de UMA entrada do artefato contra a unidade atual. */
+export interface ImportEntryInfo {
+  id: string;
+  key: string;
+  index_count: number;
+  store_index_count: number;
+  changed_texts: number;
+  skipped_rows: number;
+  error?: string;
+}
+
+/** Row do artefato que ficou fora do import (chave inexistente etc.). */
+export interface ImportRowIssue {
+  id: string;
+  index: number;
+  hash: string;
+  text: string;
+  reason: string;
+}
+
+/** Uso de limite binário (FFX; no FF13 fica vazio). */
+export interface ImportUsage {
+  id: string;
+  kind: string;
+  used: number;
+  limit: number;
+  over: boolean;
+}
+
+/** Resumo de UM arquivo (modal "Importar de…"). */
+export interface ImportSummary {
+  path: string;
+  format: string;
+  kind: string;
+  version: string;
+  languages: string[];
+  entry_count: number;
+  total_indices: number;
+  changed_texts: number;
+  saves_binary: boolean;
+  entries: ImportEntryInfo[];
+  usages: ImportUsage[];
+  warnings: string[];
+  skipped: ImportRowIssue[];
+  errors: string[];
+}
+
+/** Resumo do lote de mods/translated/text/<part>. */
+export interface ImportBatch {
+  root: string;
+  kinds: string[];
+  files: string[];
+  entry_count: number;
+  changed_texts: number;
+  errors: string[];
   warnings: string[];
 }
 

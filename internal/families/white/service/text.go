@@ -59,24 +59,43 @@ func (Service) ListTextUnits(part string) ([]white.TextUnitSummary, error) {
 // do arquivo): o slot editavel ("us") vem SEMPRE — a base do rascunho precisa
 // dele — e o idioma pedido entra em Text[lang] (o pristine dele, referencia
 // somente-leitura).
-func (Service) GetTextEntry(part, id, lang string) (dto.FileEntry, error) {
+//
+// root/indexPath identificam a ORIGEM quando a folha veio do FILELIST. Nesse
+// caso a unidade é resolvida no próprio índice/white bin (fonte validada) e
+// NÃO passa pelo cache da coleção de data/ — as fontes não se misturam. root
+// vazio mantém o caminho de /data.
+func (Service) GetTextEntry(part, id, lang, root, indexPath string) (dto.FileEntry, error) {
 	part = config.NormalizePart(part)
 	id = config.NormalizeInternalPath(id)
 	if id == "" {
 		return dto.FileEntry{}, fmt.Errorf("id vazio")
 	}
 	lang = normalizeLang(lang)
-	coll, err := collectionFor(part)
-	if err != nil {
-		return dto.FileEntry{}, err
-	}
-	unit, err := collectionUnit(coll, part, id)
-	if err != nil {
-		return dto.FileEntry{}, err
-	}
-	content, err := unitContentOf(coll, part, unit)
-	if err != nil {
-		return dto.FileEntry{}, err
+	var unit *TextUnit
+	var content *UnitContent
+	if strings.TrimSpace(root) != "" {
+		var err error
+		unit, err = ResolveFilelistTextUnit(part, root, indexPath, id)
+		if err != nil {
+			return dto.FileEntry{}, err
+		}
+		content, err = ReadUnitContent(part, unit)
+		if err != nil {
+			return dto.FileEntry{}, err
+		}
+	} else {
+		coll, err := collectionFor(part)
+		if err != nil {
+			return dto.FileEntry{}, err
+		}
+		unit, err = collectionUnit(coll, part, id)
+		if err != nil {
+			return dto.FileEntry{}, err
+		}
+		content, err = unitContentOf(coll, part, unit)
+		if err != nil {
+			return dto.FileEntry{}, err
+		}
 	}
 
 	// A flag de mods decide o que a TABELA mostra: ligada = a traducao de

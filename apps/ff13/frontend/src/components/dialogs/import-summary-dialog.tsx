@@ -4,6 +4,7 @@ import { cn } from 'cn';
 import { ScrollText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type * as dto from '@ff-resources/ui/dto';
+import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import { ImportSummaryDetailsDialog } from '@/components/dialogs/import-summary-details-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ interface ImportSummaryDialogProps {
   summary: dto.ImportSummary | null;
   open: boolean;
   importing: boolean;
+  options: dto.ImportDestination;
+  onOptionsChange: (next: dto.ImportDestination) => void;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
@@ -48,9 +51,12 @@ export function ImportSummaryDialog({
   summary,
   open,
   importing,
+  options,
+  onOptionsChange,
   onOpenChange,
   onConfirm,
 }: ImportSummaryDialogProps) {
+  const hasDestination = options.write_mods || options.insert_filelist;
   const [detailsOpen, setDetailsOpen] = useState(false);
   // O componente fica montado (open é prop) — sem isto o detalhe reabriria
   // sozinho na PRÓXIMA importação depois de ficar aberto numa sessão anterior.
@@ -89,6 +95,12 @@ export function ImportSummaryDialog({
               importado; o formato não aceita entradas novas.
             </DialogDescription>
           </DialogHeader>
+
+          <ImportDestinationOptions
+            options={options}
+            onChange={onOptionsChange}
+            disabled={importing}
+          />
 
           {summary ? (
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -136,11 +148,19 @@ export function ImportSummaryDialog({
                 ) : null}
               </Button>
 
-              {summary.saves_binary ? (
+              {options.write_mods ? (
                 <div className="rounded-md border border-warning/50 bg-warning/10 p-2 text-sm text-warning">
                   Ao confirmar, o texto importado será <strong>salvo em binário</strong> em
                   <code className="mx-1">mods/</code> e recarregado dali nas próximas sessões
                   (continuidade da tradução).
+                </div>
+              ) : null}
+
+              {options.insert_filelist ? (
+                <div className="rounded-md border border-warning/50 bg-warning/10 p-2 text-sm text-warning">
+                  O texto também será <strong>inserido no filelist</strong> (white bin). A
+                  instalação do jogo será modificada; use &quot;Reverter inserções&quot; para
+                  desfazer.
                 </div>
               ) : null}
 
@@ -255,7 +275,13 @@ export function ImportSummaryDialog({
               Cancelar
             </Button>
             <Button
-              disabled={blocked || importing || !summary || (entries.length > 0 && !importable)}
+              disabled={
+                blocked ||
+                importing ||
+                !summary ||
+                !hasDestination ||
+                (entries.length > 0 && !importable)
+              }
               onClick={onConfirm}
             >
               {importing ? 'Importando…' : 'Importar'}

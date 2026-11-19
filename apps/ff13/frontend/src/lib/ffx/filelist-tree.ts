@@ -170,7 +170,7 @@ export function buildFilelistChildren(
     const entry = nested
       ? undefined
       : textLeaf
-        ? filelistEntryOf(node, version)
+        ? filelistEntryOf(node, version, root)
         : imageLeaf
           ? filelistImageEntryOf(node)
           : undefined;

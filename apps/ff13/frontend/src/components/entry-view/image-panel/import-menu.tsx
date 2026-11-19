@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ImportDestinationOptions } from './import-destination-options';
+import { ImportDestinationOptions } from '@/components/dialogs/import-destination-options';
 import type { ImageBusy } from './use-image-actions';
 
 export function ImageImportMenu({
